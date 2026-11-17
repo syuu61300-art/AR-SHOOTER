@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>AR Shooter Online</title>
+<title>AR Shooter Online - Advanced</title>
 <style>
 :root{--g:#00ff88;--r:#ff3333;--b:#33aaff;--o:#ff8800;--y:#ffdd00;--bg:rgba(0,0,0,.72);--bd:rgba(0,255,136,.32);--st:env(safe-area-inset-top,0px);--sb:env(safe-area-inset-bottom,0px)}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -13,7 +13,7 @@ html,body{height:100%;overflow:hidden;background:#000;color:var(--g);font-family
 .xr{position:absolute;inset:0;border:1.5px solid rgba(255,60,60,.6);border-radius:50%}
 .xd{position:absolute;left:50%;top:50%;width:4px;height:4px;background:#ff4444;border-radius:50%;transform:translate(-50%,-50%)}
 #xh.hit .xr{border-color:#fff;background:rgba(255,255,255,.18)}
-/* HUD (blur removed: it was a major lag source on phones) */
+/* HUD */
 #hud-gps,#hud-room{position:fixed;top:calc(var(--st) + 8px);z-index:30;pointer-events:none;background:var(--bg);border:1px solid var(--bd);border-radius:4px;padding:5px 8px;line-height:1.55}
 #hud-gps{left:10px;min-width:110px}
 #hud-room{right:10px;min-width:90px;text-align:right}
@@ -37,18 +37,21 @@ html,body{height:100%;overflow:hidden;background:#000;color:var(--g);font-family
 #mmap{position:fixed;bottom:calc(var(--sb) + 40px);left:10px;z-index:30;cursor:pointer}
 #mmap canvas{width:110px;height:110px;border-radius:50%;border:2px solid var(--bd);background:rgba(0,8,20,.85);display:block}
 #mmap .ml{font-size:7px;color:rgba(0,255,136,.5);text-align:center;margin-top:2px}
-/* FIRE moved to right-center so the gun model owns the bottom */
+/* Buttons */
 #fire{position:fixed;bottom:calc(var(--sb) + 56px);right:16px;z-index:31;width:78px;height:78px;border-radius:50%;border:3px solid rgba(255,80,80,.8);background:rgba(255,30,30,.28);color:#fff;font-size:11px;font-family:inherit;font-weight:bold;cursor:pointer;touch-action:none;-webkit-tap-highlight-color:transparent}
 #fire:active{background:rgba(255,80,80,.55);transform:scale(.92)}
 #fire.rl{border-color:rgba(255,170,0,.8);background:rgba(255,140,0,.22)}
 #rld{position:fixed;bottom:calc(var(--sb) + 148px);right:26px;z-index:31;width:58px;height:58px;border-radius:50%;border:2px solid rgba(255,190,0,.75);background:rgba(255,160,0,.2);color:#fff;font-size:9px;font-family:inherit;font-weight:bold;touch-action:none;-webkit-tap-highlight-color:transparent}
 #rld:active{background:rgba(255,190,0,.5)}
+#scan{position:fixed;bottom:calc(var(--sb) + 216px);right:30px;z-index:31;width:50px;height:50px;border-radius:50%;border:2px solid rgba(0,255,136,.7);background:rgba(0,255,136,.15);color:#fff;font-size:8px;font-family:inherit;font-weight:bold;touch-action:none;display:flex;flex-direction:column;align-items:center;justify-content:center}
+#scan.on{background:rgba(0,255,136,.5);animation:pulse 1s infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(0,255,136,.4)}70%{box-shadow:0 0 0 15px rgba(0,255,136,0)}100%{box-shadow:0 0 0 0 rgba(0,255,136,0)}}
 #camsw{position:fixed;top:calc(var(--st) + 72px);right:10px;z-index:30;background:var(--bg);border:1px solid var(--bd);color:var(--g);font-family:inherit;font-size:9px;padding:5px 10px;border-radius:4px;display:none}
 #gps-bar{position:fixed;bottom:calc(var(--sb) + 8px);left:50%;transform:translateX(-50%);z-index:30;font-size:9px;padding:3px 10px;border-radius:4px;pointer-events:none;white-space:nowrap;background:rgba(0,0,0,.65);border:1px solid rgba(0,255,136,.25);color:rgba(0,255,136,.7)}
+#cov{position:fixed;bottom:calc(var(--sb) + 148px);left:10px;z-index:31;width:50px;height:50px;border-radius:50%;border:2px solid rgba(120,200,255,.7);background:rgba(60,140,255,.15);color:#fff;font-size:8px;font-family:inherit;font-weight:bold;touch-action:none}
+#cov.on{background:rgba(60,140,255,.55)}
 /* GUN MODEL */
 #gl{position:fixed;left:0;top:0;width:100%;height:100%;z-index:22;pointer-events:none}
-#cov{position:fixed;bottom:calc(var(--sb) + 216px);right:30px;z-index:31;width:50px;height:50px;border-radius:50%;border:2px solid rgba(120,200,255,.7);background:rgba(60,140,255,.15);color:#fff;font-size:8px;font-family:inherit;font-weight:bold;touch-action:none}
-#cov.on{background:rgba(60,140,255,.55)}
 /* DAMAGE FX */
 #flash{position:fixed;inset:0;z-index:40;pointer-events:none;background:radial-gradient(ellipse at center,rgba(255,0,0,.1),rgba(255,0,0,.75) 100%);opacity:0}
 #vig{position:fixed;inset:0;z-index:39;pointer-events:none;box-shadow:inset 0 0 90px 30px rgba(255,0,0,.55);opacity:0}
@@ -63,18 +66,23 @@ body.low #vig{animation:hb 1s infinite}
 .am{background:rgba(0,0,0,.8);border:1px solid var(--o);color:var(--o);font-size:10px;padding:4px 12px;border-radius:4px;animation:fa 2.4s forwards;white-space:nowrap}
 @keyframes fa{0%{opacity:0}12%{opacity:1}70%{opacity:1}100%{opacity:0}}
 .am.ka{border-color:var(--g);color:var(--g)}.am.ha{border-color:var(--r);color:var(--r)}
-/* AR MARKERS (persistent pool, moved via transform only) */
-.em,.alm{position:fixed;left:0;top:0;z-index:25;pointer-events:none;display:flex;flex-direction:column;align-items:center;gap:2px;will-change:transform}
+/* AR MARKERS */
+.em,.alm,.obj{position:fixed;left:0;top:0;z-index:25;pointer-events:none;display:flex;flex-direction:column;align-items:center;gap:2px;will-change:transform}
 .edia{width:16px;height:16px;border:2px solid var(--r);transform:rotate(45deg);background:rgba(255,50,50,.15)}
 .elbl{font-size:8px;color:var(--r);background:rgba(0,0,0,.7);padding:1px 4px;border-radius:2px;white-space:nowrap}
 .edst{font-size:7px;color:rgba(255,120,120,.85)}
 .hpb{width:34px;height:3px;background:rgba(255,255,255,.2)}.hpb i{display:block;height:100%;background:#ff4444;width:100%}
 .atri{width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-bottom:11px solid var(--b)}
 .albl{font-size:8px;color:var(--b);background:rgba(0,0,0,.7);padding:1px 4px;border-radius:2px}
+.obj{font-size:24px;text-shadow:0 0 5px #000;transform:translate(-50%,-50%)}
+.obj.loot{color:var(--y);animation:bob 1.5s infinite}
+.obj.wall{color:#888;font-size:32px}
+@keyframes bob{0%,100%{margin-top:0}50%{margin-top:-10px}}
+/* MAP */
 #bigmap{position:fixed;inset:0;z-index:90;background:rgba(0,8,16,.96);display:none;flex-direction:column;align-items:center;justify-content:center;gap:10px}
 #bigmap.open{display:flex}
-#bigmap canvas{width:min(88vw,360px);height:min(88vw,360px);border:1px solid var(--bd);border-radius:8px}
-.mc{color:var(--g);font-size:10px;letter-spacing:2px;padding:7px 18px;border:1px solid var(--bd);border-radius:4px}
+#bigmap canvas{width:min(88vw,360px);height:min(88vw,360px);border:1px solid var(--bd);border-radius:8px;box-shadow:0 0 20px rgba(0,255,136,.2)}
+.mc{color:var(--g);font-size:10px;letter-spacing:2px;padding:7px 18px;border:1px solid var(--bd);border-radius:4px;cursor:pointer}
 /* SCREENS */
 .screen{position:fixed;inset:0;z-index:100;background:rgba(0,0,0,.94);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:20px;overflow-y:auto;touch-action:pan-y}
 .screen.hidden{display:none}
@@ -133,21 +141,22 @@ select#camsel{background:rgba(0,20,10,.9);color:var(--g);border:1px solid var(--
   <div class="sr"><div class="si">❤️</div><div class="sb"><div class="sf sh" id="hpb" style="width:100%"></div></div><div class="sn" id="hpn">100</div></div>
   <div class="sr"><div class="si">🔫</div><div class="sb"><div class="sf sa" id="amob" style="width:100%"></div></div><div class="sn" id="amon">30/90</div></div>
 </div>
-<div id="mmap"><canvas id="mc" width="110" height="110"></canvas><div class="ml">[ MAP ]</div></div>
+<div id="mmap"><canvas id="mc" width="220" height="220"></canvas><div class="ml">[ TAP TO MAP ]</div></div>
 
 <canvas id="gl"></canvas>
 
 <button id="fire">FIRE</button>
 <button id="rld">RELOAD</button>
+<button id="scan">SCAN</button>
 <button id="cov">COVER</button>
 <button id="camsw">🔄 CAM</button>
 <div id="gps-bar">📍 GPS 待機中</div>
-<div id="bigmap"><div style="font-size:10px;letter-spacing:2px">SATELLITE MAP</div><canvas id="bmc" width="360" height="360"></canvas><div style="display:flex;gap:10px"><div class="mc" id="mz-in">＋ アップ</div><div class="mc" id="mz-out">－ ワイド</div></div><div class="mc" id="bmc-close">[ CLOSE ]</div></div>
+<div id="bigmap"><div style="font-size:12px;letter-spacing:2px;color:#fff">SATELLITE MAP</div><canvas id="bmc" width="720" height="720"></canvas><div style="display:flex;gap:10px"><div class="mc" id="mz-in">＋ ズームイン</div><div class="mc" id="mz-out">－ ズームアウト</div></div><div class="mc" id="bmc-close">[ CLOSE ]</div></div>
 <div id="alerts"></div>
 
 <!-- 1: MODE -->
 <div class="screen" id="s-mode">
-  <div class="logo">AR SHOOTER</div><div class="sub">GPS BATTLE</div>
+  <div class="logo">AR SHOOTER</div><div class="sub">ADVANCED GPS BATTLE</div>
   <div class="mode-row">
     <div class="mcard bot-sel" id="mc-bot" onclick="selectMode('bot')"><div class="mi">🤖</div><div class="mt">BOT MODE</div><div class="md">1人練習<br>AI対戦</div></div>
     <div class="mcard" id="mc-on" onclick="selectMode('online')"><div class="mi">🌐</div><div class="mt">ONLINE</div><div class="md">リアル対戦<br>GPSマルチ</div></div>
@@ -156,7 +165,7 @@ select#camsel{background:rgba(0,20,10,.9);color:var(--g);border:1px solid var(--
     <div class="bot-btns" data-k="botCount"><div class="bbot sel" data-v="1">1</div><div class="bbot" data-v="3">3</div><div class="bbot" data-v="5">5</div><div class="bbot" data-v="8">8</div></div>
   </div>
   <button class="sbtn bot-s" id="next-btn" onclick="goToSetup()">▶ 次へ（カメラ・GPS設定）</button>
-  <div class="note">スマホ背面カメラ / PCウェブカメラ 両対応<br>PC: ←→ 向き / W S 前後移動（GPSなし時） / Q E 傾き / C カバー / Space 発射 / R リロード</div>
+  <div class="note">スマホ背面カメラ / PCウェブカメラ 両対応<br>PC: 矢印キー 移動/向き / Space 発射 / R リロード / C カバー</div>
 </div>
 
 <!-- 2: PERMISSIONS -->
@@ -165,7 +174,7 @@ select#camsel{background:rgba(0,20,10,.9);color:var(--g);border:1px solid var(--
   <div class="perm wt" id="perm-cam"><div class="pi">📷</div><div class="pt"><div class="ptl">CAMERA</div><div class="pv" id="pcam-v">未確認</div></div><button class="pb" id="btn-cam" onclick="doCamPerm()">許可</button></div>
   <div class="cam-sel" id="cam-sel"><label>カメラを選択</label><select id="camsel"></select><button class="cam-apply" onclick="applyCam()">▶ このカメラを使う</button></div>
   <div class="perm wt" id="perm-gps"><div class="pi">📍</div><div class="pt"><div class="ptl">GPS / LOCATION</div><div class="pv" id="pgps-v">未確認</div></div><button class="pb" id="btn-gps" onclick="doGpsPerm()">許可</button></div>
-  <div id="gps-help">位置情報がブロックされています。<br>① アドレスバー左の設定アイコン（🔒）をタップ<br>② 「権限」→「位置情報」→「許可」に変更<br>③ 許可すると自動で再取得します（されない場合は再読み込み）<br>それまではIPアドレスの概算位置で動作します。</div>
+  <div id="gps-help">位置情報がブロックされています。<br>① アドレスバー左の設定アイコン（🔒）をタップ<br>② 「権限」→「位置情報」→「許可」に変更<br>③ 許可すると自動で再取得します。<br>※屋内ではGPSの誤差が大きくなります。</div>
   <button class="sbtn" id="start-btn" onclick="proceed()" disabled>⚔ ゲームスタート</button>
   <div class="note">GPS拒否 → IP位置（概算）で代替 / カメラ拒否 → 背景は黒で続行</div>
 </div>
@@ -204,8 +213,9 @@ select#camsel{background:rgba(0,20,10,.9);color:var(--g);border:1px solid var(--
 const $=id=>document.getElementById(id);
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const st={mode:'bot',botCount:1,maxP:4,time:5,health:100,ammo:30,maxAmmo:30,reserve:90,score:{red:0,blue:0},myTeam:'red',
-  myPos:{lat:35.6762,lon:139.6503},heading:0,hd:0,gpsReady:false,src:'DEMO',gameActive:false,timeLeft:300,kills:0,deaths:0,
-  reloading:false,dead:false,roomCode:null,players:[],yawV:0,pitV:0,spd:0,walkI:0,shk:0,pitch:0,roll:0,keyWalk:0,cover:false,phd:null,ppn:null,pp:null};
+  myPos:{lat:35.6762,lon:139.6503},targetPos:{lat:35.6762,lon:139.6503},heading:0,hd:0,gpsReady:false,src:'DEMO',gameActive:false,timeLeft:300,kills:0,deaths:0,
+  reloading:false,dead:false,roomCode:null,players:[],yawV:0,pitV:0,spd:0,walkI:0,shk:0,pitch:0,roll:0,keyWalk:0,cover:false,phd:null,ppn:null,pp:null,
+  trail:[], objects:[], acc:0};
 const net={peer:null,host:false,conns:{},hostConn:null,myId:null,name:'Player',joined:false};
 const BOT_NAMES=['Ghost','Viper','Hawk','Snake','Fox','Wolf','Eagle','Raven'];
 const BOT_TEAMS=['blue','blue','red','blue','red','blue','red','blue'];
@@ -221,7 +231,6 @@ function goToSetup(){
   try{DeviceOrientationEvent.requestPermission&&DeviceOrientationEvent.requestPermission();DeviceMotionEvent.requestPermission&&DeviceMotionEvent.requestPermission()}catch(e){}
   show('s-perm');$('start-btn').textContent=st.mode==='bot'?'⚔ ゲームスタート':'▶ 次へ（ルーム設定）';
   doCamPerm();doGpsPerm();
-  // 権限取得がうまくいかない場合のフォールバック（5秒後に強制有効化）
   setTimeout(() => {
     if ($('start-btn').disabled) {
       $('start-btn').disabled = false;
@@ -251,7 +260,7 @@ async function enumCams(){try{const d=await navigator.mediaDevices.enumerateDevi
   if(cams.length)$('cam-sel').style.display='flex'}catch(e){}}
 async function startCam(idx){
   if(curStream){curStream.getTracks().forEach(t=>t.stop());curStream=null}
-  try{const con=cams.length&&idx!==undefined?{video:{deviceId:{exact:cams[idx].deviceId},width:{ideal:1280},height:{ideal:720}}}:{video:{facingMode:'environment'}};
+  try{const con=cams.length&&idx!==undefined?{video:{deviceId:{exact:cams[idx].deviceId},width:{ideal:1920},height:{ideal:1080}}}:{video:{facingMode:'environment',width:{ideal:1920},height:{ideal:1080}}};
     const s=await navigator.mediaDevices.getUserMedia(con);curStream=s;$('cam').srcObject=s;
     setPerm('cam','ok',(s.getVideoTracks()[0]?.label||'カメラ').substring(0,28));curCam=idx??0}
   catch(e){setPerm('cam','ng','拒否 — 背景は黒で続行')}
@@ -262,12 +271,28 @@ async function doCamPerm(){setPerm('cam','wt','確認中...');
 async function applyCam(){await startCam(parseInt($('camsel').value,10)||0)}
 async function switchCam(){if(cams.length<=1)return;curCam=(curCam+1)%cams.length;await startCam(curCam)}
 
-/* ── GPS (getCurrentPosition → watch, auto re-request, IP fallback) ── */
+/* ── GPS (Smoothing & Filtering) ── */
 let gpsWatcher=null,ipTimer=null,permWatch=false;
-function setPos(lat,lon,acc,src){const first=!st.gpsReady||src!==st.src;st.raw={lat,lon};st.acc=acc||0;if(first){st.myPos.lat=lat;st.myPos.lon=lon}st.src=src;st.gpsReady=true;
+function setPos(lat,lon,acc,src){
+  st.acc = acc||0;
+  // 異常なジャンプ（精度が悪い、または移動距離が大きすぎる）をフィルタリング
+  if (st.gpsReady && src === 'GPS') {
+    const dist = mDist(st.targetPos.lat, st.targetPos.lon, lat, lon);
+    if (acc > 30 || (dist > 50 && acc > 15)) {
+      // 精度が悪いデータは無視（前回の位置を維持）
+      return;
+    }
+  }
+  st.targetPos = {lat, lon};
+  if (!st.gpsReady) {
+    st.myPos = {lat, lon};
+    st.gpsReady = true;
+  }
+  st.src = src;
   $('gps-la').textContent=lat.toFixed(5)+'°';$('gps-lo').textContent=lon.toFixed(5)+'°';
   const t=src+(acc?' ±'+Math.round(acc)+'m':'');$('gps-acc').textContent=t;$('gps-bar').textContent='📍 '+t;
-  $('gps-bar').style.color=src==='GPS'?'rgba(0,255,136,.9)':'rgba(255,220,0,.8)'}
+  $('gps-bar').style.color=src==='GPS'?'rgba(0,255,136,.9)':'rgba(255,220,0,.8)';
+}
 async function ipLoc(){
   const apis=[()=>fetch('https://ipwho.is/').then(r=>r.json()).then(d=>({lat:+d.latitude,lon:+d.longitude,city:d.city})),
     ()=>fetch('https://ipapi.co/json/').then(r=>r.json()).then(d=>({lat:+d.latitude,lon:+d.longitude,city:d.city}))];
@@ -292,7 +317,7 @@ function doGpsPerm(){
   const why={1:'拒否',2:'位置不明',3:'タイムアウト'};
   const ft=setTimeout(()=>{if(st.src!=='GPS')startIP('応答なし')},9000);
   navigator.geolocation.getCurrentPosition(p=>{clearTimeout(ft);gpsOk(p)},e=>{clearTimeout(ft);startIP(why[e.code]||'エラー',e.code===1)},
-    {enableHighAccuracy:false,timeout:8000,maximumAge:60000});
+    {enableHighAccuracy:true,timeout:8000,maximumAge:0});
   gpsWatcher=navigator.geolocation.watchPosition(gpsOk,e=>{if(e.code===1)startIP('拒否',true)},{enableHighAccuracy:true,timeout:30000,maximumAge:1000});
   if(!permWatch&&navigator.permissions){permWatch=true;
     navigator.permissions.query({name:'geolocation'}).then(r=>{r.onchange=()=>{if(r.state==='granted')doGpsPerm()}}).catch(()=>{})}
@@ -308,7 +333,38 @@ function setPerm(w,s,t){$('perm-'+w).className='perm '+s;$(w==='cam'?'pcam-v':'p
 function checkReady(){const c=!$('perm-cam').classList.contains('wt'),g=!$('perm-gps').classList.contains('wt');
   if(c&&g)$('start-btn').disabled=false}
 
-/* ── bots ── */
+/* ── Scanning & Objects ── */
+function scanArea() {
+  if(!st.gameActive) return;
+  $('scan').classList.add('on');
+  showAlert('📡 周囲をスキャン中...');
+  
+  // 周囲にランダムなオブジェクト（ルートや壁）を生成
+  const types = ['loot', 'loot', 'wall'];
+  for(let i=0; i<4; i++) {
+    const ang = Math.random() * Math.PI * 2;
+    const dist = 10 + Math.random() * 30; // 10m ~ 40m
+    const lat = st.myPos.lat + (Math.cos(ang) * dist) / 111000;
+    const lon = st.myPos.lon + (Math.sin(ang) * dist) / (111000 * Math.cos(st.myPos.lat * Math.PI/180));
+    
+    // 既存オブジェクトと被らないように
+    const type = types[Math.floor(Math.random() * types.length)];
+    st.objects.push({
+      id: 'obj_' + Date.now() + '_' + i,
+      type: type,
+      lat: lat,
+      lon: lon,
+      active: true
+    });
+  }
+  
+  setTimeout(() => {
+    $('scan').classList.remove('on');
+    showAlert('✅ スキャン完了');
+  }, 1500);
+}
+
+/* ── bots & world ── */
 function spawnBots(){st.players=[];for(let i=0;i<st.botCount;i++){const a=i/st.botCount*Math.PI*2,d=.0003+Math.random()*.0004;
   st.players.push({id:'bot'+i,name:BOT_NAMES[i%8],team:BOT_TEAMS[i%8],lat:st.myPos.lat+Math.sin(a)*d,lon:st.myPos.lon+Math.cos(a)*d,hp:100,isBot:true,angle:Math.random()*6.28,atk:3+Math.random()*4})}}
 function tickBots(){if(!st.gameActive)return;st.players.forEach(p=>{if(!p.isBot||p.hp<=0)return;
@@ -316,7 +372,7 @@ function tickBots(){if(!st.gameActive)return;st.players.forEach(p=>{if(!p.isBot|
   if(p.atk<=0&&p.team!==st.myTeam&&!st.dead){const d=mDist(st.myPos.lat,st.myPos.lon,p.lat,p.lon);
     if(d<200)takeDamage(Math.max(3,Math.round((8+Math.random()*8)*Math.max(.4,1-d/250))),p);p.atk=3+Math.random()*5}})}
 
-/* ── online (PeerJS: host = relay, guests connect by room code) ── */
+/* ── online ── */
 function loadPeer(){return new Promise((ok,ng)=>{if(window.Peer)return ok();const s=document.createElement('script');
   s.src='https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js';s.onload=ok;s.onerror=ng;document.head.appendChild(s)})}
 async function netGo(){
@@ -324,12 +380,12 @@ async function netGo(){
   const host=($('net-go').dataset.t||'host')==='host';
   if(!host){const c=$('jcode').value.trim().toUpperCase();if(c.length!==6){setNet('6文字のコードを入力してください');return}st.roomCode=c}
   setNet('接続中...');$('net-go').disabled=true;
-  try{await loadPeer()}catch(e){setNet('通信ライブラリを読み込めません。ネットワークを確認してください');$('net-go').disabled=false;return}
+  try{await loadPeer()}catch(e){setNet('通信ライブラリを読み込めません');$('net-go').disabled=false;return}
   host?hostRoom():joinRoom();
 }
 function hostRoom(){
   const p=net.peer=new Peer('arsh-'+st.roomCode);net.host=true;net.myId='host';st.myTeam='red';st.players=[];
-  p.on('error',e=>{setNet(e.type==='unavailable-id'?'コードが使用中です。戻ってやり直してください':'エラー: '+e.type);$('net-go').disabled=false});
+  p.on('error',e=>{setNet(e.type==='unavailable-id'?'コードが使用中です':'エラー: '+e.type);$('net-go').disabled=false});
   p.on('open',()=>openLobby());
   p.on('connection',c=>{
     c.on('data',m=>hostRecv(c,m));
@@ -406,7 +462,7 @@ function endGame(){st.gameActive=false;ints.forEach(clearInterval);$('timer').te
   const w=st.score.red>st.score.blue?'🔴 RED WIN':st.score.blue>st.score.red?'🔵 BLUE WIN':'⚖ DRAW';
   showAlert(w+'  KD:'+st.kills+'/'+st.deaths)}
 
-/* ── 3D weapon (three.js): poses + spring physics + sensor-driven sway ── */
+/* ── 3D weapon (three.js) ── */
 const G={aimUntil:0,reloadStart:-9e9,aim(){G.aimUntil=performance.now()+1400},kick(){},hit(){},update(){}};
 function initGun(){
   const T=THREE,r=new T.WebGLRenderer({canvas:$('gl'),alpha:true,antialias:true}),TH=Math.tan(25*Math.PI/180);
@@ -429,20 +485,17 @@ function initGun(){
   const cv=document.createElement('canvas');cv.width=cv.height=64;const g=cv.getContext('2d'),gr=g.createRadialGradient(32,32,0,32,32,32);
   gr.addColorStop(0,'#fff');gr.addColorStop(.3,'#ffd36a');gr.addColorStop(.6,'rgba(255,120,0,.5)');gr.addColorStop(1,'rgba(255,100,0,0)');g.fillStyle=gr;g.fillRect(0,0,64,64);
   const fs=new T.Sprite(new T.SpriteMaterial({map:new T.CanvasTexture(cv),blending:T.AdditiveBlending,transparent:true,depthWrite:false,opacity:0}));fs.position.set(0,0,-.86);fs.scale.setScalar(.3);gun.add(fs);
-  // auto-size: keep the whole low-ready gun inside ~85% of the visible width at any aspect ratio
   const LEN=1.1,fit=()=>gun.scale.setScalar(Math.max(.15,Math.min(1,.85*TH*cam.aspect/(.75*LEN))));
   const rs=()=>{r.setSize(innerWidth,innerHeight,false);cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix();fit()};rs();addEventListener('resize',rs);addEventListener('orientationchange',()=>setTimeout(rs,300));
   r.outputEncoding=T.sRGBEncoding;r.toneMapping=T.ACESFilmicToneMapping;r.toneMappingExposure=1.05;
   {const pm=new T.PMREMGenerator(r),es=new T.Scene();es.add(new T.Mesh(new T.SphereGeometry(5,16,8),new T.MeshBasicMaterial({color:0x7d8a99,side:T.BackSide})));
    const lamp=(x,y,z,c,i)=>{const m=new T.Mesh(new T.PlaneGeometry(3,3),new T.MeshBasicMaterial({color:new T.Color(c).multiplyScalar(i),side:T.DoubleSide}));m.position.set(x,y,z);m.lookAt(0,0,0);es.add(m)};
    lamp(0,4,0,0xffffff,5);lamp(3,1,2,0xffeedd,2.5);lamp(-3,0,-2,0x99bbff,1.5);sc.environment=pm.fromScene(es).texture}
-  // AK-47 (ak-47.glb, muzzle = -Z). Normalised to LEN, pivot ≈ grip; falls back to the primitive model if the file is missing
   if(T.GLTFLoader)new T.GLTFLoader().load('ak-47.glb',gl=>{
     const m=gl.scene,b=new T.Box3().setFromObject(m),sz=b.getSize(new T.Vector3()),ct=b.getCenter(new T.Vector3()),k=LEN/Math.max(sz.x,sz.y,sz.z);
     m.scale.setScalar(k);m.position.set(-ct.x*k,-(b.min.y+.81*sz.y)*k,-(b.min.z+.674*sz.z)*k);
     m.traverse(o=>{if(o.isMesh)o.frustumCulled=false});gun.add(m);fb.visible=false;fs.position.set(0,0,-.8);showAlert('🔫 AK-47 読込完了')
   },null,e=>{console.warn(e);showAlert('⚠ ak-47.glb が見つかりません（簡易モデル）')});
-  // poses in screen-normalised units (nx/ny: -1..1 of half width/height), z in metres, rotations in rad
   const PO={aim:{nx:0,ny:-.66,z:-.42,rx:.03,ry:0,rz:0},low:{nx:.38,ny:-.5,z:-.5,rx:-.1,ry:.85,rz:.12},
     cover:{nx:.12,ny:-.42,z:-.4,rx:1.05,ry:.12,rz:.08},reload:{nx:.25,ny:-.82,z:-.45,rx:-.45,ry:.55,rz:.65},dead:{nx:.5,ny:-1.7,z:-.5,rx:-.5,ry:.9,rz:.3}};
   const P=Object.assign({},PO.low),V={nx:0,ny:0,z:0,rx:0,ry:0,rz:0},AX=['nx','ny','z','rx','ry','rz'];let ph=0,fv=0;
@@ -454,10 +507,10 @@ function initGun(){
     if(w>.03)ph+=dt*(6+w*5);const pc=Math.cos(ph),p2=Math.sin(ph*2),br=Math.sin(t*1.6),sk=Math.min(3,st.shk);
     const n1=Math.sin(t*17)+Math.sin(t*9.3+2),n2=Math.sin(t*13+1)+Math.sin(t*6.1);
     tg.ny+=p2*.03*w*a+br*.006-st.pitV*.0025;
-    tg.nx+=pc*.035*w*a-st.yawV*.0012+st.roll*(pn==='cover'?.012:.006)+n1*.004*sk;     // turn lag / lean / hand shake
+    tg.nx+=pc*.035*w*a-st.yawV*.0012+st.roll*(pn==='cover'?.012:.006)+n1*.004*sk;
     tg.rx+=p2*.04*w*a+br*.006-st.pitV*.004-run*.15;
     tg.ry+=st.yawV*.0035+pc*.05*w*a+n2*.01*sk+run*.1;
-    tg.rz+=-st.roll*.0085+pc*.05*w*a;                                                  // roll: gun hangs toward the low side
+    tg.rz+=-st.roll*.0085+pc*.05*w*a;
     const kk=pn==='aim'?160:75,dd=pn==='aim'?15:11;
     AX.forEach(i=>{V[i]+=(tg[i]-P[i])*kk*dt;V[i]*=Math.exp(-dd*dt);P[i]+=V[i]*dt});
     gun.position.set(P.nx*(-P.z)*TH*cam.aspect,P.ny*(-P.z)*TH,P.z);gun.rotation.set(P.rx,P.ry,P.rz);
@@ -466,15 +519,27 @@ function initGun(){
     r.render(sc,cam)};
 }
 
-/* ── render loop (single rAF; DOM markers are reused, not rebuilt) ── */
+/* ── render loop ── */
 const mk={};
 function frame(t){
   if(!st.gameActive)return;
   const dt=Math.min(.1,(t-last)/1000);last=t;
+  
+  // GPS Smoothing (Lerp)
+  const dm = mDist(st.myPos.lat, st.myPos.lon, st.targetPos.lat, st.targetPos.lon);
+  if (dm > 0.1) {
+    const k = Math.min(1, dt * 3); // スムーズに追従
+    st.myPos.lat += (st.targetPos.lat - st.myPos.lat) * k;
+    st.myPos.lon += (st.targetPos.lon - st.myPos.lon) * k;
+  }
+  
+  // Trail
+  if (st.trail.length === 0 || mDist(st.trail[st.trail.length-1].lat, st.trail[st.trail.length-1].lon, st.myPos.lat, st.myPos.lon) > 2) {
+    st.trail.push({lat: st.myPos.lat, lon: st.myPos.lon});
+    if (st.trail.length > 50) st.trail.shift();
+  }
+
   st.hd=(st.hd+(((st.heading-st.hd+540)%360)-180)*Math.min(1,dt*10)+360)%360;
-  if(st.raw){const dm=mDist(st.myPos.lat,st.myPos.lon,st.raw.lat,st.raw.lon);
-    if(dm>40){st.myPos.lat=st.raw.lat;st.myPos.lon=st.raw.lon}
-    else if(dm>1.5){const k=Math.min(1,dt*2.5);st.myPos.lat+=(st.raw.lat-st.myPos.lat)*k;st.myPos.lon+=(st.raw.lon-st.myPos.lon)*k}}
   st.players.forEach(p=>{
     if(p.isBot){if(p.hp>0){const s=1.6/111000*dt;p.lat+=Math.sin(p.angle)*s;p.lon+=Math.cos(p.angle)*s}}
     else if(p.tlat!=null && p.tlon!=null){const k=Math.min(1,dt*8);p.lat+=(p.tlat-p.lat)*k;p.lon+=(p.tlon-p.lon)*k}});
@@ -487,13 +552,15 @@ function frame(t){
   G.update(d2,t/1000);
   renderMarkers();requestAnimationFrame(frame);
 }
+
 function renderMarkers(){
   const W=innerWidth,H=innerHeight,fov=70,seen={};
+  
+  // Render Players
   st.players.forEach(p=>{
     p.sx=null;if(p.hp<=0)return;
     const dist=mDist(st.myPos.lat,st.myPos.lon,p.lat,p.lon);if(dist>400)return;
     const rel=((bearing(st.myPos.lat,st.myPos.lon,p.lat,p.lon)-st.hd+540)%360)-180;
-    // 視野角で弾かず、画面端にクランプする
     let sx = W/2 + (rel/fov) * W * 0.56;
     sx = Math.max(30, Math.min(W-30, sx));
     p.sx = sx;
@@ -507,46 +574,123 @@ function renderMarkers(){
     e.el.style.transform='translate3d('+p.sx+'px,'+p.sy+'px,0) translate(-50%,-50%)';
     if(e.h)e.h.style.width=p.hp+'%';if(e.d)e.d.textContent=Math.round(dist)+'m';
   });
+
+  // Render Objects (Loot/Walls)
+  st.objects.forEach(o => {
+    if(!o.active) return;
+    const dist = mDist(st.myPos.lat, st.myPos.lon, o.lat, o.lon);
+    if(dist > 100) return;
+    const rel = ((bearing(st.myPos.lat, st.myPos.lon, o.lat, o.lon) - st.hd + 540) % 360) - 180;
+    let sx = W/2 + (rel/fov) * W * 0.56;
+    sx = Math.max(30, Math.min(W-30, sx));
+    const sy = H*.28 + Math.min(1, dist/100) * H*.4; // オブジェクトは手前に表示
+    
+    seen[o.id] = 1;
+    let e = mk[o.id];
+    if(!e) {
+      const el = document.createElement('div');
+      el.className = 'obj ' + o.type;
+      el.textContent = o.type === 'loot' ? '📦' : '🧱';
+      document.body.appendChild(el);
+      e = mk[o.id] = {el};
+    }
+    e.el.style.transform = `translate3d(${sx}px, ${sy}px, 0) translate(-50%, -50%) scale(${Math.max(0.5, 1 - dist/150)})`;
+  });
+
   for(const id in mk)if(!seen[id]){mk[id].el.remove();delete mk[id]}
 }
 
 /* ── map ── */
-const STUD=1;             // 1 stud = 1 m（Roblox換算の0.28mにしたい場合は 0.28）
-const MAP_MAX=50*STUD;    // 地図の最大描写範囲（半径）
+const STUD=1;
+const MAP_MAX=100*STUD;
 const tiles=new Map();
 function tileImg(z,tx,ty){const n=2**z;tx=((tx%n)+n)%n;if(ty<0||ty>=n)return null;const key=z+'/'+tx+'/'+ty;let t=tiles.get(key);
   if(!t){t=new Image();t.onerror=()=>setTimeout(()=>tiles.delete(key),8000);
     t.src='https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/'+z+'/'+ty+'/'+tx;tiles.set(key,t);
     if(tiles.size>260)tiles.delete(tiles.keys().next().value)}
   return t.complete&&t.naturalWidth?t:null}
-// heading-up satellite map centred on the current position. R = radius in metres (≤ MAP_MAX)
+
 function drawMap(cv,R){
   R=Math.min(R,MAP_MAX);
   const x=cv.getContext('2d'),W=cv.width,c=W/2,k=c/R,mini=cv.id==='mc',u=W/(mini?110:360),rad=Math.PI/180;
   x.clearRect(0,0,W,W);x.save();if(mini){x.beginPath();x.arc(c,c,c,0,6.283);x.clip()}
+  
+  // High contrast background
   x.fillStyle='#0d1319';x.fillRect(0,0,W,W);
+  
   const lat=st.myPos.lat,lon=st.myPos.lon,mEq=156543.03392*Math.cos(lat*rad);
-  const z=Math.max(8,Math.min(18,Math.ceil(Math.log2(mEq/(R/c))))),n=2**z,sn=Math.sin(lat*rad);
+  const z=Math.max(10,Math.min(19,Math.ceil(Math.log2(mEq/(R/c))))),n=2**z,sn=Math.sin(lat*rad);
   const wx=(lon+180)/360*n*256,wy=(.5-Math.log((1+sn)/(1-sn))/(4*Math.PI))*n*256,s=k*mEq/n,e=c*1.45/s;
+  
   x.save();x.translate(c,c);x.rotate(-st.hd*rad);x.scale(s,s);
-  for(let ty=Math.floor((wy-e)/256);ty<=Math.floor((wy+e)/256);ty++)for(let tx=Math.floor((wx-e)/256);tx<=Math.floor((wx+e)/256);tx++){const im=tileImg(z,tx,ty);if(im)x.drawImage(im,tx*256-wx,ty*256-wy,256.7,256.7)}
+  for(let ty=Math.floor((wy-e)/256);ty<=Math.floor((wy+e)/256);ty++)for(let tx=Math.floor((wx-e)/256);tx<=Math.floor((wx+e)/256);tx++){
+    const im=tileImg(z,tx,ty);
+    if(im) x.drawImage(im,tx*256-wx,ty*256-wy,256.7,256.7);
+  }
   x.restore();
-  x.fillStyle='rgba(255,255,255,.13)';x.beginPath();x.moveTo(c,c);x.arc(c,c,c,-Math.PI/2-35*rad,-Math.PI/2+35*rad);x.closePath();x.fill();
-  x.strokeStyle='rgba(255,255,255,.4)';x.lineWidth=u;[.5,1].forEach(f=>{x.beginPath();x.arc(c,c,c*f*.98,0,6.283);x.stroke()});
-  x.font='bold '+8*u+'px Courier New';x.textAlign='center';x.lineJoin='round';
-  const lab=(t,X,Y,col)=>{x.lineWidth=2.5*u;x.strokeStyle='rgba(0,0,0,.75)';x.strokeText(t,X,Y);x.fillStyle=col;x.fillText(t,X,Y)};
-  lab(Math.round(R/2/STUD)+'st',c,c-c*.49-2*u,'#fff');
-  const na=-st.hd*rad;lab('N',c+Math.sin(na)*(c-9*u),c-Math.cos(na)*(c-9*u)+3*u,'#ff7755');
-  if(st.src==='GPS'&&st.acc>0){x.beginPath();x.arc(c,c,Math.min(st.acc*k,c),0,6.283);x.fillStyle='rgba(60,140,255,.18)';x.fill();x.strokeStyle='rgba(60,140,255,.55)';x.lineWidth=u;x.stroke()}
+  
+  // Trail
+  if(st.trail.length > 1) {
+    x.beginPath();
+    x.moveTo(c, c);
+    st.trail.forEach(p => {
+      const dN=(p.lat-st.myPos.lat)*111000, dE=(p.lon-st.myPos.lon)*111000*Math.cos(st.myPos.lat*rad);
+      const dist=Math.hypot(dE,dN), f=Math.atan2(dE,dN)-st.hd*rad;
+      const X=c + dist*Math.sin(f)*k, Y=c - dist*Math.cos(f)*k;
+      x.lineTo(X, Y);
+    });
+    x.strokeStyle = 'rgba(0, 255, 136, 0.4)';
+    x.lineWidth = 3*u;
+    x.stroke();
+  }
+
+  // Accuracy Circle
+  if(st.src==='GPS'&&st.acc>0){
+    x.beginPath();x.arc(c,c,Math.min(st.acc*k,c),0,6.283);
+    x.fillStyle='rgba(60,140,255,.18)';x.fill();
+    x.strokeStyle='rgba(60,140,255,.55)';x.lineWidth=u;x.stroke();
+  }
+
+  // Grid
+  x.strokeStyle='rgba(255,255,255,.1)';x.lineWidth=1;
+  const step = 10 * k; // 10m grid
+  for(let i=-c; i<c; i+=step) {
+    x.beginPath();x.moveTo(c+i, 0);x.lineTo(c+i, W);x.stroke();
+    x.beginPath();x.moveTo(0, c+i);x.lineTo(W, c+i);x.stroke();
+  }
+
+  // Players
   st.players.forEach(p=>{if(p.hp<=0)return;
     const dN=(p.lat-st.myPos.lat)*111000,dE=(p.lon-st.myPos.lon)*111000*Math.cos(st.myPos.lat*rad),dist=Math.hypot(dE,dN),f=Math.atan2(dE,dN)-st.hd*rad;
     let px=dist*Math.sin(f),py=-dist*Math.cos(f),edge=dist>R*.94;if(edge){const q=R*.94/dist;px*=q;py*=q}
     const X=c+px*k,Y=c+py*k,col=p.team==='red'?'#ff4444':'#33aaff';
-    x.globalAlpha=edge?.6:1;x.beginPath();x.arc(X,Y,(mini?3.8:5.5)*u,0,6.283);x.fillStyle=col;x.fill();x.strokeStyle='#fff';x.lineWidth=1.2*u;x.stroke();
-    if(!mini)lab(p.name+' '+Math.round(dist/STUD)+'st',X,Y-9*u,col);x.globalAlpha=1});
-  x.translate(c,c);x.beginPath();x.moveTo(0,-14*u);x.lineTo(5*u,-6*u);x.lineTo(-5*u,-6*u);x.closePath();x.fillStyle=st.myTeam==='red'?'#ff7755':'#55bbff';x.fill();
-  x.beginPath();x.arc(0,0,6*u,0,6.283);x.fillStyle='#2f7dff';x.fill();x.strokeStyle='#fff';x.lineWidth=2*u;x.stroke();x.translate(-c,-c);
-  x.font=(mini?5:7)*u+'px Arial';lab('© Esri',c,W-(mini?9:6)*u,'#ddd');if(!mini){x.textAlign='left';lab('RANGE '+Math.round(R/STUD)+' studs',8*u,16*u,'#fff')}
+    x.globalAlpha=edge?.6:1;x.beginPath();x.arc(X,Y,(mini?4:6)*u,0,6.283);x.fillStyle=col;x.fill();x.strokeStyle='#fff';x.lineWidth=1.5*u;x.stroke();
+    x.globalAlpha=1;
+  });
+
+  // Objects
+  st.objects.forEach(o => {
+    if(!o.active) return;
+    const dN=(o.lat-st.myPos.lat)*111000,dE=(o.lon-st.myPos.lon)*111000*Math.cos(st.myPos.lat*rad),dist=Math.hypot(dE,dN),f=Math.atan2(dE,dN)-st.hd*rad;
+    if(dist > R) return;
+    const X=c+dist*Math.sin(f)*k, Y=c-dist*Math.cos(f)*k;
+    x.font = `${(mini?8:12)*u}px Arial`;
+    x.textAlign = 'center';
+    x.textBaseline = 'middle';
+    x.fillText(o.type === 'loot' ? '📦' : '🧱', X, Y);
+  });
+
+  // Player Avatar
+  x.translate(c,c);
+  x.beginPath();x.moveTo(0,-16*u);x.lineTo(6*u,-6*u);x.lineTo(-6*u,-6*u);x.closePath();x.fillStyle='#00ff88';x.fill();
+  x.beginPath();x.arc(0,0,7*u,0,6.283);x.fillStyle='#004422';x.fill();x.strokeStyle='#00ff88';x.lineWidth=2.5*u;x.stroke();
+  x.translate(-c,-c);
+
+  // UI
+  x.font='bold '+8*u+'px Courier New';x.textAlign='center';
+  x.fillStyle='#fff';
+  x.fillText(Math.round(R/STUD)+'m', c, c-c*.49-2*u);
+  
   x.restore();
 }
 function mDist(a,b,c,d){const R=6371000,p=Math.PI/180,dL=(c-a)*p,dO=(d-b)*p;
@@ -554,22 +698,72 @@ function mDist(a,b,c,d){const R=6371000,p=Math.PI/180,dL=(c-a)*p,dO=(d-b)*p;
 function bearing(a,b,c,d){const p=Math.PI/180,dO=(d-b)*p,y=Math.sin(dO)*Math.cos(c*p),x=Math.cos(a*p)*Math.sin(c*p)-Math.sin(a*p)*Math.cos(c*p)*Math.cos(dO);
   return(Math.atan2(y,x)/p+360)%360}
 
-/* ── combat ── */
-// damage scale: closer = stronger (100% ≤0m → min 35% at 325m+), head ×2
+/* ── combat (Precise Hitboxes) ── */
 const dmgScale=(dist,head)=>Math.round(34*Math.max(.35,1-dist/500)*(head?2:1));
 let lastShot=0;
+
+function isBlockedByWall(targetLat, targetLon) {
+  // 障害物（WALL）が間にあるかチェック（簡易レイキャスト）
+  const dist = mDist(st.myPos.lat, st.myPos.lon, targetLat, targetLon);
+  const brg = bearing(st.myPos.lat, st.myPos.lon, targetLat, targetLon);
+  
+  for (const o of st.objects) {
+    if (o.type !== 'wall' || !o.active) continue;
+    const oDist = mDist(st.myPos.lat, st.myPos.lon, o.lat, o.lon);
+    if (oDist > dist) continue; // ターゲットより遠い壁は無視
+    
+    const oBrg = bearing(st.myPos.lat, st.myPos.lon, o.lat, o.lon);
+    let brgDiff = Math.abs(brg - oBrg);
+    if (brgDiff > 180) brgDiff = 360 - brgDiff;
+    
+    // 壁の幅（仮に5度とする）
+    if (brgDiff < 5) {
+      return true; // 壁に当たった
+    }
+  }
+  return false;
+}
+
 function recoil(){
   G.aim();G.kick();
   $('xh').animate([{transform:'translate(-50%,-50%) scale(1.4)'},{transform:'translate(-50%,-50%) scale(1)'}],{duration:150});
 }
+
 function fire(){
   if(!st.gameActive||st.dead||st.reloading)return;
   const now=performance.now();if(now-lastShot<140)return;
   if(st.ammo<=0){reload();return}
   lastShot=now;st.ammo--;updateAmmoUI();recoil();
-  const cx=innerWidth/2,cy=innerHeight/2;let best=null,bd=62;
-  st.players.forEach(p=>{if(p.team===st.myTeam||p.sx==null||p.hp<=0)return;const d=Math.hypot(p.sx-cx,p.sy-cy);if(d<bd){bd=d;best=p}});
-  if(best){const head=bd<20,dmg=dmgScale(best.dist,head);
+  
+  const cx=innerWidth/2,cy=innerHeight/2;
+  let best=null,bd=80; // 当たり判定の許容範囲を少し広げる
+  
+  st.players.forEach(p=>{
+    if(p.team===st.myTeam||p.sx==null||p.hp<=0)return;
+    
+    // 画面中央からの距離
+    const d = Math.hypot(p.sx-cx, p.sy-cy);
+    
+    // 距離に応じた当たり判定の厳しさ（遠いほどシビアに）
+    const tolerance = Math.max(30, 80 - (p.dist / 10)); 
+    
+    if(d < tolerance){
+      // 壁による遮蔽チェック
+      if (isBlockedByWall(p.lat, p.lon)) {
+        pop('BLOCKED', p.sx, p.sy, '');
+        return;
+      }
+      
+      // 最も中心に近い敵を優先
+      if (!best || d < bd) {
+        bd = d;
+        best = p;
+      }
+    }
+  });
+  
+  if(best){
+    const head=bd<20,dmg=dmgScale(best.dist,head);
     best.hp=Math.max(0,best.hp-dmg);best.lock=now+400;
     pop((head?'HEAD ':'')+'-'+dmg,best.sx,best.sy-24,head?'hd':'');
     $('xh').classList.add('hit');setTimeout(()=>$('xh').classList.remove('hit'),110);
@@ -579,10 +773,12 @@ function fire(){
   }
   if(st.ammo<=0)setTimeout(reload,300);
 }
+
 function reload(){if(st.reloading||st.reserve<=0||st.ammo>=st.maxAmmo){if(!st.reserve)showAlert('弾切れ！');return}
   st.reloading=true;$('fire').classList.add('rl');showAlert('リロード中...');
   G.reloadStart=performance.now();
   setTimeout(()=>{const g=Math.min(st.maxAmmo-st.ammo,st.reserve);st.ammo+=g;st.reserve-=g;st.reloading=false;$('fire').classList.remove('rl');updateAmmoUI()},1800)}
+
 function takeDamage(d,src){
   if(st.dead||!st.gameActive)return;
   st.health=Math.max(0,st.health-d);updateHealthUI();
@@ -606,11 +802,12 @@ function updateHealthUI(){$('hpb').style.width=st.health+'%';$('hpn').textConten
 function updateScore(){$('sc-r').textContent='RED '+st.score.red;$('sc-b').textContent='BLUE '+st.score.blue}
 function showAlert(m,c){const e=document.createElement('div');e.className='am '+(c||'');e.textContent=m;$('alerts').appendChild(e);setTimeout(()=>e.remove(),2500)}
 
-/* ── events (hold FIRE = auto fire) ── */
+/* ── events ── */
 let af=null;const fb=$('fire');
 fb.addEventListener('pointerdown',e=>{e.preventDefault();fire();clearInterval(af);af=setInterval(fire,140)});
 ['pointerup','pointercancel','pointerleave'].forEach(n=>fb.addEventListener(n,()=>clearInterval(af)));
 $('camsw').addEventListener('click',switchCam);
+$('scan').addEventListener('pointerdown',e=>{e.preventDefault();scanArea()});
 $('cov').addEventListener('pointerdown',e=>{e.preventDefault();st.cover=!st.cover;$('cov').classList.toggle('on',st.cover);showAlert(st.cover?'🧱 COVER: 銃を構え上げ':'COVER解除')});
 $('rld').addEventListener('pointerdown',e=>{e.preventDefault();reload()});
 $('mmap').addEventListener('click',()=>{$('bigmap').classList.add('open');drawMap($('bmc'),st.bigR)});
@@ -619,13 +816,13 @@ document.addEventListener('keydown',e=>{if(!st.gameActive)return;
   if(e.code==='KeyR')reload();if(e.code==='KeyC')$('cov').dispatchEvent(new Event('pointerdown'));if(e.code==='KeyQ')st.roll=-25;if(e.code==='KeyE')st.roll=25;if(e.code==='KeyW'||e.code==='KeyS')st.keyWalk=performance.now();if(e.code==='Space'||e.code==='Enter'){e.preventDefault();fire()}
   if(e.code==='ArrowLeft'||e.code==='KeyA')st.heading=(st.heading+355)%360;
   if(e.code==='ArrowRight'||e.code==='KeyD')st.heading=(st.heading+5)%360;
-  if((e.code==='KeyW'||e.code==='KeyS')&&st.src!=='GPS'){st.raw=st.raw||{lat:st.myPos.lat,lon:st.myPos.lon};
-    const q=(e.code==='KeyW'?1:-1)*3/111000,a=st.heading*Math.PI/180;st.raw.lat+=Math.cos(a)*q;st.raw.lon+=Math.sin(a)*q/Math.cos(st.myPos.lat*Math.PI/180)}});
-const dpr=Math.min(2,devicePixelRatio||1);$('mc').width=$('mc').height=110*dpr;$('bmc').width=$('bmc').height=360*dpr;
+  if((e.code==='KeyW'||e.code==='KeyS')&&st.src!=='GPS'){st.targetPos.lat=st.targetPos.lat||st.myPos.lat; st.targetPos.lon=st.targetPos.lon||st.myPos.lon;
+    const q=(e.code==='KeyW'?1:-1)*3/111000,a=st.heading*Math.PI/180;st.targetPos.lat+=Math.cos(a)*q;st.targetPos.lon+=Math.sin(a)*q/Math.cos(st.myPos.lat*Math.PI/180)}});
+const dpr=Math.min(2,devicePixelRatio||1);$('mc').width=$('mc').height=220*dpr;$('bmc').width=$('bmc').height=720*dpr;
 document.addEventListener('keyup',e=>{if(e.code==='KeyQ'||e.code==='KeyE')st.roll=0});
 (()=>{const x=document.createElement('script');x.src='https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js';x.onload=()=>{const y=document.createElement('script');y.src='https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js';y.onload=y.onerror=()=>{try{initGun()}catch(e){console.error(e)}};document.head.appendChild(y)};document.head.appendChild(x)})();
-const ZS=[10,15,25,35,50];let zi=2;st.bigR=ZS[zi]*STUD;
-const zoom=d=>e=>{e.stopPropagation();zi=Math.max(0,Math.min(4,zi+d));st.bigR=ZS[zi]*STUD;drawMap($('bmc'),st.bigR)};
+const ZS=[20,50,100,200];let zi=2;st.bigR=ZS[zi]*STUD;
+const zoom=d=>e=>{e.stopPropagation();zi=Math.max(0,Math.min(3,zi+d));st.bigR=ZS[zi]*STUD;drawMap($('bmc'),st.bigR)};
 $('mz-in').addEventListener('click',zoom(-1));$('mz-out').addEventListener('click',zoom(1));
 selectMode('bot');tab('host');drawMap($('mc'),MAP_MAX);
 </script>
