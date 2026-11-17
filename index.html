@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>AR Shooter - AI Vision</title>
+<title>AR Shooter - Territory Battle</title>
 <style>
 :root{--g:#00ff88;--r:#ff3333;--b:#33aaff;--o:#ff8800;--y:#ffdd00;--bg:rgba(0,0,0,.72);--bd:rgba(0,255,136,.32);--st:env(safe-area-inset-top,0px);--sb:env(safe-area-inset-bottom,0px)}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -48,9 +48,6 @@ html,body{height:100%;overflow:hidden;background:#000;color:var(--g);font-family
 #fire.rl{border-color:rgba(255,170,0,.8);background:rgba(255,140,0,.22)}
 #rld{position:fixed;bottom:calc(var(--sb) + 148px);right:26px;z-index:31;width:58px;height:58px;border-radius:50%;border:2px solid rgba(255,190,0,.75);background:rgba(255,160,0,.2);color:#fff;font-size:9px;font-family:inherit;font-weight:bold;touch-action:none;-webkit-tap-highlight-color:transparent}
 #rld:active{background:rgba(255,190,0,.5)}
-#scan{position:fixed;bottom:calc(var(--sb) + 216px);right:30px;z-index:31;width:50px;height:50px;border-radius:50%;border:2px solid rgba(0,255,136,.7);background:rgba(0,255,136,.15);color:#fff;font-size:8px;font-family:inherit;font-weight:bold;touch-action:none;display:flex;flex-direction:column;align-items:center;justify-content:center}
-#scan.on{background:rgba(0,255,136,.5);animation:pulse 1s infinite}
-@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(0,255,136,.4)}70%{box-shadow:0 0 0 15px rgba(0,255,136,0)}100%{box-shadow:0 0 0 0 rgba(0,255,136,0)}}
 #camsw{position:fixed;top:calc(var(--st) + 72px);right:10px;z-index:30;background:var(--bg);border:1px solid var(--bd);color:var(--g);font-family:inherit;font-size:9px;padding:5px 10px;border-radius:4px;display:none}
 #gps-bar{position:fixed;bottom:calc(var(--sb) + 8px);left:50%;transform:translateX(-50%);z-index:30;font-size:9px;padding:3px 10px;border-radius:4px;pointer-events:none;white-space:nowrap;background:rgba(0,0,0,.65);border:1px solid rgba(0,255,136,.25);color:rgba(0,255,136,.7)}
 #cov{position:fixed;bottom:calc(var(--sb) + 148px);left:10px;z-index:31;width:50px;height:50px;border-radius:50%;border:2px solid rgba(120,200,255,.7);background:rgba(60,140,255,.15);color:#fff;font-size:8px;font-family:inherit;font-weight:bold;touch-action:none}
@@ -72,22 +69,27 @@ body.low #vig{animation:hb 1s infinite}
 @keyframes fa{0%{opacity:0}12%{opacity:1}70%{opacity:1}100%{opacity:0}}
 .am.ka{border-color:var(--g);color:var(--g)}.am.ha{border-color:var(--r);color:var(--r)}
 /* AR MARKERS */
-.em,.alm,.obj{position:fixed;left:0;top:0;z-index:25;pointer-events:none;display:flex;flex-direction:column;align-items:center;gap:2px;will-change:transform}
+.em,.alm{position:fixed;left:0;top:0;z-index:25;pointer-events:none;display:flex;flex-direction:column;align-items:center;gap:2px;will-change:transform}
 .edia{width:16px;height:16px;border:2px solid var(--r);transform:rotate(45deg);background:rgba(255,50,50,.15)}
 .elbl{font-size:8px;color:var(--r);background:rgba(0,0,0,.7);padding:1px 4px;border-radius:2px;white-space:nowrap}
 .edst{font-size:7px;color:rgba(255,120,120,.85)}
 .hpb{width:34px;height:3px;background:rgba(255,255,255,.2)}.hpb i{display:block;height:100%;background:#ff4444;width:100%}
 .atri{width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-bottom:11px solid var(--b)}
 .albl{font-size:8px;color:var(--b);background:rgba(0,0,0,.7);padding:1px 4px;border-radius:2px}
-.obj{font-size:24px;text-shadow:0 0 5px #000;transform:translate(-50%,-50%)}
-.obj.loot{color:var(--y);animation:bob 1.5s infinite}
-.obj.wall{color:#888;font-size:32px}
-@keyframes bob{0%,100%{margin-top:0}50%{margin-top:-10px}}
 /* MAP */
 #bigmap{position:fixed;inset:0;z-index:90;background:rgba(0,8,16,.96);display:none;flex-direction:column;align-items:center;justify-content:center;gap:10px}
 #bigmap.open{display:flex}
-#bigmap canvas{width:min(88vw,360px);height:min(88vw,360px);border:1px solid var(--bd);border-radius:8px;box-shadow:0 0 20px rgba(0,255,136,.2)}
-.mc{color:var(--g);font-size:10px;letter-spacing:2px;padding:7px 18px;border:1px solid var(--bd);border-radius:4px;cursor:pointer}
+#bigmap .canvas-wrap{position:relative;width:min(88vw,360px);height:min(88vw,360px);}
+#bigmap canvas{width:100%;height:100%;border:1px solid var(--bd);border-radius:8px;box-shadow:0 0 20px rgba(0,255,136,.2);touch-action:none;}
+.map-controls{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;max-width:360px;}
+.mc{color:var(--g);font-size:10px;letter-spacing:1px;padding:7px 14px;border:1px solid var(--bd);border-radius:4px;cursor:pointer;background:rgba(0,0,0,.5);text-align:center;transition:all .2s;}
+.mc:active{background:rgba(0,255,136,.2)}
+.mc.active{background:rgba(0,255,136,.4);color:#000;font-weight:bold;}
+.map-slider-wrap{display:flex;align-items:center;gap:10px;width:100%;max-width:360px;padding:10px;background:rgba(0,0,0,.5);border:1px solid var(--bd);border-radius:4px;}
+.map-slider-wrap input[type=range]{flex:1;accent-color:var(--g);}
+.map-slider-wrap span{font-size:10px;color:var(--g);min-width:40px;text-align:right;}
+.map-help{font-size:9px;color:var(--y);text-align:center;height:12px;}
+
 /* SCREENS */
 .screen{position:fixed;inset:0;z-index:100;background:rgba(0,0,0,.94);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:20px;overflow-y:auto;touch-action:pan-y}
 .screen.hidden{display:none}
@@ -158,16 +160,36 @@ select#camsel{background:rgba(0,20,10,.9);color:var(--g);border:1px solid var(--
 
 <button id="fire">FIRE</button>
 <button id="rld">RELOAD</button>
-<button id="scan">SCAN</button>
 <button id="cov">COVER</button>
 <button id="camsw">🔄 CAM</button>
 <div id="gps-bar">📍 GPS 待機中</div>
-<div id="bigmap"><div style="font-size:12px;letter-spacing:2px;color:#fff">SATELLITE MAP</div><canvas id="bmc" width="720" height="720"></canvas><div style="display:flex;gap:10px"><div class="mc" id="mz-in">＋ ズームイン</div><div class="mc" id="mz-out">－ ズームアウト</div></div><div class="mc" id="bmc-close">[ CLOSE ]</div></div>
+
+<div id="bigmap">
+  <div style="font-size:12px;letter-spacing:2px;color:#fff">SATELLITE MAP</div>
+  <div class="canvas-wrap">
+    <canvas id="bmc" width="720" height="720"></canvas>
+  </div>
+  <div class="map-slider-wrap" id="radius-ctrl" style="display:none;">
+    <span style="font-size:10px;color:#fff">半径</span>
+    <input type="range" id="t-radius" min="10" max="100" value="30">
+    <span id="t-radius-val">30m</span>
+  </div>
+  <div class="map-help" id="map-help"></div>
+  <div class="map-controls">
+    <div class="mc" id="btn-calibrate">📍 位置補正</div>
+    <div class="mc" id="btn-territory">🚩 陣地設定</div>
+    <div class="mc" id="btn-save-territory" style="display:none;">✅ 保存</div>
+    <div class="mc" id="mz-in">＋ ズーム</div>
+    <div class="mc" id="mz-out">－ ズーム</div>
+    <div class="mc" id="bmc-close">[ CLOSE ]</div>
+  </div>
+</div>
+
 <div id="alerts"></div>
 
 <!-- 1: MODE -->
 <div class="screen" id="s-mode">
-  <div class="logo">AR SHOOTER</div><div class="sub">AI VISION TACTICAL</div>
+  <div class="logo">AR SHOOTER</div><div class="sub">TERRITORY BATTLE</div>
   <div class="mode-row">
     <div class="mcard bot-sel" id="mc-bot" onclick="selectMode('bot')"><div class="mi">🤖</div><div class="mt">BOT MODE</div><div class="md">1人練習<br>AI対戦</div></div>
     <div class="mcard" id="mc-on" onclick="selectMode('online')"><div class="mi">🌐</div><div class="mt">ONLINE</div><div class="md">リアル対戦<br>GPSマルチ</div></div>
@@ -230,13 +252,21 @@ const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',
 const st={mode:'bot',botCount:1,maxP:4,time:5,health:100,ammo:30,maxAmmo:30,reserve:90,score:{red:0,blue:0},myTeam:'red',
   myPos:{lat:35.6762,lon:139.6503},targetPos:{lat:35.6762,lon:139.6503},heading:0,hd:0,gpsReady:false,src:'DEMO',gameActive:false,timeLeft:300,kills:0,deaths:0,
   reloading:false,dead:false,roomCode:null,players:[],yawV:0,pitV:0,spd:0,walkI:0,shk:0,pitch:0,roll:0,keyWalk:0,cover:false,phd:null,ppn:null,pp:null,
-  trail:[], objects:[], acc:0};
+  trail:[], gpsOffset:{lat:0, lon:0}, myTerritory:null, oppTerritory:null, acc:0};
 const net={peer:null,host:false,conns:{},hostConn:null,myId:null,name:'Player',joined:false};
 const BOT_NAMES=['Ghost','Viper','Hawk','Snake','Fox','Wolf','Eagle','Raven'];
 const BOT_TEAMS=['blue','blue','red','blue','red','blue','red','blue'];
 const ints=[];
-
 let cocoModel = null;
+let lastAIPreds = [];
+
+// マップ操作用
+let mapMode = 'view'; // 'view', 'calibrate', 'territory'
+let isDragging = false;
+let dragStart = {x:0, y:0};
+let tempTerritory = {lat:0, lon:0, radius:30};
+let currentZoomIdx = 2;
+const ZOOM_LEVELS = [20, 50, 100, 200];
 
 /* ── flow ── */
 document.addEventListener('click',e=>{const b=e.target.closest('.bbot');if(!b)return;const g=b.parentNode;
@@ -294,10 +324,15 @@ function setPos(lat,lon,acc,src){
   st.acc = acc||0;
   if (st.gpsReady && src === 'GPS') {
     const dist = mDist(st.targetPos.lat, st.targetPos.lon, lat, lon);
-    if (acc > 30 || (dist > 50 && acc > 15)) return;
+    if (acc > 50 || (dist > 100 && acc > 20)) return; // 誤差許容範囲を拡大
   }
-  st.targetPos = {lat, lon};
-  if (!st.gpsReady) { st.myPos = {lat, lon}; st.gpsReady = true; }
+  
+  // 手動補正を適用
+  const finalLat = lat + st.gpsOffset.lat;
+  const finalLon = lon + st.gpsOffset.lon;
+
+  st.targetPos = {lat: finalLat, lon: finalLon};
+  if (!st.gpsReady) { st.myPos = {lat: finalLat, lon: finalLon}; st.gpsReady = true; }
   st.src = src;
   $('gps-la').textContent=lat.toFixed(5)+'°';$('gps-lo').textContent=lon.toFixed(5)+'°';
   const t=src+(acc?' ±'+Math.round(acc)+'m':'');$('gps-acc').textContent=t;$('gps-bar').textContent='📍 '+t;
@@ -367,110 +402,259 @@ function startAIDetection() {
     if (!st.gameActive) { requestAnimationFrame(detect); return; }
     
     if (video.readyState === 4) {
-      // Canvasサイズを画面に合わせる
       if (canvas.width !== innerWidth || canvas.height !== innerHeight) {
         canvas.width = innerWidth;
         canvas.height = innerHeight;
       }
       
-      // 推論実行
       const predictions = await cocoModel.detect(video);
+      lastAIPreds = [];
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       
-      // object-fit: cover の座標変換
-      const vw = video.videoWidth;
-      const vh = video.videoHeight;
-      const cw = canvas.width;
-      const ch = canvas.height;
-      const vr = vw / vh;
-      const cr = cw / ch;
-      
+      const vw = video.videoWidth, vh = video.videoHeight, cw = canvas.width, ch = canvas.height;
+      const vr = vw / vh, cr = cw / ch;
       let sx = 1, sy = 1, ox = 0, oy = 0;
-      if (cr > vr) {
-        // 左右がトリミングされる（映像が横長）
-        sx = vw / cw;
-        sy = sx;
-        oy = (vh - ch * sy) / 2;
-      } else {
-        // 上下がトリミングされる（映像が縦長）
-        sy = vh / ch;
-        sx = sy;
-        ox = (vw - cw * sx) / 2;
-      }
+      if (cr > vr) { sx = vw / cw; sy = sx; oy = (vh - ch * sy) / 2; } 
+      else { sy = vh / ch; sx = sy; ox = (vw - cw * sx) / 2; }
       
       let listHTML = '';
+      let hasEnemyTarget = false;
       
       predictions.forEach(pred => {
-        // 座標マッピング
-        const x = (pred.bbox[0] - ox) / sx;
-        const y = (pred.bbox[1] - oy) / sy;
-        const w = pred.bbox[2] / sx;
-        const h = pred.bbox[3] / sy;
-        
-        // 画面外のものはスキップ
+        const x = (pred.bbox[0] - ox) / sx, y = (pred.bbox[1] - oy) / sy;
+        const w = pred.bbox[2] / sx, h = pred.bbox[3] / sy;
         if (x + w < 0 || x > cw || y + h < 0 || y > ch) return;
         
-        // 描画設定
+        let isEnemyPerson = false;
+        if (pred.class === 'person') {
+           st.players.forEach(p => {
+              if (p.team !== st.myTeam && p.hp > 0) {
+                  const dist = mDist(st.myPos.lat, st.myPos.lon, p.lat, p.lon);
+                  if (dist < 100) isEnemyPerson = true;
+              }
+           });
+        }
+        
         const isPerson = pred.class === 'person';
-        const color = isPerson ? '#ff3333' : '#00ff88';
+        let color = '#00ff88';
+        if (isPerson) color = isEnemyPerson ? '#ff3333' : '#ffdd00';
         
         ctx.strokeStyle = color;
-        ctx.lineWidth = 2;
-        ctx.strokeRect(x, y, w, h);
+        ctx.lineWidth = isEnemyPerson ? 3 : 2;
         
-        // ラベル背景
-        ctx.fillStyle = isPerson ? 'rgba(255, 50, 50, 0.7)' : 'rgba(0, 255, 136, 0.7)';
-        const label = `${pred.class.toUpperCase()} ${Math.round(pred.score * 100)}%`;
+        if (isEnemyPerson) {
+            ctx.strokeRect(x, y, w, h);
+            ctx.beginPath();
+            ctx.moveTo(x + w/2, y); ctx.lineTo(x + w/2, y - 15);
+            ctx.moveTo(x + w/2, y + h); ctx.lineTo(x + w/2, y + h + 15);
+            ctx.moveTo(x, y + h/2); ctx.lineTo(x - 15, y + h/2);
+            ctx.moveTo(x + w, y + h/2); ctx.lineTo(x + w + 15, y + h/2);
+            ctx.stroke();
+            hasEnemyTarget = true;
+            lastAIPreds.push({ x, y, w, h, isEnemy: true });
+        } else {
+            ctx.strokeRect(x, y, w, h);
+            if (isPerson) lastAIPreds.push({ x, y, w, h, isEnemy: false });
+        }
+        
+        ctx.fillStyle = isEnemyPerson ? 'rgba(255, 50, 50, 0.7)' : (isPerson ? 'rgba(255, 221, 0, 0.7)' : 'rgba(0, 255, 136, 0.7)');
+        const label = isEnemyPerson ? `TARGET LOCKED` : `${pred.class.toUpperCase()} ${Math.round(pred.score * 100)}%`;
         ctx.font = 'bold 12px Courier New';
         const textWidth = ctx.measureText(label).width;
         ctx.fillRect(x, y - 18, textWidth + 8, 18);
         
-        // ラベルテキスト
         ctx.fillStyle = '#fff';
         ctx.fillText(label, x + 4, y - 5);
         
-        // リスト作成
         listHTML += `<div><span style="color:${color}">■</span> ${pred.class}: ${Math.round(pred.score * 100)}%</div>`;
       });
       
       $('ai-list').innerHTML = listHTML || '物体なし';
+      if (hasEnemyTarget) $('xh').classList.add('hit');
+      else $('xh').classList.remove('hit');
     }
-    
-    // 負荷軽減のため次の推論まで少し待つ
     setTimeout(detect, 250);
   };
-  
   detect();
 }
 
-/* ── Scanning ── */
-function scanArea() {
-  if(!st.gameActive) return;
-  $('scan').classList.add('on');
-  showAlert('📡 周囲をスキャン中...');
+/* ── Map Interaction (Calibration & Territory) ── */
+function openMap() {
+  $('bigmap').classList.add('open');
+  mapMode = 'view';
+  $('radius-ctrl').style.display = 'none';
+  $('btn-save-territory').style.display = 'none';
+  $('map-help').textContent = 'タップして操作を選択';
+  updateMapButtons();
+  drawMap($('bmc'), ZOOM_LEVELS[currentZoomIdx]);
+}
+
+function closeMap() {
+  $('bigmap').classList.remove('open');
+  mapMode = 'view';
+}
+
+function updateMapButtons() {
+  $('btn-calibrate').className = 'mc' + (mapMode === 'calibrate' ? ' active' : '');
+  $('btn-territory').className = 'mc' + (mapMode === 'territory' ? ' active' : '');
   
-  const types = ['loot', 'loot', 'wall'];
-  for(let i=0; i<4; i++) {
-    const ang = Math.random() * Math.PI * 2;
-    const dist = 10 + Math.random() * 30;
-    const lat = st.myPos.lat + (Math.cos(ang) * dist) / 111000;
-    const lon = st.myPos.lon + (Math.sin(ang) * dist) / (111000 * Math.cos(st.myPos.lat * Math.PI/180));
-    
-    const type = types[Math.floor(Math.random() * types.length)];
-    st.objects.push({
-      id: 'obj_' + Date.now() + '_' + i,
-      type: type,
-      lat: lat,
-      lon: lon,
-      active: true
-    });
+  if (mapMode === 'calibrate') {
+    $('map-help').textContent = '自分の青い点をドラッグして実際の位置へ移動';
+  } else if (mapMode === 'territory') {
+    $('map-help').textContent = 'マップをタップして陣地の中心を指定';
+    $('radius-ctrl').style.display = 'flex';
+    $('btn-save-territory').style.display = 'block';
+  } else {
+    $('map-help').textContent = 'マップをドラッグして移動';
+    $('radius-ctrl').style.display = 'none';
+    $('btn-save-territory').style.display = 'none';
+  }
+}
+
+function canvasToLatLon(cx, cy) {
+  const cv = $('bmc');
+  const W = cv.width;
+  const c = W / 2;
+  const R = ZOOM_LEVELS[currentZoomIdx];
+  const k = c / R;
+  const rad = Math.PI / 180;
+  
+  // 中心からの相対ピクセル
+  const dx = cx - c;
+  const dy = cy - c;
+  
+  // マップの回転を戻す（北が上になるように）
+  const hd = st.hd * rad;
+  const rx = dx * Math.cos(hd) - dy * Math.sin(hd);
+  const ry = dx * Math.sin(hd) + dy * Math.cos(hd);
+  
+  // メートルに変換
+  const mx = rx / k;
+  const my = ry / k; // 南方向
+  
+  const dLat = -my / 111000;
+  const dLon = mx / (111000 * Math.cos(st.myPos.lat * rad));
+  
+  return {
+    lat: st.myPos.lat + dLat,
+    lon: st.myPos.lon + dLon
+  };
+}
+
+function latLonToCanvas(lat, lon) {
+  const cv = $('bmc');
+  const W = cv.width;
+  const c = W / 2;
+  const R = ZOOM_LEVELS[currentZoomIdx];
+  const k = c / R;
+  const rad = Math.PI / 180;
+  
+  const dLat = lat - st.myPos.lat;
+  const dLon = lon - st.myPos.lon;
+  
+  const my = -dLat * 111000; // 南方向
+  const mx = dLon * 111000 * Math.cos(st.myPos.lat * rad);
+  
+  // 回転を適用
+  const hd = -st.hd * rad;
+  const X = c + (mx * Math.cos(hd) - my * Math.sin(hd)) * k;
+  const Y = c + (mx * Math.sin(hd) + my * Math.cos(hd)) * k;
+  
+  return { x: X, y: Y };
+}
+
+// Map Events
+const bmc = $('bmc');
+bmc.addEventListener('pointerdown', e => {
+  const rect = bmc.getBoundingClientRect();
+  const x = (e.clientX - rect.left) * (bmc.width / rect.width);
+  const y = (e.clientY - rect.top) * (bmc.height / rect.height);
+  
+  if (mapMode === 'calibrate') {
+    isDragging = true;
+  } else if (mapMode === 'territory') {
+    const pos = canvasToLatLon(x, y);
+    tempTerritory.lat = pos.lat;
+    tempTerritory.lon = pos.lon;
+    drawMap(bmc, ZOOM_LEVELS[currentZoomIdx]);
+  }
+});
+
+bmc.addEventListener('pointermove', e => {
+  if (!isDragging || mapMode !== 'calibrate') return;
+  const rect = bmc.getBoundingClientRect();
+  const x = (e.clientX - rect.left) * (bmc.width / rect.width);
+  const y = (e.clientY - rect.top) * (bmc.height / rect.height);
+  
+  const pos = canvasToLatLon(x, y);
+  st.gpsOffset.lat = pos.lat - st.targetPos.lat;
+  st.gpsOffset.lon = pos.lon - st.targetPos.lon;
+  
+  // 即時反映
+  st.myPos.lat = pos.lat;
+  st.myPos.lon = pos.lon;
+  
+  drawMap(bmc, ZOOM_LEVELS[currentZoomIdx]);
+});
+
+bmc.addEventListener('pointerup', () => {
+  isDragging = false;
+});
+
+$('t-radius').addEventListener('input', e => {
+  tempTerritory.radius = parseInt(e.target.value);
+  $('t-radius-val').textContent = tempTerritory.radius + 'm';
+  drawMap(bmc, ZOOM_LEVELS[currentZoomIdx]);
+});
+
+$('btn-calibrate').addEventListener('click', () => {
+  mapMode = 'calibrate';
+  updateMapButtons();
+});
+
+$('btn-territory').addEventListener('click', () => {
+  mapMode = 'territory';
+  tempTerritory.lat = st.myPos.lat;
+  tempTerritory.lon = st.myPos.lon;
+  tempTerritory.radius = 30;
+  $('t-radius').value = 30;
+  $('t-radius-val').textContent = '30m';
+  updateMapButtons();
+  drawMap(bmc, ZOOM_LEVELS[currentZoomIdx]);
+});
+
+$('btn-save-territory').addEventListener('click', () => {
+  st.myTerritory = {
+    lat: tempTerritory.lat,
+    lon: tempTerritory.lon,
+    radius: tempTerritory.radius,
+    team: st.myTeam
+  };
+  
+  showAlert('🚩 陣地を設定しました');
+  
+  if (st.mode === 'online') {
+    if (net.host) {
+      Object.values(net.conns).forEach(c => c.send({t: 'territory', data: st.myTerritory}));
+    } else if (net.hostConn) {
+      net.hostConn.send({t: 'territory', data: st.myTerritory, id: net.myId});
+    }
   }
   
-  setTimeout(() => {
-    $('scan').classList.remove('on');
-    showAlert('✅ スキャン完了');
-  }, 1500);
-}
+  mapMode = 'view';
+  updateMapButtons();
+  drawMap(bmc, ZOOM_LEVELS[currentZoomIdx]);
+});
+
+$('mz-in').addEventListener('click', () => {
+  currentZoomIdx = Math.max(0, currentZoomIdx - 1);
+  drawMap(bmc, ZOOM_LEVELS[currentZoomIdx]);
+});
+
+$('mz-out').addEventListener('click', () => {
+  currentZoomIdx = Math.min(ZOOM_LEVELS.length - 1, currentZoomIdx + 1);
+  drawMap(bmc, ZOOM_LEVELS[currentZoomIdx]);
+});
 
 /* ── bots ── */
 function spawnBots(){st.players=[];for(let i=0;i<st.botCount;i++){const a=i/st.botCount*Math.PI*2,d=.0003+Math.random()*.0004;
@@ -510,6 +694,7 @@ function hostRecv(c,m){const now=performance.now();let p=st.players.find(x=>x.id
   else if(m.t==='pos'){p.tlat=m.la;p.tlon=m.lo;if(!p.lock||now>p.lock)p.hp=m.hp}
   else if(m.t==='hit')hostHit(m,c.peer);
   else if(m.t==='kill')scoreKill(m.by);
+  else if(m.t==='territory'){st.oppTerritory = m.data; showAlert('相手の陣地を確認', 'ka');}
 }
 function hostHit(m,from){if(m.to==='host')takeDamage(m.d,{lat:m.fl,lon:m.fo,id:from});
   else net.conns[m.to]&&net.conns[m.to].send({t:'dmg',d:m.d,fl:m.fl,fo:m.fo,from})}
@@ -529,6 +714,7 @@ function clientRecv(m){const now=performance.now();
   else if(m.t==='lobby'){st.maxP=m.max;lobbyShow(m.l)}
   else if(m.t==='start'){st.time=m.time;beginOnline()}
   else if(m.t==='dmg')takeDamage(m.d,{lat:m.fl,lon:m.fo,id:m.from});
+  else if(m.t==='territory'){st.oppTerritory = m.data; showAlert('相手の陣地を確認', 'ka');}
   else if(m.t==='s'){const ids={};
     m.p.forEach(q=>{if(q.id===net.myId)return;ids[q.id]=1;let p=st.players.find(x=>x.id===q.id);
       if(!p){p={id:q.id,lat:q.la,lon:q.lo,hp:100,tlat:q.la,tlon:q.lo};st.players.push(p)}
@@ -564,7 +750,11 @@ function runGame(){
   ints.push(setInterval(()=>{if(!st.gameActive)return;st.timeLeft--;
     $('timer').textContent=String(Math.floor(st.timeLeft/60)).padStart(2,'0')+':'+String(Math.max(0,st.timeLeft)%60).padStart(2,'0');
     if(st.timeLeft<=30)$('timer').style.color='#ff4444';if(st.timeLeft<=0)endGame()},1000));
-  ints.push(setInterval(()=>{drawMap($('mc'),MAP_MAX);if($('bigmap').classList.contains('open'))drawMap($('bmc'),st.bigR);$('pcnt').textContent=(st.players.length+1)+'/'+(st.mode==='bot'?st.botCount+1:st.maxP)},250));
+  ints.push(setInterval(()=>{
+    drawMap($('mc'), 50);
+    if($('bigmap').classList.contains('open')) drawMap($('bmc'), ZOOM_LEVELS[currentZoomIdx]);
+    $('pcnt').textContent=(st.players.length+1)+'/'+(st.mode==='bot'?st.botCount+1:st.maxP);
+  },250));
   last=performance.now();requestAnimationFrame(frame);
   showAlert('⚔ START — TEAM '+st.myTeam.toUpperCase());
 }
@@ -668,7 +858,16 @@ function renderMarkers(){
   
   st.players.forEach(p=>{
     p.sx=null;if(p.hp<=0)return;
-    const dist=mDist(st.myPos.lat,st.myPos.lon,p.lat,p.lon);if(dist>400)return;
+    const dist=mDist(st.myPos.lat,st.myPos.lon,p.lat,p.lon);
+    if(dist>400)return;
+    
+    if (dist < 100 && lastAIPreds.some(pr => pr.isEnemy)) {
+        p.sx = W/2; p.sy = H/2; p.dist = dist; seen[p.id] = 1;
+        let e = mk[p.id];
+        if(e) e.el.style.display = 'none';
+        return;
+    }
+
     const rel=((bearing(st.myPos.lat,st.myPos.lon,p.lat,p.lon)-st.hd+540)%360)-180;
     let sx = W/2 + (rel/fov) * W * 0.56;
     sx = Math.max(30, Math.min(W-30, sx));
@@ -680,35 +879,15 @@ function renderMarkers(){
       el.innerHTML=en?'<div class="edia"></div><div class="elbl"></div><div class="hpb"><i></i></div><div class="edst"></div>':'<div class="atri"></div><div class="albl"></div>';
       document.body.appendChild(el);e=mk[p.id]={el,l:el.querySelector('.elbl,.albl'),h:el.querySelector('i'),d:el.querySelector('.edst')};
       e.l.textContent=(p.isBot?'🤖':'')+(p.name||'Enemy')}
+    e.el.style.display = 'flex';
     e.el.style.transform='translate3d('+p.sx+'px,'+p.sy+'px,0) translate(-50%,-50%)';
     if(e.h)e.h.style.width=p.hp+'%';if(e.d)e.d.textContent=Math.round(dist)+'m';
-  });
-
-  st.objects.forEach(o => {
-    if(!o.active) return;
-    const dist = mDist(st.myPos.lat, st.myPos.lon, o.lat, o.lon);
-    if(dist > 100) return;
-    const rel = ((bearing(st.myPos.lat, st.myPos.lon, o.lat, o.lon) - st.hd + 540) % 360) - 180;
-    let sx = W/2 + (rel/fov) * W * 0.56;
-    sx = Math.max(30, Math.min(W-30, sx));
-    const sy = H*.28 + Math.min(1, dist/100) * H*.4;
-    
-    seen[o.id] = 1;
-    let e = mk[o.id];
-    if(!e) {
-      const el = document.createElement('div');
-      el.className = 'obj ' + o.type;
-      el.textContent = o.type === 'loot' ? '📦' : '🧱';
-      document.body.appendChild(el);
-      e = mk[o.id] = {el};
-    }
-    e.el.style.transform = `translate3d(${sx}px, ${sy}px, 0) translate(-50%, -50%) scale(${Math.max(0.5, 1 - dist/150)})`;
   });
 
   for(const id in mk)if(!seen[id]){mk[id].el.remove();delete mk[id]}
 }
 
-/* ── map ── */
+/* ── map drawing ── */
 const STUD=1;
 const MAP_MAX=100*STUD;
 const tiles=new Map();
@@ -736,6 +915,7 @@ function drawMap(cv,R){
   }
   x.restore();
   
+  // Trail
   if(st.trail.length > 1) {
     x.beginPath();
     x.moveTo(c, c);
@@ -749,6 +929,34 @@ function drawMap(cv,R){
     x.lineWidth = 3*u;
     x.stroke();
   }
+
+  // Saved Territories
+  const drawTerritory = (t, isTemp) => {
+    if (!t) return;
+    const dN=(t.lat-st.myPos.lat)*111000,dE=(t.lon-st.myPos.lon)*111000*Math.cos(st.myPos.lat*rad),dist=Math.hypot(dE,dN),f=Math.atan2(dE,dN)-st.hd*rad;
+    const X=c + dist*Math.sin(f)*k, Y=c - dist*Math.cos(f)*k;
+    const col = isTemp ? 'rgba(255, 255, 255, 0.4)' : (t.team === 'red' ? 'rgba(255, 50, 50, 0.2)' : 'rgba(50, 170, 255, 0.2)');
+    const strokeCol = isTemp ? '#fff' : (t.team === 'red' ? 'rgba(255, 50, 50, 0.8)' : 'rgba(50, 170, 255, 0.8)');
+    x.beginPath();
+    x.arc(X, Y, t.radius * k, 0, 6.283);
+    x.fillStyle = col;
+    x.fill();
+    x.strokeStyle = strokeCol;
+    x.lineWidth = (isTemp ? 2 : 3) * u;
+    x.setLineDash(isTemp ? [5, 5] : []);
+    x.stroke();
+    x.setLineDash([]);
+    
+    // Center point
+    x.beginPath();
+    x.arc(X, Y, 3 * u, 0, 6.283);
+    x.fillStyle = strokeCol;
+    x.fill();
+  };
+
+  drawTerritory(st.myTerritory, false);
+  drawTerritory(st.oppTerritory, false);
+  if (mapMode === 'territory') drawTerritory(tempTerritory, true);
 
   if(st.src==='GPS'&&st.acc>0){
     x.beginPath();x.arc(c,c,Math.min(st.acc*k,c),0,6.283);
@@ -771,17 +979,6 @@ function drawMap(cv,R){
     x.globalAlpha=1;
   });
 
-  st.objects.forEach(o => {
-    if(!o.active) return;
-    const dN=(o.lat-st.myPos.lat)*111000,dE=(o.lon-st.myPos.lon)*111000*Math.cos(st.myPos.lat*rad),dist=Math.hypot(dE,dN),f=Math.atan2(dE,dN)-st.hd*rad;
-    if(dist > R) return;
-    const X=c+dist*Math.sin(f)*k, Y=c-dist*Math.cos(f)*k;
-    x.font = `${(mini?8:12)*u}px Arial`;
-    x.textAlign = 'center';
-    x.textBaseline = 'middle';
-    x.fillText(o.type === 'loot' ? '📦' : '🧱', X, Y);
-  });
-
   x.translate(c,c);
   x.beginPath();x.moveTo(0,-16*u);x.lineTo(6*u,-6*u);x.lineTo(-6*u,-6*u);x.closePath();x.fillStyle='#00ff88';x.fill();
   x.beginPath();x.arc(0,0,7*u,0,6.283);x.fillStyle='#004422';x.fill();x.strokeStyle='#00ff88';x.lineWidth=2.5*u;x.stroke();
@@ -802,24 +999,6 @@ function bearing(a,b,c,d){const p=Math.PI/180,dO=(d-b)*p,y=Math.sin(dO)*Math.cos
 const dmgScale=(dist,head)=>Math.round(34*Math.max(.35,1-dist/500)*(head?2:1));
 let lastShot=0;
 
-function isBlockedByWall(targetLat, targetLon) {
-  const dist = mDist(st.myPos.lat, st.myPos.lon, targetLat, targetLon);
-  const brg = bearing(st.myPos.lat, st.myPos.lon, targetLat, targetLon);
-  
-  for (const o of st.objects) {
-    if (o.type !== 'wall' || !o.active) continue;
-    const oDist = mDist(st.myPos.lat, st.myPos.lon, o.lat, o.lon);
-    if (oDist > dist) continue;
-    
-    const oBrg = bearing(st.myPos.lat, st.myPos.lon, o.lat, o.lon);
-    let brgDiff = Math.abs(brg - oBrg);
-    if (brgDiff > 180) brgDiff = 360 - brgDiff;
-    
-    if (brgDiff < 5) return true;
-  }
-  return false;
-}
-
 function recoil(){
   G.aim();G.kick();
   $('xh').animate([{transform:'translate(-50%,-50%) scale(1.4)'},{transform:'translate(-50%,-50%) scale(1)'}],{duration:150});
@@ -832,31 +1011,49 @@ function fire(){
   lastShot=now;st.ammo--;updateAmmoUI();recoil();
   
   const cx=innerWidth/2,cy=innerHeight/2;
-  let best=null,bd=80;
+  let hitEnemy = null;
   
-  st.players.forEach(p=>{
-    if(p.team===st.myTeam||p.sx==null||p.hp<=0)return;
-    const d = Math.hypot(p.sx-cx, p.sy-cy);
-    const tolerance = Math.max(30, 80 - (p.dist / 10)); 
-    
-    if(d < tolerance){
-      if (isBlockedByWall(p.lat, p.lon)) {
-        pop('BLOCKED', p.sx, p.sy, '');
-        return;
+  // AI判定（クロスヘアが人型の中にあるか）
+  for (let pred of lastAIPreds) {
+      if (!pred.isEnemy) continue;
+      if (cx >= pred.x && cx <= pred.x + pred.w && cy >= pred.y && cy <= pred.y + pred.h) {
+          st.players.forEach(p => {
+              if (p.team !== st.myTeam && p.hp > 0) {
+                  const dist = mDist(st.myPos.lat, st.myPos.lon, p.lat, p.lon);
+                  if (dist < 100) {
+                      if (!hitEnemy || dist < hitEnemy.dist) hitEnemy = { p, dist };
+                  }
+              }
+          });
+          break;
       }
-      if (!best || d < bd) { bd = d; best = p; }
-    }
-  });
+  }
   
-  if(best){
-    const head=bd<20,dmg=dmgScale(best.dist,head);
+  // ARマーカー判定
+  if (!hitEnemy) {
+      let best=null,bd=80;
+      st.players.forEach(p=>{
+        if(p.team===st.myTeam||p.sx==null||p.hp<=0)return;
+        const d = Math.hypot(p.sx-cx, p.sy-cy);
+        const tolerance = Math.max(30, 80 - (p.dist / 10)); 
+        if(d < tolerance){ if (!best || d < bd) { bd = d; best = p; } }
+      });
+      if (best) hitEnemy = { p: best, dist: best.dist };
+  }
+  
+  if(hitEnemy){
+    const best = hitEnemy.p;
+    const dmg=dmgScale(hitEnemy.dist,false);
     best.hp=Math.max(0,best.hp-dmg);best.lock=now+400;
-    pop((head?'HEAD ':'')+'-'+dmg,best.sx,best.sy-24,head?'hd':'');
+    pop('-'+dmg,innerWidth/2,innerHeight/2,'hd');
     $('xh').classList.add('hit');setTimeout(()=>$('xh').classList.remove('hit'),110);
     if(!best.isBot){const m={t:'hit',to:best.id,d:dmg,fl:st.myPos.lat,fo:st.myPos.lon};net.host?hostHit(m,'host'):net.hostConn.send(m)}
     if(best.hp<=0){st.kills++;showAlert('撃破！ KD:'+st.kills+'/'+st.deaths,'ka');
       if(best.isBot){st.score[st.myTeam]++;updateScore();const b=best;setTimeout(()=>{b.lat=st.myPos.lat+(Math.random()-.5)*.001;b.lon=st.myPos.lon+(Math.random()-.5)*.001;b.hp=100},4000)}}
+  } else {
+    pop('MISS', innerWidth/2, innerHeight/2, '');
   }
+  
   if(st.ammo<=0)setTimeout(reload,300);
 }
 
@@ -893,11 +1090,11 @@ let af=null;const fb=$('fire');
 fb.addEventListener('pointerdown',e=>{e.preventDefault();fire();clearInterval(af);af=setInterval(fire,140)});
 ['pointerup','pointercancel','pointerleave'].forEach(n=>fb.addEventListener(n,()=>clearInterval(af)));
 $('camsw').addEventListener('click',switchCam);
-$('scan').addEventListener('pointerdown',e=>{e.preventDefault();scanArea()});
 $('cov').addEventListener('pointerdown',e=>{e.preventDefault();st.cover=!st.cover;$('cov').classList.toggle('on',st.cover);showAlert(st.cover?'🧱 COVER: 銃を構え上げ':'COVER解除')});
 $('rld').addEventListener('pointerdown',e=>{e.preventDefault();reload()});
-$('mmap').addEventListener('click',()=>{$('bigmap').classList.add('open');drawMap($('bmc'),st.bigR)});
-$('bigmap').addEventListener('click',()=>$('bigmap').classList.remove('open'));
+$('mmap').addEventListener('click', openMap);
+$('bmc-close').addEventListener('click', closeMap);
+
 document.addEventListener('keydown',e=>{if(!st.gameActive)return;
   if(e.code==='KeyR')reload();if(e.code==='KeyC')$('cov').dispatchEvent(new Event('pointerdown'));if(e.code==='KeyQ')st.roll=-25;if(e.code==='KeyE')st.roll=25;if(e.code==='KeyW'||e.code==='KeyS')st.keyWalk=performance.now();if(e.code==='Space'||e.code==='Enter'){e.preventDefault();fire()}
   if(e.code==='ArrowLeft'||e.code==='KeyA')st.heading=(st.heading+355)%360;
@@ -910,10 +1107,7 @@ document.addEventListener('keyup',e=>{if(e.code==='KeyQ'||e.code==='KeyE')st.rol
 // Load Three.js & GLTFLoader
 (()=>{const x=document.createElement('script');x.src='https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js';x.onload=()=>{const y=document.createElement('script');y.src='https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js';y.onload=y.onerror=()=>{try{initGun()}catch(e){console.error(e)}};document.head.appendChild(y)};document.head.appendChild(x)})();
 
-const ZS=[20,50,100,200];let zi=2;st.bigR=ZS[zi]*STUD;
-const zoom=d=>e=>{e.stopPropagation();zi=Math.max(0,Math.min(3,zi+d));st.bigR=ZS[zi]*STUD;drawMap($('bmc'),st.bigR)};
-$('mz-in').addEventListener('click',zoom(-1));$('mz-out').addEventListener('click',zoom(1));
-selectMode('bot');tab('host');drawMap($('mc'),MAP_MAX);
+selectMode('bot');tab('host');drawMap($('mc'), 50);
 
 // Initialize AI after DOM load
 window.addEventListener('load', initAI);
