@@ -3,306 +3,194 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>AR Shooter Online</title>
+<title>AR Shooter - AI Vision</title>
 <style>
-:root{--g:#00ff88;--r:#ff3333;--b:#33aaff;--o:#ff8800;--y:#ffdd00;
-  --bg:rgba(0,0,0,.72);--bd:rgba(0,255,136,.32);
-  --st:env(safe-area-inset-top,0px);--sb:env(safe-area-inset-bottom,0px)}
+:root{--g:#00ff88;--r:#ff3333;--b:#33aaff;--o:#ff8800;--y:#ffdd00;--bg:rgba(0,0,0,.72);--bd:rgba(0,255,136,.32);--st:env(safe-area-inset-top,0px);--sb:env(safe-area-inset-bottom,0px)}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-html,body{height:100%;overflow:hidden;background:#000;color:var(--g);
-  font-family:'Courier New',monospace;user-select:none;-webkit-user-select:none;touch-action:none}
-
-/* ── カメラ ── */
+html,body{height:100%;overflow:hidden;background:#000;color:var(--g);font-family:'Courier New',monospace;user-select:none;-webkit-user-select:none;touch-action:none}
 #cam{position:fixed;inset:0;width:100%;height:100%;object-fit:cover;z-index:1;background:#0a0a0a}
+#ai-layer{position:fixed;inset:0;width:100%;height:100%;z-index:10;pointer-events:none}
 
-/* ── クロスヘア ── */
-#xh{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);
-  width:56px;height:56px;z-index:20;pointer-events:none}
-.xr{position:absolute;inset:0;border:2px solid rgba(255,60,60,.7);border-radius:50%;
-  transition:border-color .1s}
-.xd{position:absolute;left:50%;top:50%;width:5px;height:5px;
-  background:#ff4444;border-radius:50%;transform:translate(-50%,-50%)}
-.xl{position:absolute;background:rgba(255,60,60,.6)}
-.xl.h{width:14px;height:1.5px;top:50%;transform:translateY(-50%)}
-.xl.lf{left:-2px}.xl.rt{right:-2px}
-.xl.v{width:1.5px;height:14px;left:50%;transform:translateX(-50%)}
-.xl.tp{top:-2px}.xl.bt{bottom:-2px}
-#xh.hit .xr{border-color:#fff;background:rgba(255,255,255,.12)}
-#xh.lock .xr{border-color:#ff0;box-shadow:0 0 8px #ff0}
-
-/* ── HUD ── */
-#hud-gps,#hud-room{position:fixed;top:calc(var(--st)+8px);z-index:30;
-  pointer-events:none;background:var(--bg);border:1px solid var(--bd);
-  border-radius:4px;padding:5px 8px;line-height:1.55}
-#hud-gps{left:10px;min-width:118px}
-#hud-room{right:10px;min-width:92px;text-align:right}
-#hud-center{position:fixed;top:calc(var(--st)+8px);left:50%;
-  transform:translateX(-50%);z-index:30;pointer-events:none;
-  display:flex;flex-direction:column;align-items:center;gap:4px}
-#timer{background:var(--bg);border:1px solid var(--bd);border-radius:4px;
-  padding:3px 14px;font-size:17px;font-weight:bold;color:#fff;letter-spacing:2px;
-  white-space:nowrap}
+/* HUD */
+#hud-gps,#hud-room{position:fixed;top:calc(var(--st) + 8px);z-index:30;pointer-events:none;background:var(--bg);border:1px solid var(--bd);border-radius:4px;padding:5px 8px;line-height:1.55}
+#hud-gps{left:10px;min-width:110px}
+#hud-room{right:10px;min-width:90px;text-align:right}
+#hud-center{position:fixed;top:calc(var(--st) + 8px);left:50%;transform:translateX(-50%);z-index:30;pointer-events:none;display:flex;flex-direction:column;align-items:center;gap:4px}
+#timer{background:var(--bg);border:1px solid var(--bd);border-radius:4px;padding:3px 14px;font-size:17px;font-weight:bold;color:#fff;letter-spacing:2px}
 #scores{display:flex;gap:8px}
 .sc{font-size:10px;font-weight:bold;padding:2px 8px;border-radius:3px;white-space:nowrap}
 .sc.red{color:var(--r);background:rgba(60,0,0,.7);border:1px solid rgba(255,50,50,.35)}
 .sc.blu{color:var(--b);background:rgba(0,20,50,.7);border:1px solid rgba(50,170,255,.35)}
-#mode-badge{font-size:8px;letter-spacing:2px;padding:2px 8px;border-radius:10px;
-  background:var(--bg);border:1px solid var(--bd);white-space:nowrap}
+#mode-badge{font-size:8px;letter-spacing:2px;padding:2px 8px;border-radius:10px;background:var(--bg);border:1px solid var(--bd)}
 .hl{color:rgba(0,255,136,.55);font-size:8px;letter-spacing:1px}
 .hv{color:var(--g);font-size:11px;font-weight:bold}
 
-/* ── ステータス（HP/弾） ── */
-#hud-stats{position:fixed;bottom:calc(var(--sb)+172px);left:10px;
-  z-index:30;pointer-events:none}
+/* AI Panel */
+#ai-panel{position:fixed;top:50%;left:10px;transform:translateY(-50%);z-index:31;background:rgba(0,0,0,.7);border:1px solid rgba(0,255,136,.4);padding:8px;font-size:10px;color:#00ff88;border-radius:4px;width:140px;pointer-events:none;max-height:40vh;overflow-y:auto;display:none}
+#ai-panel .title{font-size:9px;font-weight:bold;margin-bottom:5px;border-bottom:1px solid rgba(0,255,136,.3);padding-bottom:3px;color:#fff;letter-spacing:1px}
+#ai-list div{margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+#hud-stats{position:fixed;bottom:calc(var(--sb) + 172px);left:10px;z-index:30;pointer-events:none}
 .sr{display:flex;align-items:center;gap:6px;margin-bottom:6px}
 .si{font-size:12px;width:16px;text-align:center}
-.sb2{width:80px;height:6px;background:rgba(255,255,255,.12);border-radius:3px;overflow:hidden}
+.sb{width:80px;height:6px;background:rgba(255,255,255,.12);border-radius:3px;overflow:hidden}
 .sf{height:100%;border-radius:3px;transition:width .2s}
 .sh{background:linear-gradient(90deg,#ff3333,#ff6644)}
 .sa{background:linear-gradient(90deg,#ffaa00,#ffdd00)}
 .sn{font-size:10px;color:#fff;min-width:32px}
-
-/* ── ミニマップ ── */
-#mmap{position:fixed;bottom:calc(var(--sb)+40px);left:10px;z-index:30;cursor:pointer}
-#mmap canvas{width:110px;height:110px;border-radius:50%;border:2px solid var(--bd);
-  background:rgba(0,8,20,.85);display:block}
+#mmap{position:fixed;bottom:calc(var(--sb) + 40px);left:10px;z-index:30;cursor:pointer}
+#mmap canvas{width:110px;height:110px;border-radius:50%;border:2px solid var(--bd);background:rgba(0,8,20,.85);display:block}
 #mmap .ml{font-size:7px;color:rgba(0,255,136,.5);text-align:center;margin-top:2px}
 
-/* ── 銃モデル ── */
-#gl{position:fixed;left:0;top:0;width:100%;height:100%;z-index:22;pointer-events:none}
-
-/* ── ボタン ── */
-#fire{position:fixed;bottom:calc(var(--sb)+56px);right:16px;z-index:31;
-  width:78px;height:78px;border-radius:50%;border:3px solid rgba(255,80,80,.8);
-  background:rgba(255,30,30,.28);color:#fff;font-size:11px;font-family:inherit;
-  font-weight:bold;cursor:pointer;touch-action:none;-webkit-tap-highlight-color:transparent}
+/* Buttons */
+#fire{position:fixed;bottom:calc(var(--sb) + 56px);right:16px;z-index:31;width:78px;height:78px;border-radius:50%;border:3px solid rgba(255,80,80,.8);background:rgba(255,30,30,.28);color:#fff;font-size:11px;font-family:inherit;font-weight:bold;cursor:pointer;touch-action:none;-webkit-tap-highlight-color:transparent}
 #fire:active{background:rgba(255,80,80,.55);transform:scale(.92)}
 #fire.rl{border-color:rgba(255,170,0,.8);background:rgba(255,140,0,.22)}
-#rld{position:fixed;bottom:calc(var(--sb)+148px);right:26px;z-index:31;
-  width:58px;height:58px;border-radius:50%;border:2px solid rgba(255,190,0,.75);
-  background:rgba(255,160,0,.2);color:#fff;font-size:9px;font-family:inherit;
-  font-weight:bold;touch-action:none;-webkit-tap-highlight-color:transparent}
+#rld{position:fixed;bottom:calc(var(--sb) + 148px);right:26px;z-index:31;width:58px;height:58px;border-radius:50%;border:2px solid rgba(255,190,0,.75);background:rgba(255,160,0,.2);color:#fff;font-size:9px;font-family:inherit;font-weight:bold;touch-action:none;-webkit-tap-highlight-color:transparent}
 #rld:active{background:rgba(255,190,0,.5)}
-#cov{position:fixed;bottom:calc(var(--sb)+216px);right:30px;z-index:31;
-  width:50px;height:50px;border-radius:50%;border:2px solid rgba(120,200,255,.7);
-  background:rgba(60,140,255,.15);color:#fff;font-size:8px;font-family:inherit;
-  font-weight:bold;touch-action:none}
+#scan{position:fixed;bottom:calc(var(--sb) + 216px);right:30px;z-index:31;width:50px;height:50px;border-radius:50%;border:2px solid rgba(0,255,136,.7);background:rgba(0,255,136,.15);color:#fff;font-size:8px;font-family:inherit;font-weight:bold;touch-action:none;display:flex;flex-direction:column;align-items:center;justify-content:center}
+#scan.on{background:rgba(0,255,136,.5);animation:pulse 1s infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(0,255,136,.4)}70%{box-shadow:0 0 0 15px rgba(0,255,136,0)}100%{box-shadow:0 0 0 0 rgba(0,255,136,0)}}
+#camsw{position:fixed;top:calc(var(--st) + 72px);right:10px;z-index:30;background:var(--bg);border:1px solid var(--bd);color:var(--g);font-family:inherit;font-size:9px;padding:5px 10px;border-radius:4px;display:none}
+#gps-bar{position:fixed;bottom:calc(var(--sb) + 8px);left:50%;transform:translateX(-50%);z-index:30;font-size:9px;padding:3px 10px;border-radius:4px;pointer-events:none;white-space:nowrap;background:rgba(0,0,0,.65);border:1px solid rgba(0,255,136,.25);color:rgba(0,255,136,.7)}
+#cov{position:fixed;bottom:calc(var(--sb) + 148px);left:10px;z-index:31;width:50px;height:50px;border-radius:50%;border:2px solid rgba(120,200,255,.7);background:rgba(60,140,255,.15);color:#fff;font-size:8px;font-family:inherit;font-weight:bold;touch-action:none}
 #cov.on{background:rgba(60,140,255,.55)}
-#camsw{position:fixed;top:calc(var(--st)+72px);right:10px;z-index:30;
-  background:var(--bg);border:1px solid var(--bd);color:var(--g);font-family:inherit;
-  font-size:9px;padding:5px 10px;border-radius:4px;display:none}
-
-/* ── GPSバー ── */
-#gps-bar{position:fixed;bottom:calc(var(--sb)+8px);left:50%;transform:translateX(-50%);
-  z-index:30;font-size:9px;padding:3px 10px;border-radius:4px;pointer-events:none;
-  white-space:nowrap;background:rgba(0,0,0,.65);border:1px solid rgba(0,255,136,.25);
-  color:rgba(0,255,136,.7)}
-
-/* ── ダメージエフェクト ── */
-#flash{position:fixed;inset:0;z-index:40;pointer-events:none;
-  background:radial-gradient(ellipse at center,rgba(255,0,0,.1),rgba(255,0,0,.75) 100%);opacity:0}
-#vig{position:fixed;inset:0;z-index:39;pointer-events:none;
-  box-shadow:inset 0 0 90px 30px rgba(255,0,0,.55);opacity:0}
+/* GUN MODEL */
+#gl{position:fixed;left:0;top:0;width:100%;height:100%;z-index:22;pointer-events:none}
+/* DAMAGE FX */
+#flash{position:fixed;inset:0;z-index:40;pointer-events:none;background:radial-gradient(ellipse at center,rgba(255,0,0,.1),rgba(255,0,0,.75) 100%);opacity:0}
+#vig{position:fixed;inset:0;z-index:39;pointer-events:none;box-shadow:inset 0 0 90px 30px rgba(255,0,0,.55);opacity:0}
 body.low #vig{animation:hb 1s infinite}
 @keyframes hb{0%,100%{opacity:.35}45%{opacity:1}}
 #hitdir{position:fixed;left:50%;top:50%;width:0;height:0;z-index:41;opacity:0;pointer-events:none}
-#hitdir::before{content:'';position:absolute;left:-26px;top:-140px;
-  border-left:26px solid transparent;border-right:26px solid transparent;
-  border-bottom:44px solid rgba(255,40,40,.9);filter:drop-shadow(0 0 8px red)}
-.dmg{position:fixed;z-index:45;pointer-events:none;font-weight:bold;font-size:15px;
-  color:#ffe14d;text-shadow:0 0 4px #000;transform:translate(-50%,-50%);animation:fl .85s forwards}
+#hitdir::before{content:'';position:absolute;left:-26px;top:-140px;border-left:26px solid transparent;border-right:26px solid transparent;border-bottom:44px solid rgba(255,40,40,.9);filter:drop-shadow(0 0 8px red)}
+.dmg{position:fixed;z-index:45;pointer-events:none;font-weight:bold;font-size:15px;color:#ffe14d;text-shadow:0 0 4px #000,0 0 4px #000;transform:translate(-50%,-50%);animation:fl .85s forwards}
 .dmg.hd{color:#ff4a4a;font-size:19px}.dmg.me{color:#ff5555}
 @keyframes fl{to{opacity:0;margin-top:-46px}}
-#alerts{position:fixed;top:36%;left:50%;transform:translate(-50%,-50%);
-  z-index:50;display:flex;flex-direction:column;align-items:center;gap:6px;pointer-events:none}
-.am{background:rgba(0,0,0,.8);border:1px solid var(--o);color:var(--o);
-  font-size:10px;padding:4px 12px;border-radius:4px;animation:fa 2.4s forwards;white-space:nowrap}
+#alerts{position:fixed;top:36%;left:50%;transform:translate(-50%,-50%);z-index:50;display:flex;flex-direction:column;align-items:center;gap:6px;pointer-events:none}
+.am{background:rgba(0,0,0,.8);border:1px solid var(--o);color:var(--o);font-size:10px;padding:4px 12px;border-radius:4px;animation:fa 2.4s forwards;white-space:nowrap}
 @keyframes fa{0%{opacity:0}12%{opacity:1}70%{opacity:1}100%{opacity:0}}
 .am.ka{border-color:var(--g);color:var(--g)}.am.ha{border-color:var(--r);color:var(--r)}
-
-/* ── ARマーカー（プール再利用） ── */
-.em,.alm{position:fixed;left:0;top:0;z-index:25;pointer-events:none;
-  display:flex;flex-direction:column;align-items:center;gap:2px;will-change:transform}
-.edia{width:18px;height:18px;border:2px solid var(--r);transform:rotate(45deg);
-  background:rgba(255,50,50,.15)}
-.elbl{font-size:8px;color:var(--r);background:rgba(0,0,0,.72);
-  padding:1px 5px;border-radius:2px;white-space:nowrap;border:1px solid rgba(255,50,50,.3)}
+/* AR MARKERS */
+.em,.alm,.obj{position:fixed;left:0;top:0;z-index:25;pointer-events:none;display:flex;flex-direction:column;align-items:center;gap:2px;will-change:transform}
+.edia{width:16px;height:16px;border:2px solid var(--r);transform:rotate(45deg);background:rgba(255,50,50,.15)}
+.elbl{font-size:8px;color:var(--r);background:rgba(0,0,0,.7);padding:1px 4px;border-radius:2px;white-space:nowrap}
 .edst{font-size:7px;color:rgba(255,120,120,.85)}
-.hpb{width:36px;height:3px;background:rgba(255,255,255,.2);border-radius:2px}
-.hpb i{display:block;height:100%;background:#ff4444;border-radius:2px}
-.atri{width:0;height:0;border-left:6px solid transparent;
-  border-right:6px solid transparent;border-bottom:11px solid var(--b)}
-.albl{font-size:8px;color:var(--b);background:rgba(0,0,0,.72);
-  padding:1px 5px;border-radius:2px;border:1px solid rgba(50,170,255,.3)}
-
-/* ── ビッグマップ ── */
-#bigmap{position:fixed;inset:0;z-index:90;background:rgba(0,8,16,.96);
-  display:none;flex-direction:column;align-items:center;justify-content:center;gap:10px}
+.hpb{width:34px;height:3px;background:rgba(255,255,255,.2)}.hpb i{display:block;height:100%;background:#ff4444;width:100%}
+.atri{width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-bottom:11px solid var(--b)}
+.albl{font-size:8px;color:var(--b);background:rgba(0,0,0,.7);padding:1px 4px;border-radius:2px}
+.obj{font-size:24px;text-shadow:0 0 5px #000;transform:translate(-50%,-50%)}
+.obj.loot{color:var(--y);animation:bob 1.5s infinite}
+.obj.wall{color:#888;font-size:32px}
+@keyframes bob{0%,100%{margin-top:0}50%{margin-top:-10px}}
+/* MAP */
+#bigmap{position:fixed;inset:0;z-index:90;background:rgba(0,8,16,.96);display:none;flex-direction:column;align-items:center;justify-content:center;gap:10px}
 #bigmap.open{display:flex}
-#bigmap canvas{width:min(90vw,380px);height:min(90vw,380px);
-  border:1px solid var(--bd);border-radius:8px}
-.mc{color:var(--g);font-size:10px;letter-spacing:2px;padding:7px 18px;
-  border:1px solid var(--bd);border-radius:4px;cursor:pointer;background:rgba(0,255,136,.05)}
-
-/* ── スキャン進捗バー ── */
-#scan-ui{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
-  z-index:200;background:rgba(0,0,0,.85);border:1px solid var(--bd);
-  border-radius:8px;padding:20px 28px;text-align:center;display:none;min-width:220px}
-#scan-ui .st{font-size:11px;letter-spacing:2px;margin-bottom:10px}
-#scan-pb{width:100%;height:8px;background:rgba(255,255,255,.1);border-radius:4px;overflow:hidden}
-#scan-fill{height:100%;width:0%;background:linear-gradient(90deg,var(--g),var(--b));
-  transition:width .1s;border-radius:4px}
-#scan-ui .sp{font-size:9px;margin-top:6px;color:rgba(0,255,136,.6)}
-
-/* ── スクリーン共通 ── */
-.screen{position:fixed;inset:0;z-index:100;background:rgba(0,0,0,.94);
-  display:flex;flex-direction:column;align-items:center;justify-content:center;
-  gap:12px;padding:20px;overflow-y:auto;touch-action:pan-y}
+#bigmap canvas{width:min(88vw,360px);height:min(88vw,360px);border:1px solid var(--bd);border-radius:8px;box-shadow:0 0 20px rgba(0,255,136,.2)}
+.mc{color:var(--g);font-size:10px;letter-spacing:2px;padding:7px 18px;border:1px solid var(--bd);border-radius:4px;cursor:pointer}
+/* SCREENS */
+.screen{position:fixed;inset:0;z-index:100;background:rgba(0,0,0,.94);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:20px;overflow-y:auto;touch-action:pan-y}
 .screen.hidden{display:none}
-.logo{font-size:24px;font-weight:bold;color:var(--g);letter-spacing:4px;
-  text-shadow:0 0 16px rgba(0,255,136,.5)}
+.logo{font-size:24px;font-weight:bold;color:var(--g);letter-spacing:4px;text-shadow:0 0 16px rgba(0,255,136,.5)}
 .sub{font-size:9px;color:rgba(0,255,136,.5);letter-spacing:3px}
 .mode-row{display:flex;gap:10px;width:100%;max-width:300px}
-.mcard{flex:1;border:2px solid rgba(0,255,136,.22);border-radius:8px;
-  padding:12px 6px;text-align:center;cursor:pointer;background:rgba(0,255,136,.03)}
+.mcard{flex:1;border:2px solid rgba(0,255,136,.22);border-radius:8px;padding:12px 6px;text-align:center;cursor:pointer;background:rgba(0,255,136,.03)}
 .mcard.sel{border-color:var(--g);background:rgba(0,255,136,.1)}
 .mcard.bot-sel{border-color:var(--y);background:rgba(255,220,0,.07)}
 .mcard .mi{font-size:26px;margin-bottom:5px}
 .mcard .mt{font-size:10px;font-weight:bold}
-.mcard.bot-sel .mt{color:var(--y)}.mcard.sel .mt{color:var(--g)}
+.mcard.bot-sel .mt{color:var(--y)}
 .mcard .md{font-size:8px;color:rgba(255,255,255,.4);margin-top:2px}
 .opt-row{width:100%;max-width:300px;display:flex;flex-direction:column;gap:5px}
 .opt-row label{font-size:8px;color:rgba(255,220,0,.6);letter-spacing:1px}
 .bot-btns{display:flex;gap:7px}
-.bbot{flex:1;padding:7px 2px;border:1px solid rgba(255,220,0,.3);border-radius:4px;
-  background:rgba(255,220,0,.05);color:var(--y);font-size:12px;cursor:pointer;text-align:center}
+.bbot{flex:1;padding:7px 2px;border:1px solid rgba(255,220,0,.3);border-radius:4px;background:rgba(255,220,0,.05);color:var(--y);font-size:12px;cursor:pointer;text-align:center}
 .bbot.sel{border-color:var(--y);background:rgba(255,220,0,.2)}
 .online label{color:rgba(50,170,255,.65)}
 .online .bbot{color:var(--b);border-color:rgba(50,170,255,.3);background:rgba(50,170,255,.05)}
 .online .bbot.sel{border-color:var(--b);background:rgba(50,170,255,.2)}
-.opt-row input{background:rgba(0,20,40,.9);color:var(--b);border:1px solid rgba(50,170,255,.35);
-  border-radius:4px;padding:8px 10px;font-family:inherit;font-size:12px;width:100%;letter-spacing:2px}
-.code-big{font-size:28px;font-weight:bold;letter-spacing:8px;color:var(--b);text-align:center;
-  padding:8px;border:1px dashed rgba(50,170,255,.5);border-radius:6px;cursor:pointer}
+.opt-row input{background:rgba(0,20,40,.9);color:var(--b);border:1px solid rgba(50,170,255,.35);border-radius:4px;padding:8px 10px;font-family:inherit;font-size:12px;width:100%;letter-spacing:2px}
+.code-big{font-size:28px;font-weight:bold;letter-spacing:8px;color:var(--b);text-align:center;padding:8px;border:1px dashed rgba(50,170,255,.5);border-radius:6px;cursor:pointer}
 .lob{display:flex;flex-direction:column;gap:4px;max-height:34vh;overflow-y:auto}
 .lob div{font-size:11px;padding:5px 8px;border-radius:4px;border:1px solid rgba(255,255,255,.15)}
 .lob .red{color:var(--r);border-color:rgba(255,50,50,.4)}.lob .blue{color:var(--b);border-color:rgba(50,170,255,.4)}
-.perm{display:flex;align-items:center;gap:10px;width:100%;max-width:300px;
-  padding:8px 12px;border-radius:6px;border:1px solid;background:rgba(0,0,0,.3)}
+.perm{display:flex;align-items:center;gap:10px;width:100%;max-width:300px;padding:8px 12px;border-radius:6px;border:1px solid;background:rgba(0,0,0,.3)}
 .perm .pi{font-size:16px}.perm .pt{flex:1;min-width:0}
 .perm .ptl{font-size:8px;opacity:.6}
 .perm .pv{font-size:11px;font-weight:bold;margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.pb{font-size:9px;padding:4px 9px;border-radius:4px;cursor:pointer;border:1px solid;
-  font-family:inherit;white-space:nowrap;background:transparent;color:inherit}
+.pb{font-size:9px;padding:4px 9px;border-radius:4px;cursor:pointer;border:1px solid;font-family:inherit;white-space:nowrap;background:transparent;color:inherit}
 .perm.ok{border-color:rgba(0,255,136,.35);color:var(--g)}
 .perm.ng{border-color:rgba(255,50,50,.35);color:var(--r)}
 .perm.wt{border-color:rgba(255,136,0,.35);color:var(--o)}
-#gps-help{display:none;width:100%;max-width:300px;font-size:9px;line-height:1.8;
-  color:var(--y);border:1px solid rgba(255,220,0,.35);border-radius:6px;
-  padding:8px 10px;background:rgba(255,220,0,.06)}
+#gps-help{display:none;width:100%;max-width:300px;font-size:9px;line-height:1.8;color:var(--y);border:1px solid rgba(255,220,0,.35);border-radius:6px;padding:8px 10px;background:rgba(255,220,0,.06)}
 .cam-sel{width:100%;max-width:300px;display:none;flex-direction:column;gap:5px}
 .cam-sel label{font-size:8px;color:rgba(0,255,136,.5)}
-select#camsel{background:rgba(0,20,10,.9);color:var(--g);border:1px solid var(--bd);
-  border-radius:4px;padding:7px 9px;font-family:inherit;font-size:10px;width:100%}
-.cam-apply{padding:6px;width:100%;background:rgba(0,255,136,.07);border:1px solid var(--bd);
-  border-radius:4px;color:var(--g);font-family:inherit;font-size:9px}
-.sbtn{width:100%;max-width:300px;padding:12px;border:2px solid var(--g);
-  background:rgba(0,255,136,.09);color:var(--g);font-family:inherit;font-size:13px;
-  letter-spacing:3px;cursor:pointer;border-radius:4px}
-.sbtn:active{background:rgba(0,255,136,.22)}.sbtn:disabled{opacity:.35}
+select#camsel{background:rgba(0,20,10,.9);color:var(--g);border:1px solid var(--bd);border-radius:4px;padding:7px 9px;font-family:inherit;font-size:10px;width:100%}
+.cam-apply{padding:6px;width:100%;background:rgba(0,255,136,.07);border:1px solid var(--bd);border-radius:4px;color:var(--g);font-family:inherit;font-size:9px}
+.sbtn{width:100%;max-width:300px;padding:12px;border:2px solid var(--g);background:rgba(0,255,136,.09);color:var(--g);font-family:inherit;font-size:13px;letter-spacing:3px;cursor:pointer;border-radius:4px}
+.sbtn:active{background:rgba(0,255,136,.22)}
+.sbtn:disabled{opacity:.35}
 .sbtn.bot-s{border-color:var(--y);background:rgba(255,220,0,.09);color:var(--y)}
 .note{font-size:9px;color:rgba(255,255,255,.4);text-align:center;line-height:1.9;max-width:290px}
 </style>
 </head>
 <body>
 <video id="cam" autoplay playsinline muted></video>
-<div id="xh">
-  <div class="xr"></div><div class="xd"></div>
-  <div class="xl h lf"></div><div class="xl h rt"></div>
-  <div class="xl v tp"></div><div class="xl v bt"></div>
-</div>
+<canvas id="ai-layer"></canvas>
+<div id="xh"><div class="xr"></div><div class="xd"></div></div>
 <div id="vig"></div><div id="hitdir"></div><div id="flash"></div>
 
-<!-- HUD -->
-<div id="hud-gps">
-  <div class="hl">GPS</div>
-  <div class="hv" id="gps-la">---.-----°</div>
-  <div class="hv" id="gps-lo">---.-----°</div>
-  <div class="hl" id="gps-acc">...</div>
+<div id="ai-panel">
+  <div class="title">AI DETECTION</div>
+  <div id="ai-list">待機中...</div>
 </div>
-<div id="hud-center">
-  <div id="timer">05:00</div>
-  <div id="scores"><div class="sc red" id="sc-r">RED 0</div><div class="sc blu" id="sc-b">BLUE 0</div></div>
-  <div id="mode-badge">BOT</div>
-</div>
-<div id="hud-room">
-  <div class="hl">PLAYERS</div>
-  <div class="hv" id="pcnt">1/1</div>
-  <div class="hl" id="rid">----</div>
-</div>
-<div id="hud-stats">
-  <div class="sr"><div class="si">❤️</div><div class="sb2"><div class="sf sh" id="hpb" style="width:100%"></div></div><div class="sn" id="hpn">100</div></div>
-  <div class="sr"><div class="si">🔫</div><div class="sb2"><div class="sf sa" id="amob" style="width:100%"></div></div><div class="sn" id="amon">30/90</div></div>
-</div>
-<div id="mmap"><canvas id="mc" width="110" height="110"></canvas><div class="ml">[ MAP ]</div></div>
 
-<!-- 銃 -->
+<div id="hud-gps"><div class="hl">GPS</div><div class="hv" id="gps-la">---.-----°</div><div class="hv" id="gps-lo">---.-----°</div><div class="hl" id="gps-acc">...</div></div>
+<div id="hud-center"><div id="timer">05:00</div><div id="scores"><div class="sc red" id="sc-r">RED 0</div><div class="sc blu" id="sc-b">BLUE 0</div></div><div id="mode-badge">BOT</div></div>
+<div id="hud-room"><div class="hl">PLAYERS</div><div class="hv" id="pcnt">1/1</div><div class="hl" id="rid">----</div></div>
+<div id="hud-stats">
+  <div class="sr"><div class="si">❤️</div><div class="sb"><div class="sf sh" id="hpb" style="width:100%"></div></div><div class="sn" id="hpn">100</div></div>
+  <div class="sr"><div class="si">🔫</div><div class="sb"><div class="sf sa" id="amob" style="width:100%"></div></div><div class="sn" id="amon">30/90</div></div>
+</div>
+<div id="mmap"><canvas id="mc" width="220" height="220"></canvas><div class="ml">[ TAP TO MAP ]</div></div>
+
 <canvas id="gl"></canvas>
+
 <button id="fire">FIRE</button>
 <button id="rld">RELOAD</button>
+<button id="scan">SCAN</button>
 <button id="cov">COVER</button>
 <button id="camsw">🔄 CAM</button>
 <div id="gps-bar">📍 GPS 待機中</div>
-
-<!-- ビッグマップ -->
-<div id="bigmap">
-  <div style="font-size:10px;letter-spacing:2px;color:var(--g)">SATELLITE MAP</div>
-  <canvas id="bmc" width="360" height="360"></canvas>
-  <div style="display:flex;gap:10px">
-    <div class="mc" id="mz-in">＋ ズームイン</div>
-    <div class="mc" id="mz-out">－ ズームアウト</div>
-  </div>
-  <div class="mc" id="bmc-close">[ CLOSE ]</div>
-</div>
-
-<!-- スキャンUI -->
-<div id="scan-ui">
-  <div class="st" id="scan-st">📡 エリアスキャン中...</div>
-  <div id="scan-pb"><div id="scan-fill"></div></div>
-  <div class="sp" id="scan-sp">タイルを取得中</div>
-</div>
-
+<div id="bigmap"><div style="font-size:12px;letter-spacing:2px;color:#fff">SATELLITE MAP</div><canvas id="bmc" width="720" height="720"></canvas><div style="display:flex;gap:10px"><div class="mc" id="mz-in">＋ ズームイン</div><div class="mc" id="mz-out">－ ズームアウト</div></div><div class="mc" id="bmc-close">[ CLOSE ]</div></div>
 <div id="alerts"></div>
 
-<!-- ════ SCREEN 1: MODE ════ -->
+<!-- 1: MODE -->
 <div class="screen" id="s-mode">
-  <div class="logo">AR SHOOTER</div><div class="sub">GPS BATTLE</div>
+  <div class="logo">AR SHOOTER</div><div class="sub">AI VISION TACTICAL</div>
   <div class="mode-row">
     <div class="mcard bot-sel" id="mc-bot" onclick="selectMode('bot')"><div class="mi">🤖</div><div class="mt">BOT MODE</div><div class="md">1人練習<br>AI対戦</div></div>
     <div class="mcard" id="mc-on" onclick="selectMode('online')"><div class="mi">🌐</div><div class="mt">ONLINE</div><div class="md">リアル対戦<br>GPSマルチ</div></div>
   </div>
   <div class="opt-row" id="bot-row"><label>BOT 数</label>
-    <div class="bot-btns" data-k="botCount">
-      <div class="bbot sel" data-v="1">1</div><div class="bbot" data-v="3">3</div>
-      <div class="bbot" data-v="5">5</div><div class="bbot" data-v="8">8</div>
-    </div>
+    <div class="bot-btns" data-k="botCount"><div class="bbot sel" data-v="1">1</div><div class="bbot" data-v="3">3</div><div class="bbot" data-v="5">5</div><div class="bbot" data-v="8">8</div></div>
   </div>
   <button class="sbtn bot-s" id="next-btn" onclick="goToSetup()">▶ 次へ（カメラ・GPS設定）</button>
-  <div class="note">PC: ←→向き / WSAD移動 / C:カバー / Space:発射 / R:リロード<br>スマホ背面カメラ / PCウェブカメラ 両対応</div>
+  <div class="note">スマホ背面カメラ / PCウェブカメラ 両対応<br>PC: 矢印キー 移動/向き / Space 発射 / R リロード / C カバー</div>
 </div>
 
-<!-- ════ SCREEN 2: PERM ════ -->
+<!-- 2: PERMISSIONS -->
 <div class="screen hidden" id="s-perm">
   <div class="logo" style="font-size:17px;letter-spacing:2px">📡 カメラ・GPS設定</div>
   <div class="perm wt" id="perm-cam"><div class="pi">📷</div><div class="pt"><div class="ptl">CAMERA</div><div class="pv" id="pcam-v">未確認</div></div><button class="pb" id="btn-cam" onclick="doCamPerm()">許可</button></div>
   <div class="cam-sel" id="cam-sel"><label>カメラを選択</label><select id="camsel"></select><button class="cam-apply" onclick="applyCam()">▶ このカメラを使う</button></div>
   <div class="perm wt" id="perm-gps"><div class="pi">📍</div><div class="pt"><div class="ptl">GPS / LOCATION</div><div class="pv" id="pgps-v">未確認</div></div><button class="pb" id="btn-gps" onclick="doGpsPerm()">許可</button></div>
-  <div id="gps-help">位置情報がブロックされています。<br>① アドレスバー左の 🔒 をタップ<br>② 「権限」→「位置情報」→「許可」<br>③ 許可後は自動で再取得。IP概算位置で動作します。</div>
+  <div id="gps-help">位置情報がブロックされています。<br>① アドレスバー左の設定アイコン（🔒）をタップ<br>② 「権限」→「位置情報」→「許可」に変更<br>③ 許可すると自動で再取得します。<br>※屋内ではGPSの誤差が大きくなります。</div>
   <button class="sbtn" id="start-btn" onclick="proceed()" disabled>⚔ ゲームスタート</button>
   <div class="note">GPS拒否 → IP位置（概算）で代替 / カメラ拒否 → 背景は黒で続行</div>
 </div>
 
-<!-- ════ SCREEN 3: ONLINE ════ -->
+<!-- 3: ONLINE (host / join) -->
 <div class="screen hidden" id="s-online">
   <div class="logo" style="font-size:17px">🌐 ONLINE</div>
   <div class="mode-row">
@@ -311,21 +199,17 @@ select#camsel{background:rgba(0,20,10,.9);color:var(--g);border:1px solid var(--
   </div>
   <div class="opt-row online"><label>プレイヤー名</label><input id="pname" maxlength="10" placeholder="NAME"></div>
   <div class="opt-row online" id="p-host">
-    <label>ルームコード（タップでコピー）</label>
-    <div class="code-big" id="hcode" onclick="copyCode()"></div>
+    <label>ルームコード（タップでコピー）</label><div class="code-big" id="hcode" onclick="copyCode()"></div>
     <label>最大人数</label><div class="bot-btns" data-k="maxP"><div class="bbot" data-v="2">2</div><div class="bbot sel" data-v="4">4</div><div class="bbot" data-v="8">8</div></div>
     <label>制限時間（分）</label><div class="bot-btns" data-k="time"><div class="bbot" data-v="3">3</div><div class="bbot sel" data-v="5">5</div><div class="bbot" data-v="10">10</div></div>
   </div>
-  <div class="opt-row online" id="p-join" style="display:none">
-    <label>ルームコード（6文字）</label>
-    <input id="jcode" maxlength="6" placeholder="XXXXXX" style="text-transform:uppercase;text-align:center;font-size:18px">
-  </div>
+  <div class="opt-row online" id="p-join" style="display:none"><label>ルームコード（6文字）</label><input id="jcode" maxlength="6" placeholder="XXXXXX" style="text-transform:uppercase;text-align:center;font-size:18px"></div>
   <div class="note" id="net-msg"></div>
   <button class="sbtn" id="net-go" onclick="netGo()">ルームを作成</button>
   <div class="note" style="cursor:pointer" onclick="backPerm()">← 戻る</div>
 </div>
 
-<!-- ════ SCREEN 4: LOBBY ════ -->
+<!-- 4: LOBBY -->
 <div class="screen hidden" id="s-lobby">
   <div class="logo" style="font-size:17px">ロビー</div>
   <div class="code-big" id="lcode"></div>
@@ -335,43 +219,48 @@ select#camsel{background:rgba(0,20,10,.9);color:var(--g);border:1px solid var(--
   <div class="note" style="cursor:pointer" onclick="location.reload()">退出</div>
 </div>
 
+<!-- TensorFlow.js & COCO-SSD -->
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.21.0/dist/tf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.2/dist/coco-ssd.min.js"></script>
+
 <script>
 'use strict';
 const $=id=>document.getElementById(id);
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-
-/* ════ STATE ════ */
-const st={mode:'bot',botCount:1,maxP:4,time:5,health:100,ammo:30,maxAmmo:30,reserve:90,
-  score:{red:0,blue:0},myTeam:'red',myPos:{lat:35.6762,lon:139.6503},
-  heading:0,hd:0,gpsReady:false,src:'DEMO',gameActive:false,timeLeft:300,
-  kills:0,deaths:0,reloading:false,dead:false,roomCode:null,players:[],
-  yawV:0,pitV:0,spd:0,walkI:0,shk:0,pitch:0,roll:0,keyWalk:0,cover:false,
-  phd:null,ppn:null,pp:null,raw:null,acc:0,
-  /* マップスキャン */scanArea:null};
+const st={mode:'bot',botCount:1,maxP:4,time:5,health:100,ammo:30,maxAmmo:30,reserve:90,score:{red:0,blue:0},myTeam:'red',
+  myPos:{lat:35.6762,lon:139.6503},targetPos:{lat:35.6762,lon:139.6503},heading:0,hd:0,gpsReady:false,src:'DEMO',gameActive:false,timeLeft:300,kills:0,deaths:0,
+  reloading:false,dead:false,roomCode:null,players:[],yawV:0,pitV:0,spd:0,walkI:0,shk:0,pitch:0,roll:0,keyWalk:0,cover:false,phd:null,ppn:null,pp:null,
+  trail:[], objects:[], acc:0};
 const net={peer:null,host:false,conns:{},hostConn:null,myId:null,name:'Player',joined:false};
 const BOT_NAMES=['Ghost','Viper','Hawk','Snake','Fox','Wolf','Eagle','Raven'];
 const BOT_TEAMS=['blue','blue','red','blue','red','blue','red','blue'];
 const ints=[];
 
-/* ════ FLOW ════ */
-document.addEventListener('click',e=>{
-  const b=e.target.closest('.bbot');if(!b)return;
-  const g=b.parentNode;g.querySelectorAll('.bbot').forEach(x=>x.classList.toggle('sel',x===b));
-  st[g.dataset.k]=+b.dataset.v});
+let cocoModel = null;
+
+/* ── flow ── */
+document.addEventListener('click',e=>{const b=e.target.closest('.bbot');if(!b)return;const g=b.parentNode;
+  g.querySelectorAll('.bbot').forEach(x=>x.classList.toggle('sel',x===b));st[g.dataset.k]=+b.dataset.v});
 function show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.add('hidden'));$(id).classList.remove('hidden')}
-function selectMode(m){st.mode=m;
-  $('mc-bot').className='mcard '+(m==='bot'?'bot-sel':'');
-  $('mc-on').className='mcard '+(m==='online'?'sel':'');
-  $('bot-row').style.display=m==='bot'?'flex':'none';
-  $('next-btn').className='sbtn'+(m==='bot'?' bot-s':'')}
+function selectMode(m){st.mode=m;$('mc-bot').className='mcard '+(m==='bot'?'bot-sel':'');$('mc-on').className='mcard '+(m==='online'?'sel':'');
+  $('bot-row').style.display=m==='bot'?'flex':'none';$('next-btn').className='sbtn'+(m==='bot'?' bot-s':'')}
 function goToSetup(){
-  try{DeviceOrientationEvent.requestPermission&&DeviceOrientationEvent.requestPermission();
-      DeviceMotionEvent.requestPermission&&DeviceMotionEvent.requestPermission()}catch(e){}
-  show('s-perm');
-  $('start-btn').textContent=st.mode==='bot'?'⚔ ゲームスタート':'▶ 次へ（ルーム設定）';
+  try{DeviceOrientationEvent.requestPermission&&DeviceOrientationEvent.requestPermission();DeviceMotionEvent.requestPermission&&DeviceMotionEvent.requestPermission()}catch(e){}
+  show('s-perm');$('start-btn').textContent=st.mode==='bot'?'⚔ ゲームスタート':'▶ 次へ（ルーム設定）';
   doCamPerm();doGpsPerm();
+  setTimeout(() => {
+    if ($('start-btn').disabled) {
+      $('start-btn').disabled = false;
+      setPerm('cam', 'ng', 'タイムアウト（背景黒で続行）');
+      setPerm('gps', 'ng', 'タイムアウト（デモ座標）');
+      if(!st.gpsReady) setPos(35.6762, 139.6503, 0, 'DEMO');
+    }
+  }, 5000);
 }
-function proceed(){if(st.mode==='bot'){beginBot();return}st.roomCode=genCode();$('hcode').textContent=st.roomCode;show('s-online')}
+function proceed(){
+  if(st.mode==='bot'){beginBot();return}
+  st.roomCode=genCode();$('hcode').textContent=st.roomCode;show('s-online');
+}
 function backPerm(){show('s-perm')}
 function genCode(){const c='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';let s='';for(let i=0;i<6;i++)s+=c[Math.floor(Math.random()*c.length)];return s}
 function tab(t){$('t-host').className='mcard '+(t==='host'?'sel':'');$('t-join').className='mcard '+(t==='join'?'sel':'');
@@ -380,60 +269,54 @@ function tab(t){$('t-host').className='mcard '+(t==='host'?'sel':'');$('t-join')
 function copyCode(){navigator.clipboard&&navigator.clipboard.writeText(st.roomCode).then(()=>setNet('コードをコピーしました'))}
 function setNet(t){$('net-msg').textContent=t}
 
-/* ════ CAMERA ════ */
+/* ── camera ── */
 let cams=[],curCam=0,curStream=null;
-async function enumCams(){
-  try{const d=await navigator.mediaDevices.enumerateDevices();cams=d.filter(x=>x.kind==='videoinput');
-    const sel=$('camsel');sel.innerHTML='';
-    cams.forEach((c,i)=>{const l=c.label||('カメラ '+(i+1));const o=document.createElement('option');o.value=i;o.textContent=l;sel.appendChild(o)});
-    const bi=cams.findIndex(c=>/back|rear|env/i.test(c.label));if(bi>=0){sel.value=bi;curCam=bi}
-    if(cams.length)$('cam-sel').style.display='flex'}catch(e){}}
+async function enumCams(){try{const d=await navigator.mediaDevices.enumerateDevices();cams=d.filter(x=>x.kind==='videoinput');
+  const sel=$('camsel');sel.innerHTML='';cams.forEach((c,i)=>{const l=c.label||('カメラ '+(i+1));const o=document.createElement('option');o.value=i;o.textContent=l;sel.appendChild(o)});
+  const bi=cams.findIndex(c=>/back|rear|env/i.test(c.label));if(bi>=0){sel.value=bi;curCam=bi}
+  if(cams.length)$('cam-sel').style.display='flex'}catch(e){}}
 async function startCam(idx){
   if(curStream){curStream.getTracks().forEach(t=>t.stop());curStream=null}
-  try{const con=cams.length&&idx!==undefined?{video:{deviceId:{exact:cams[idx].deviceId},width:{ideal:1920},height:{ideal:1080}}}:{video:{facingMode:'environment'}};
+  try{const con=cams.length&&idx!==undefined?{video:{deviceId:{exact:cams[idx].deviceId},width:{ideal:1920},height:{ideal:1080}}}:{video:{facingMode:'environment',width:{ideal:1920},height:{ideal:1080}}};
     const s=await navigator.mediaDevices.getUserMedia(con);curStream=s;$('cam').srcObject=s;
     setPerm('cam','ok',(s.getVideoTracks()[0]?.label||'カメラ').substring(0,28));curCam=idx??0}
-  catch(e){setPerm('cam','ng','拒否 — 背景は黒で続行')}checkReady()}
+  catch(e){setPerm('cam','ng','拒否 — 背景は黒で続行')}
+  checkReady()}
 async function doCamPerm(){setPerm('cam','wt','確認中...');
   try{const t=await navigator.mediaDevices.getUserMedia({video:true});t.getTracks().forEach(x=>x.stop())}catch(e){}
   await enumCams();const i=parseInt($('camsel').value||'0',10);await startCam(isNaN(i)?0:i)}
 async function applyCam(){await startCam(parseInt($('camsel').value,10)||0)}
 async function switchCam(){if(cams.length<=1)return;curCam=(curCam+1)%cams.length;await startCam(curCam)}
 
-/* ════ GPS ════ */
+/* ── GPS ── */
 let gpsWatcher=null,ipTimer=null,permWatch=false;
-/* カルマンフィルター的GPSスムージング */
-const kf={lat:0,lon:0,vLat:0,vLon:0,init:false,R:5,Q:.001,P:1};
-function kfUpdate(lat,lon,acc){
-  if(!kf.init){kf.lat=lat;kf.lon=lon;kf.init=true;return{lat,lon}}
-  const r=Math.max(acc||15,3),k=kf.P/(kf.P+r);
-  kf.lat+=k*(lat-kf.lat);kf.lon+=k*(lon-kf.lon);kf.P=(1-k)*kf.P+kf.Q;
-  return{lat:kf.lat,lon:kf.lon}}
 function setPos(lat,lon,acc,src){
-  const smooth=src==='GPS'?kfUpdate(lat,lon,acc):{lat,lon};
-  st.raw={lat:smooth.lat,lon:smooth.lon};st.acc=acc||0;
-  if(!st.gpsReady){st.myPos.lat=smooth.lat;st.myPos.lon=smooth.lon}
-  st.src=src;st.gpsReady=true;
-  $('gps-la').textContent=smooth.lat.toFixed(5)+'°';
-  $('gps-lo').textContent=smooth.lon.toFixed(5)+'°';
-  const t=src+(acc?' ±'+Math.round(acc)+'m':'');
-  $('gps-acc').textContent=t;$('gps-bar').textContent='📍 '+t;
-  $('gps-bar').style.color=src==='GPS'?'rgba(0,255,136,.9)':'rgba(255,220,0,.8)'}
+  st.acc = acc||0;
+  if (st.gpsReady && src === 'GPS') {
+    const dist = mDist(st.targetPos.lat, st.targetPos.lon, lat, lon);
+    if (acc > 30 || (dist > 50 && acc > 15)) return;
+  }
+  st.targetPos = {lat, lon};
+  if (!st.gpsReady) { st.myPos = {lat, lon}; st.gpsReady = true; }
+  st.src = src;
+  $('gps-la').textContent=lat.toFixed(5)+'°';$('gps-lo').textContent=lon.toFixed(5)+'°';
+  const t=src+(acc?' ±'+Math.round(acc)+'m':'');$('gps-acc').textContent=t;$('gps-bar').textContent='📍 '+t;
+  $('gps-bar').style.color=src==='GPS'?'rgba(0,255,136,.9)':'rgba(255,220,0,.8)';
+}
 async function ipLoc(){
   const apis=[()=>fetch('https://ipwho.is/').then(r=>r.json()).then(d=>({lat:+d.latitude,lon:+d.longitude,city:d.city})),
     ()=>fetch('https://ipapi.co/json/').then(r=>r.json()).then(d=>({lat:+d.latitude,lon:+d.longitude,city:d.city}))];
   for(const f of apis){try{const d=await f();if(d.lat&&d.lon)return d}catch(e){}}return null}
 async function startIP(why,denied){
-  if(ipTimer)return;setPerm('gps','wt','IP位置取得中...');
-  if(denied)$('gps-help').style.display='block';
+  if(ipTimer)return;
+  setPerm('gps','wt','IP位置取得中...');if(denied)$('gps-help').style.display='block';
   const upd=async()=>{if(st.src==='GPS')return;const d=await ipLoc();
     if(st.src==='GPS')return;
     if(d){setPos(d.lat,d.lon,0,'IP'+(d.city?'('+d.city+')':''));setPerm('gps','ng',why+' → IP位置(概算)')}
-    else{setPerm('gps','ng',why+' → デモ座標');$('gps-bar').textContent='📍 デモ座標'}
+    else{setPerm('gps','ng',why+' → デモ座標');$('gps-bar').textContent='📍 デモ座標'; if(!st.gpsReady) setPos(35.6762, 139.6503, 0, 'DEMO')}
     checkReady()};
   await upd();ipTimer=setInterval(upd,30000)}
-function gpsOk(p){
-  if(ipTimer){clearInterval(ipTimer);ipTimer=null}
+function gpsOk(p){if(ipTimer){clearInterval(ipTimer);ipTimer=null}
   setPos(p.coords.latitude,p.coords.longitude,p.coords.accuracy,'GPS');
   $('gps-help').style.display='none';setPerm('gps','ok','GPS OK ±'+Math.round(p.coords.accuracy)+'m');checkReady()}
 function doGpsPerm(){
@@ -441,13 +324,11 @@ function doGpsPerm(){
   if(!navigator.geolocation){startIP('非対応');return}
   if(!isSecureContext){startIP('HTTPS必須');return}
   setPerm('gps','wt','GPS取得中...');
+  const why={1:'拒否',2:'位置不明',3:'タイムアウト'};
   const ft=setTimeout(()=>{if(st.src!=='GPS')startIP('応答なし')},9000);
-  navigator.geolocation.getCurrentPosition(p=>{clearTimeout(ft);gpsOk(p)},
-    e=>{clearTimeout(ft);startIP({1:'拒否',2:'位置不明',3:'タイムアウト'}[e.code]||'エラー',e.code===1)},
-    {enableHighAccuracy:false,timeout:8000,maximumAge:60000});
-  gpsWatcher=navigator.geolocation.watchPosition(gpsOk,
-    e=>{if(e.code===1)startIP('拒否',true)},
-    {enableHighAccuracy:true,timeout:30000,maximumAge:0});
+  navigator.geolocation.getCurrentPosition(p=>{clearTimeout(ft);gpsOk(p)},e=>{clearTimeout(ft);startIP(why[e.code]||'エラー',e.code===1)},
+    {enableHighAccuracy:true,timeout:8000,maximumAge:0});
+  gpsWatcher=navigator.geolocation.watchPosition(gpsOk,e=>{if(e.code===1)startIP('拒否',true)},{enableHighAccuracy:true,timeout:30000,maximumAge:1000});
   if(!permWatch&&navigator.permissions){permWatch=true;
     navigator.permissions.query({name:'geolocation'}).then(r=>{r.onchange=()=>{if(r.state==='granted')doGpsPerm()}}).catch(()=>{})}
 }
@@ -455,199 +336,193 @@ function onOri(e){let h=e.webkitCompassHeading;
   if(h==null&&e.alpha!=null&&(e.absolute||e.type==='deviceorientationabsolute'))h=360-e.alpha;
   if(h!=null)st.heading=h;if(e.beta!=null){st.pitch=e.beta-90;st.roll=Math.max(-45,Math.min(45,e.gamma||0))}}
 addEventListener('deviceorientationabsolute',onOri,true);addEventListener('deviceorientation',onOri,true);
-addEventListener('devicemotion',e=>{const a=e.accelerationIncludingGravity;if(!a||a.x==null)return;
-  st.shk+=(Math.abs(Math.hypot(a.x,a.y,a.z)-9.81)-st.shk)*.12});
+addEventListener('devicemotion',e=>{const a=e.accelerationIncludingGravity;if(!a||a.x==null)return;st.shk+=(Math.abs(Math.hypot(a.x,a.y,a.z)-9.81)-st.shk)*.12});
+
 function setPerm(w,s,t){$('perm-'+w).className='perm '+s;$(w==='cam'?'pcam-v':'pgps-v').textContent=t;
   const b=$(w==='cam'?'btn-cam':'btn-gps');b.textContent=s==='ok'?'✓':s==='ng'?'再試行':'...';b.disabled=s==='wt'}
-function checkReady(){
-  const c=$('perm-cam').classList,g=$('perm-gps').classList;
-  if((c.contains('ok')||c.contains('ng'))&&(g.contains('ok')||g.contains('ng')))
-    $('start-btn').disabled=false}
+function checkReady(){const c=!$('perm-cam').classList.contains('wt'),g=!$('perm-gps').classList.contains('wt');
+  if(c&&g)$('start-btn').disabled=false}
 
-/* ════ MAP SCAN ════ */
-/* マップスキャン：ゲーム開始時に周囲のサテライトタイルを先読みする */
-const tiles=new Map();
-function tileImg(z,tx,ty){
-  const n=2**z;tx=((tx%n)+n)%n;if(ty<0||ty>=n)return null;
-  const key=z+'/'+tx+'/'+ty;let t=tiles.get(key);
-  if(!t){t=new Image();t.crossOrigin='anonymous';
-    t.onerror=()=>setTimeout(()=>tiles.delete(key),8000);
-    // 高解像度衛星写真（Esri World Imagery）
-    t.src='https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/'+z+'/'+ty+'/'+tx;
-    tiles.set(key,t);if(tiles.size>400)tiles.delete(tiles.keys().next().value)}
-  return t.complete&&t.naturalWidth?t:null}
-
-async function scanArea(lat,lon,radiusM){
-  /* 周囲のタイルを複数ズームレベルで非同期プリロード */
-  $('scan-ui').style.display='block';
-  $('scan-st').textContent='📡 エリアスキャン中...';
-  const rad=Math.PI/180,mEq=156543.03392*Math.cos(lat*rad);
-  const zooms=[15,16,17,18];let loaded=0;
-  const allTiles=[];
-  zooms.forEach(z=>{
-    const n=2**z,s=mEq/n*256,cells=Math.ceil(radiusM/s)+2;
-    const wx=(lon+180)/360*n*256,sn=Math.sin(lat*rad),wy=(.5-Math.log((1+sn)/(1-sn))/(4*Math.PI))*n*256;
-    const tx0=Math.floor(wx/256),ty0=Math.floor(wy/256);
-    for(let dy=-cells;dy<=cells;dy++)for(let dx=-cells;dx<=cells;dx++)allTiles.push([z,tx0+dx,ty0+dy])});
-  const total=allTiles.length;
-  const batch=16;
-  for(let i=0;i<allTiles.length;i+=batch){
-    const chunk=allTiles.slice(i,i+batch);
-    await Promise.all(chunk.map(([z,tx,ty])=>new Promise(res=>{
-      let t=tiles.get(z+'/'+tx+'/'+ty);
-      if(t&&t.complete&&t.naturalWidth){loaded++;res();return}
-      if(!t){t=new Image();t.crossOrigin='anonymous';
-        tiles.set(z+'/'+((tx%(2**z)+(2**z))%(2**z))+'/'+ty,t);
-        t.src='https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/'+z+'/'+ty+'/'+((tx%(2**z)+(2**z))%(2**z));
-      }
-      const done=()=>{loaded++;res()};
-      t.onload=done;t.onerror=done;
-      setTimeout(()=>{loaded++;res()},3000)})));
-    const pct=Math.round(loaded/total*100);
-    $('scan-fill').style.width=pct+'%';
-    $('scan-sp').textContent=loaded+'/'+total+' タイル読込中 ('+pct+'%)';
+/* ── AI Object Detection ── */
+async function initAI() {
+  if (typeof cocoSsd === 'undefined') return;
+  try {
+    $('ai-list').textContent = 'モデル読込中...';
+    cocoModel = await cocoSsd.load();
+    $('ai-list').textContent = 'スキャン待機中';
+    if (st.gameActive) startAIDetection();
+  } catch (e) {
+    console.error(e);
+    $('ai-list').textContent = 'AIロード失敗';
   }
-  st.scanArea={lat,lon,rad:radiusM};
-  $('scan-ui').style.display='none';
-  showAlert('🗺️ マップスキャン完了');}
+}
 
-/* ════ MAP DRAW ════ */
-const STUD=1,MAP_MAX=50*STUD;
-const ZS=[8,15,25,40,60];let zi=1;st.bigR=ZS[zi]*STUD;
+function startAIDetection() {
+  if (!cocoModel) return;
+  const video = $('cam');
+  const canvas = $('ai-layer');
+  const ctx = canvas.getContext('2d');
+  
+  const detect = async () => {
+    if (!st.gameActive) { requestAnimationFrame(detect); return; }
+    
+    if (video.readyState === 4) {
+      // Canvasサイズを画面に合わせる
+      if (canvas.width !== innerWidth || canvas.height !== innerHeight) {
+        canvas.width = innerWidth;
+        canvas.height = innerHeight;
+      }
+      
+      // 推論実行
+      const predictions = await cocoModel.detect(video);
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      
+      // object-fit: cover の座標変換
+      const vw = video.videoWidth;
+      const vh = video.videoHeight;
+      const cw = canvas.width;
+      const ch = canvas.height;
+      const vr = vw / vh;
+      const cr = cw / ch;
+      
+      let sx = 1, sy = 1, ox = 0, oy = 0;
+      if (cr > vr) {
+        // 左右がトリミングされる（映像が横長）
+        sx = vw / cw;
+        sy = sx;
+        oy = (vh - ch * sy) / 2;
+      } else {
+        // 上下がトリミングされる（映像が縦長）
+        sy = vh / ch;
+        sx = sy;
+        ox = (vw - cw * sx) / 2;
+      }
+      
+      let listHTML = '';
+      
+      predictions.forEach(pred => {
+        // 座標マッピング
+        const x = (pred.bbox[0] - ox) / sx;
+        const y = (pred.bbox[1] - oy) / sy;
+        const w = pred.bbox[2] / sx;
+        const h = pred.bbox[3] / sy;
+        
+        // 画面外のものはスキップ
+        if (x + w < 0 || x > cw || y + h < 0 || y > ch) return;
+        
+        // 描画設定
+        const isPerson = pred.class === 'person';
+        const color = isPerson ? '#ff3333' : '#00ff88';
+        
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 2;
+        ctx.strokeRect(x, y, w, h);
+        
+        // ラベル背景
+        ctx.fillStyle = isPerson ? 'rgba(255, 50, 50, 0.7)' : 'rgba(0, 255, 136, 0.7)';
+        const label = `${pred.class.toUpperCase()} ${Math.round(pred.score * 100)}%`;
+        ctx.font = 'bold 12px Courier New';
+        const textWidth = ctx.measureText(label).width;
+        ctx.fillRect(x, y - 18, textWidth + 8, 18);
+        
+        // ラベルテキスト
+        ctx.fillStyle = '#fff';
+        ctx.fillText(label, x + 4, y - 5);
+        
+        // リスト作成
+        listHTML += `<div><span style="color:${color}">■</span> ${pred.class}: ${Math.round(pred.score * 100)}%</div>`;
+      });
+      
+      $('ai-list').innerHTML = listHTML || '物体なし';
+    }
+    
+    // 負荷軽減のため次の推論まで少し待つ
+    setTimeout(detect, 250);
+  };
+  
+  detect();
+}
 
-function drawMap(cv,R){
-  R=Math.min(R,MAP_MAX);
-  const ctx=cv.getContext('2d'),W=cv.width,c=W/2,k=c/R,mini=cv.id==='mc',u=W/(mini?110:360);
-  const rad=Math.PI/180;
-  ctx.clearRect(0,0,W,W);ctx.save();
-  if(mini){ctx.beginPath();ctx.arc(c,c,c,0,6.283);ctx.clip()}
-  ctx.fillStyle='#0d1319';ctx.fillRect(0,0,W,W);
-  const lat=st.myPos.lat,lon=st.myPos.lon;
-  const mEq=156543.03392*Math.cos(lat*rad);
-  /* ズームレベルを精度に応じて選択 */
-  const z=Math.max(10,Math.min(19,Math.ceil(Math.log2(mEq/(R/c)))));
-  const n=2**z,sn=Math.sin(lat*rad);
-  const wx=(lon+180)/360*n*256,wy=(.5-Math.log((1+sn)/(1-sn))/(4*Math.PI))*n*256,s=k*mEq/n,e=c*1.6/s;
-  /* 衛星タイル描画 */
-  ctx.save();ctx.translate(c,c);ctx.rotate(-st.hd*rad);ctx.scale(s,s);
-  for(let ty2=Math.floor((wy-e)/256);ty2<=Math.ceil((wy+e)/256);ty2++)
-    for(let tx2=Math.floor((wx-e)/256);tx2<=Math.ceil((wx+e)/256);tx2++){
-      const im=tileImg(z,tx2,ty2);
-      if(im)ctx.drawImage(im,tx2*256-wx,ty2*256-wy,256.5,256.5)}
-  ctx.restore();
-  /* 範囲インジケーター */
-  ctx.strokeStyle='rgba(255,255,255,.35)';ctx.lineWidth=u;
-  [.5,1].forEach(f=>{ctx.beginPath();ctx.arc(c,c,c*f*.97,0,6.283);ctx.stroke()});
-  /* 距離ラベル */
-  const lab=(t,X,Y,col,sz)=>{ctx.font='bold '+(sz||8*u)+'px Courier New';ctx.textAlign='center';ctx.lineWidth=2.5*u;
-    ctx.strokeStyle='rgba(0,0,0,.8)';ctx.strokeText(t,X,Y);ctx.fillStyle=col;ctx.fillText(t,X,Y)};
-  lab(Math.round(R/2)+'m',c,c-c*.49-2*u,'#fff');
-  /* 北マーク */
-  const na=-st.hd*rad;lab('N',c+Math.sin(na)*(c-9*u),c-Math.cos(na)*(c-9*u)+3*u,'#ff7755');
-  /* GPS精度円 */
-  if(st.src==='GPS'&&st.acc>0){
-    ctx.beginPath();ctx.arc(c,c,Math.min(st.acc*k,c*.9),0,6.283);
-    ctx.fillStyle='rgba(60,140,255,.12)';ctx.fill();
-    ctx.strokeStyle='rgba(60,140,255,.5)';ctx.lineWidth=u*.8;ctx.stroke()}
-  /* プレイヤーマーカー */
-  st.players.forEach(p=>{
-    if(p.hp<=0)return;
-    const dN=(p.lat-st.myPos.lat)*111000,dE=(p.lon-st.myPos.lon)*111000*Math.cos(lat*rad);
-    const dist=Math.hypot(dE,dN),f=Math.atan2(dE,dN)-st.hd*rad;
-    let px=dist*Math.sin(f),py=-dist*Math.cos(f),edge=dist>R*.93;
-    if(edge){const q=R*.93/dist;px*=q;py*=q}
-    const X=c+px*k,Y=c+py*k,col=p.team==='red'?'#ff4444':'#33aaff';
-    ctx.globalAlpha=edge?.5:1;
-    /* チームカラーの円 */
-    ctx.beginPath();ctx.arc(X,Y,(mini?4:6)*u,0,6.283);
-    ctx.fillStyle=col;ctx.fill();ctx.strokeStyle='#fff';ctx.lineWidth=1.5*u;ctx.stroke();
-    /* ミニマップ以外ではHPバーと名前 */
-    if(!mini){
-      lab(p.name+' '+Math.round(dist)+'m',X,Y-9*u,col);
-      /* HPバー */
-      const bw=18*u,bh=3*u,bx=X-bw/2,by=Y+7*u;
-      ctx.fillStyle='rgba(0,0,0,.5)';ctx.fillRect(bx,by,bw,bh);
-      ctx.fillStyle=p.hp>50?'#00ff88':p.hp>25?'#ffaa00':'#ff3333';
-      ctx.fillRect(bx,by,bw*p.hp/100,bh)}
-    ctx.globalAlpha=1});
-  /* 自分（三角形 + 精度円） */
-  ctx.translate(c,c);
-  ctx.beginPath();ctx.moveTo(0,-14*u);ctx.lineTo(5.5*u,-6*u);ctx.lineTo(-5.5*u,-6*u);ctx.closePath();
-  ctx.fillStyle=st.myTeam==='red'?'#ff7755':'#55bbff';ctx.fill();
-  ctx.beginPath();ctx.arc(0,0,6.5*u,0,6.283);ctx.fillStyle='#2f7dff';ctx.fill();
-  ctx.strokeStyle='#fff';ctx.lineWidth=2*u;ctx.stroke();
-  ctx.translate(-c,-c);
-  /* Esriクレジット */
-  ctx.font=(mini?5:7)*u+'px Arial';
-  lab('© Esri',c,W-(mini?8:5)*u,'#ccc');
-  if(!mini){ctx.textAlign='left';lab('RANGE '+Math.round(R)+'m',8*u,16*u,'#fff')}
-  ctx.restore();}
+/* ── Scanning ── */
+function scanArea() {
+  if(!st.gameActive) return;
+  $('scan').classList.add('on');
+  showAlert('📡 周囲をスキャン中...');
+  
+  const types = ['loot', 'loot', 'wall'];
+  for(let i=0; i<4; i++) {
+    const ang = Math.random() * Math.PI * 2;
+    const dist = 10 + Math.random() * 30;
+    const lat = st.myPos.lat + (Math.cos(ang) * dist) / 111000;
+    const lon = st.myPos.lon + (Math.sin(ang) * dist) / (111000 * Math.cos(st.myPos.lat * Math.PI/180));
+    
+    const type = types[Math.floor(Math.random() * types.length)];
+    st.objects.push({
+      id: 'obj_' + Date.now() + '_' + i,
+      type: type,
+      lat: lat,
+      lon: lon,
+      active: true
+    });
+  }
+  
+  setTimeout(() => {
+    $('scan').classList.remove('on');
+    showAlert('✅ スキャン完了');
+  }, 1500);
+}
 
-function mDist(a,b,c,d){const R=6371000,p=Math.PI/180,dL=(c-a)*p,dO=(d-b)*p;
-  const k=Math.sin(dL/2)**2+Math.cos(a*p)*Math.cos(c*p)*Math.sin(dO/2)**2;return R*2*Math.atan2(Math.sqrt(k),Math.sqrt(1-k))}
-function bearing(a,b,c,d){const p=Math.PI/180,dO=(d-b)*p,y=Math.sin(dO)*Math.cos(c*p),x=Math.cos(a*p)*Math.sin(c*p)-Math.sin(a*p)*Math.cos(c*p)*Math.cos(dO);
-  return(Math.atan2(y,x)/p+360)%360}
+/* ── bots ── */
+function spawnBots(){st.players=[];for(let i=0;i<st.botCount;i++){const a=i/st.botCount*Math.PI*2,d=.0003+Math.random()*.0004;
+  st.players.push({id:'bot'+i,name:BOT_NAMES[i%8],team:BOT_TEAMS[i%8],lat:st.myPos.lat+Math.sin(a)*d,lon:st.myPos.lon+Math.cos(a)*d,hp:100,isBot:true,angle:Math.random()*6.28,atk:3+Math.random()*4})}}
+function tickBots(){if(!st.gameActive)return;st.players.forEach(p=>{if(!p.isBot||p.hp<=0)return;
+  p.angle+=(Math.random()-.5)*.9;p.atk-=.5;
+  if(p.atk<=0&&p.team!==st.myTeam&&!st.dead){const d=mDist(st.myPos.lat,st.myPos.lon,p.lat,p.lon);
+    if(d<200)takeDamage(Math.max(3,Math.round((8+Math.random()*8)*Math.max(.4,1-d/250))),p);p.atk=3+Math.random()*5}})}
 
-/* ════ BOTS ════ */
-function spawnBots(){st.players=[];
-  for(let i=0;i<st.botCount;i++){const a=i/st.botCount*Math.PI*2,d=.0003+Math.random()*.0004;
-    st.players.push({id:'bot'+i,name:BOT_NAMES[i%8],team:BOT_TEAMS[i%8],
-      lat:st.myPos.lat+Math.sin(a)*d,lon:st.myPos.lon+Math.cos(a)*d,
-      hp:100,isBot:true,angle:Math.random()*6.28,atk:3+Math.random()*4,
-      /* ボットAI状態 */ aiState:'wander',target:null,attackCooldown:0})}}
-function tickBots(){if(!st.gameActive)return;
-  st.players.forEach(p=>{if(!p.isBot||p.hp<=0)return;
-    const dist=mDist(st.myPos.lat,st.myPos.lon,p.lat,p.lon);
-    /* AI状態機械 */
-    if(dist<80&&p.team!==st.myTeam)p.aiState='pursue';
-    else if(dist>200||p.team===st.myTeam)p.aiState='wander';
-    if(p.aiState==='pursue'){
-      /* 自分に向けて移動 */
-      const brg=bearing(p.lat,p.lon,st.myPos.lat,st.myPos.lon)*Math.PI/180;
-      p.angle=brg;const spd=2.4/111000*.5/1000;
-      p.lat+=Math.cos(brg)*spd;p.lon+=Math.sin(brg)*spd/Math.cos(p.lat*Math.PI/180)}
-    else{p.angle+=(Math.random()-.5)*.9;
-      const s=1.6/111000*.5/1000;p.lat+=Math.sin(p.angle)*s;p.lon+=Math.cos(p.angle)*s}
-    p.atk-=.5;
-    if(p.atk<=0&&p.team!==st.myTeam&&!st.dead){
-      if(dist<200)takeDamage(Math.max(3,Math.round((8+Math.random()*8)*Math.max(.4,1-dist/250))),p);
-      p.atk=3+Math.random()*5}})}
-
-/* ════ ONLINE (PeerJS) ════ */
-function loadPeer(){return new Promise((ok,ng)=>{if(window.Peer)return ok();
-  const s=document.createElement('script');
-  s.src='https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js';
-  s.onload=ok;s.onerror=ng;document.head.appendChild(s)})}
+/* ── online ── */
+function loadPeer(){return new Promise((ok,ng)=>{if(window.Peer)return ok();const s=document.createElement('script');
+  s.src='https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js';s.onload=ok;s.onerror=ng;document.head.appendChild(s)})}
 async function netGo(){
   net.name=($('pname').value.trim()||'Player').slice(0,10);
   const host=($('net-go').dataset.t||'host')==='host';
   if(!host){const c=$('jcode').value.trim().toUpperCase();if(c.length!==6){setNet('6文字のコードを入力してください');return}st.roomCode=c}
   setNet('接続中...');$('net-go').disabled=true;
   try{await loadPeer()}catch(e){setNet('通信ライブラリを読み込めません');$('net-go').disabled=false;return}
-  host?hostRoom():joinRoom()}
-function hostRoom(){const p=net.peer=new Peer('arsh-'+st.roomCode);net.host=true;net.myId='host';st.myTeam='red';st.players=[];
+  host?hostRoom():joinRoom();
+}
+function hostRoom(){
+  const p=net.peer=new Peer('arsh-'+st.roomCode);net.host=true;net.myId='host';st.myTeam='red';st.players=[];
   p.on('error',e=>{setNet(e.type==='unavailable-id'?'コードが使用中です':'エラー: '+e.type);$('net-go').disabled=false});
   p.on('open',()=>openLobby());
-  p.on('connection',c=>{c.on('data',m=>hostRecv(c,m));c.on('close',()=>{delete net.conns[c.peer];st.players=st.players.filter(x=>x.id!==c.peer);lobbyPush()})})}
+  p.on('connection',c=>{
+    c.on('data',m=>hostRecv(c,m));
+    c.on('close',()=>{delete net.conns[c.peer];st.players=st.players.filter(x=>x.id!==c.peer);lobbyPush()});
+  });
+}
 function hostRecv(c,m){const now=performance.now();let p=st.players.find(x=>x.id===c.peer);
-  if(m.t==='join'){if(st.players.length+1>=st.maxP||st.gameActive){c.send({t:'full'});setTimeout(()=>c.close(),300);return}
+  if(m.t==='join'){
+    if(st.players.length+1>=st.maxP||st.gameActive){c.send({t:'full'});setTimeout(()=>c.close(),300);return}
     const r=st.players.filter(x=>x.team==='red').length+1,b=st.players.length+1-r,team=r<=b?'red':'blue';
-    st.players.push({id:c.peer,name:esc(String(m.name||'Player').slice(0,10)),team,lat:st.myPos.lat,lon:st.myPos.lon,hp:100});
-    net.conns[c.peer]=c;c.send({t:'welcome',team,time:st.time,max:st.maxP});lobbyPush()}
-  else if(!p)return;
+    st.players.push({id:c.peer,name:esc(String(m.name||'Player').slice(0,10)),team,lat:st.myPos.lat,lon:st.myPos.lon,hp:100,tlat:st.myPos.lat,tlon:st.myPos.lon});
+    net.conns[c.peer]=c;c.send({t:'welcome',team,time:st.time,max:st.maxP});lobbyPush();
+  }else if(!p)return;
   else if(m.t==='pos'){p.tlat=m.la;p.tlon=m.lo;if(!p.lock||now>p.lock)p.hp=m.hp}
   else if(m.t==='hit')hostHit(m,c.peer);
-  else if(m.t==='kill')scoreKill(m.by)}
+  else if(m.t==='kill')scoreKill(m.by);
+}
 function hostHit(m,from){if(m.to==='host')takeDamage(m.d,{lat:m.fl,lon:m.fo,id:from});
   else net.conns[m.to]&&net.conns[m.to].send({t:'dmg',d:m.d,fl:m.fl,fo:m.fo,from})}
 function scoreKill(id){const k=id==='host'?{team:st.myTeam}:st.players.find(p=>p.id===id);
   const t=k?k.team:(st.myTeam==='red'?'blue':'red');st.score[t]++;updateScore()}
-function joinRoom(){net.joined=false;const p=net.peer=new Peer();
+function joinRoom(){
+  net.joined=false;const p=net.peer=new Peer();
   p.on('error',e=>{setNet(e.type==='peer-unavailable'?'ルームが見つかりません':'エラー: '+e.type);$('net-go').disabled=false});
   p.on('open',id=>{net.myId=id;const c=net.hostConn=p.connect('arsh-'+st.roomCode,{serialization:'json',reliable:true});
     c.on('open',()=>c.send({t:'join',name:net.name}));c.on('data',clientRecv);
     c.on('close',()=>{if(st.gameActive){endGame();showAlert('ホストが切断しました','ha')}else if(!net.joined)return;else location.reload()});
-    setTimeout(()=>{if(!net.joined){setNet('ルームが見つかりません');$('net-go').disabled=false}},9000)})}
+    setTimeout(()=>{if(!net.joined){setNet('ルームが見つかりません');$('net-go').disabled=false}},9000)});
+}
 function clientRecv(m){const now=performance.now();
   if(m.t==='welcome'){net.joined=true;st.myTeam=m.team;st.time=m.time;st.maxP=m.max;openLobby()}
   else if(m.t==='full'){setNet('満員、または開始済みです');$('net-go').disabled=false}
@@ -656,108 +531,85 @@ function clientRecv(m){const now=performance.now();
   else if(m.t==='dmg')takeDamage(m.d,{lat:m.fl,lon:m.fo,id:m.from});
   else if(m.t==='s'){const ids={};
     m.p.forEach(q=>{if(q.id===net.myId)return;ids[q.id]=1;let p=st.players.find(x=>x.id===q.id);
-      if(!p){p={id:q.id,lat:q.la,lon:q.lo,hp:100};st.players.push(p)}
+      if(!p){p={id:q.id,lat:q.la,lon:q.lo,hp:100,tlat:q.la,tlon:q.lo};st.players.push(p)}
       p.name=q.n;p.team=q.tm;p.tlat=q.la;p.tlon=q.lo;if(!p.lock||now>p.lock)p.hp=q.hp});
-    st.players=st.players.filter(p=>ids[p.id]);st.score=m.sc;updateScore();if(Math.abs(st.timeLeft-m.tl)>1)st.timeLeft=m.tl}}
+    st.players=st.players.filter(p=>ids[p.id]);st.score=m.sc;updateScore();
+    if(Math.abs(st.timeLeft-m.tl)>1)st.timeLeft=m.tl}
+}
 function lobbyData(){return[{id:'host',name:net.name,team:'red'}].concat(st.players.map(p=>({id:p.id,name:p.name,team:p.team})))}
 function lobbyShow(l){$('lob').innerHTML=l.map(x=>`<div class="${x.team}">${x.id==='host'?'👑 ':'● '}${esc(x.name)}</div>`).join('');$('lcount').textContent='参加者 '+l.length+'/'+st.maxP}
 function lobbyPush(){const l=lobbyData();lobbyShow(l);Object.values(net.conns).forEach(c=>c.send({t:'lobby',l,max:st.maxP}))}
 function openLobby(){show('s-lobby');$('lcode').textContent=st.roomCode;$('rid').textContent=st.roomCode;
-  $('lob-start').style.display=net.host?'block':'none';
-  $('lob-wait').textContent=net.host?'コードを友達に伝えて、揃ったら開始':'ホストの開始を待っています...';
+  $('lob-start').style.display=net.host?'block':'none';$('lob-wait').textContent=net.host?'コードを友達に伝えて、揃ったら開始':'ホストの開始を待っています...';
   if(net.host)lobbyPush()}
 function hostStart(){Object.values(net.conns).forEach(c=>c.send({t:'start',time:st.time}));beginOnline()}
 
-/* ════ GAME START ════ */
+/* ── game start / end ── */
 let last=0;
-function beginBot(){st.mode='bot';spawnBots();setBadge('🤖 BOT ×'+st.botCount);$('rid').textContent='BOT';
-  ints.push(setInterval(tickBots,500));runGame()}
+function beginBot(){st.mode='bot';spawnBots();setBadge('🤖 BOT ×'+st.botCount);$('rid').textContent='BOT';ints.push(setInterval(tickBots,500));runGame()}
 function beginOnline(){setBadge('🌐 ONLINE');
   ints.push(setInterval(()=>{if(!st.gameActive)return;
     if(net.host){const p=[{id:'host',n:net.name,tm:st.myTeam,la:st.myPos.lat,lo:st.myPos.lon,hp:st.health}]
-        .concat(st.players.map(x=>({id:x.id,n:x.name,tm:x.team,la:x.lat,lo:x.lon,hp:x.hp})));
-      Object.values(net.conns).forEach(c=>c.send({t:'s',p,sc:st.score,tl:st.timeLeft}))}
+      .concat(st.players.map(x=>({id:x.id,n:x.name,tm:x.team,la:x.lat,lo:x.lon,hp:x.hp})));
+      const m={t:'s',p,sc:st.score,tl:st.timeLeft};Object.values(net.conns).forEach(c=>c.send(m))}
     else net.hostConn.send({t:'pos',la:st.myPos.lat,lo:st.myPos.lon,hp:st.health})},150));
   runGame()}
-function setBadge(t){$('mode-badge').textContent=t}
-async function runGame(){
+function setBadge(t){const m=$('mode-badge');m.textContent=t}
+function runGame(){
   document.querySelectorAll('.screen').forEach(s=>s.classList.add('hidden'));
-  /* エリアスキャン（バックグラウンドで） */
-  scanArea(st.myPos.lat,st.myPos.lon,100);
-  st.gameActive=true;st.timeLeft=st.mode==='bot'?300:st.time*60;
+  st.gameActive=true;st.timeLeft=st.time*60;if(st.mode==='bot')st.timeLeft=300;
   if(cams.length>1)$('camsw').style.display='block';
+  $('ai-panel').style.display='block';
+  if(cocoModel) startAIDetection();
   ints.push(setInterval(()=>{if(!st.gameActive)return;st.timeLeft--;
     $('timer').textContent=String(Math.floor(st.timeLeft/60)).padStart(2,'0')+':'+String(Math.max(0,st.timeLeft)%60).padStart(2,'0');
     if(st.timeLeft<=30)$('timer').style.color='#ff4444';if(st.timeLeft<=0)endGame()},1000));
-  ints.push(setInterval(()=>{
-    drawMap($('mc'),MAP_MAX);
-    if($('bigmap').classList.contains('open'))drawMap($('bmc'),st.bigR);
-    $('pcnt').textContent=(st.players.length+1)+'/'+(st.mode==='bot'?st.botCount+1:st.maxP)},250));
+  ints.push(setInterval(()=>{drawMap($('mc'),MAP_MAX);if($('bigmap').classList.contains('open'))drawMap($('bmc'),st.bigR);$('pcnt').textContent=(st.players.length+1)+'/'+(st.mode==='bot'?st.botCount+1:st.maxP)},250));
   last=performance.now();requestAnimationFrame(frame);
-  showAlert('⚔ START — TEAM '+st.myTeam.toUpperCase())}
+  showAlert('⚔ START — TEAM '+st.myTeam.toUpperCase());
+}
 function endGame(){st.gameActive=false;ints.forEach(clearInterval);$('timer').textContent='終了';
   const w=st.score.red>st.score.blue?'🔴 RED WIN':st.score.blue>st.score.red?'🔵 BLUE WIN':'⚖ DRAW';
   showAlert(w+'  KD:'+st.kills+'/'+st.deaths);
-  setTimeout(()=>{let rb=$('restart-btn');if(!rb){rb=document.createElement('button');rb.id='restart-btn';
-    rb.style.cssText='position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:35;padding:10px 28px;border:1px solid var(--g);border-radius:4px;background:rgba(0,255,136,.12);color:var(--g);font-family:inherit;font-size:12px;letter-spacing:2px;cursor:pointer;';
-    rb.textContent='🔄 もう一度';rb.onclick=()=>{rb.remove();location.reload()};document.body.appendChild(rb)}},2200)}
+  $('ai-panel').style.display='none';$('ai-layer').getContext('2d').clearRect(0,0,innerWidth,innerHeight);
+}
 
-/* ════ 3D GUN (Three.js + AK-47 GLB) ════ */
+/* ── 3D weapon ── */
 const G={aimUntil:0,reloadStart:-9e9,aim(){G.aimUntil=performance.now()+1400},kick(){},hit(){},update(){}};
 function initGun(){
   const T=THREE,r=new T.WebGLRenderer({canvas:$('gl'),alpha:true,antialias:true}),TH=Math.tan(25*Math.PI/180);
-  r.setPixelRatio(Math.min(2,devicePixelRatio||1));r.outputEncoding=T.sRGBEncoding;
-  r.toneMapping=T.ACESFilmicToneMapping;r.toneMappingExposure=1.1;
+  r.setPixelRatio(Math.min(2,devicePixelRatio||1));
   const sc=new T.Scene(),cam=new T.PerspectiveCamera(50,1,.02,10),gun=new T.Group();gun.rotation.order='YXZ';sc.add(gun);
-  sc.add(new T.HemisphereLight(0xcfe3ff,0x303030,1.4));
-  const dl=new T.DirectionalLight(0xffffff,1.2);dl.position.set(1,2,1.5);sc.add(dl);
+  sc.add(new T.HemisphereLight(0xcfe3ff,0x303030,1.3));const dl=new T.DirectionalLight(0xffffff,1.1);dl.position.set(1,2,1.5);sc.add(dl);
   const fl=new T.PointLight(0xffa030,0,2);fl.position.set(0,0,-.9);gun.add(fl);
-  /* フォールバック用プリミティブモデル */
-  const fb=new T.Group();gun.add(fb);
   const M=(c,m,q,o)=>new T.MeshStandardMaterial(Object.assign({color:c,metalness:m,roughness:q},o||{}));
   const steel=M(0x2c323a,.85,.35),dark=M(0x121417,.6,.5),poly=M(0x1e2125,.1,.75),tan=M(0x5b5741,.1,.8);
+  const fb=new T.Group();gun.add(fb);
   const B=(w,h,d,x,y,z,m,rx)=>{const o=new T.Mesh(new T.BoxGeometry(w,h,d),m);o.position.set(x,y,z);if(rx)o.rotation.x=rx;fb.add(o);return o};
   const C=(rr,l,x,y,z,m)=>{const o=new T.Mesh(new T.CylinderGeometry(rr,rr,l,14),m);o.rotation.x=Math.PI/2;o.position.set(x,y,z);fb.add(o)};
   B(.062,.09,.3,0,0,0,steel);B(.05,.016,.3,0,.052,0,dark);B(.03,.012,.55,0,.066,-.1,dark);
   B(.07,.075,.3,0,-.004,-.3,poly);B(.074,.01,.3,0,.04,-.3,dark);C(.011,.34,0,.002,-.62,steel);
   B(.025,.03,.04,0,.025,-.5,dark);C(.017,.07,0,.002,-.8,dark);B(.006,.04,.006,0,.085,-.74,dark);
-  B(.045,.05,.09,0,.095,-.04,dark);
-  B(.036,.034,.004,0,.098,-.088,M(0x330000,0,.1,{emissive:0xff2222,emissiveIntensity:.6,transparent:true,opacity:.7}));
+  B(.045,.05,.09,0,.095,-.04,dark);B(.036,.034,.004,0,.098,-.088,M(0x330000,0,.1,{emissive:0xff2222,emissiveIntensity:.6,transparent:true,opacity:.7}));
   B(.03,.03,.01,0,.08,.12,dark);B(.05,.085,.22,0,-.012,.26,poly);B(.052,.095,.02,0,-.012,.375,dark);
   B(.04,.11,.055,0,-.095,.09,tan,.4);B(.01,.03,.1,0,-.058,-.02,dark);
   const mag=B(.04,.16,.065,0,-.12,-.075,steel,-.18);
-  /* マズルフラッシュスプライト */
-  const cv2=document.createElement('canvas');cv2.width=cv2.height=64;const g=cv2.getContext('2d');
-  const gr=g.createRadialGradient(32,32,0,32,32,32);
-  gr.addColorStop(0,'#fff');gr.addColorStop(.3,'#ffd36a');gr.addColorStop(.6,'rgba(255,120,0,.5)');gr.addColorStop(1,'rgba(255,100,0,0)');
-  g.fillStyle=gr;g.fillRect(0,0,64,64);
-  const fs=new T.Sprite(new T.SpriteMaterial({map:new T.CanvasTexture(cv2),blending:T.AdditiveBlending,transparent:true,depthWrite:false,opacity:0}));
-  fs.position.set(0,0,-.86);fs.scale.setScalar(.3);gun.add(fs);
+  const cv=document.createElement('canvas');cv.width=cv.height=64;const g=cv.getContext('2d'),gr=g.createRadialGradient(32,32,0,32,32,32);
+  gr.addColorStop(0,'#fff');gr.addColorStop(.3,'#ffd36a');gr.addColorStop(.6,'rgba(255,120,0,.5)');gr.addColorStop(1,'rgba(255,100,0,0)');g.fillStyle=gr;g.fillRect(0,0,64,64);
+  const fs=new T.Sprite(new T.SpriteMaterial({map:new T.CanvasTexture(cv),blending:T.AdditiveBlending,transparent:true,depthWrite:false,opacity:0}));fs.position.set(0,0,-.86);fs.scale.setScalar(.3);gun.add(fs);
   const LEN=1.1,fit=()=>gun.scale.setScalar(Math.max(.15,Math.min(1,.85*TH*cam.aspect/(.75*LEN))));
-  const rs=()=>{r.setSize(innerWidth,innerHeight,false);cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix();fit()};
-  rs();addEventListener('resize',rs);addEventListener('orientationchange',()=>setTimeout(rs,300));
-  /* 環境マップ */
-  {const pm=new T.PMREMGenerator(r),es=new T.Scene();
-   es.add(new T.Mesh(new T.SphereGeometry(5,16,8),new T.MeshBasicMaterial({color:0x7d8a99,side:T.BackSide})));
+  const rs=()=>{r.setSize(innerWidth,innerHeight,false);cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix();fit()};rs();addEventListener('resize',rs);addEventListener('orientationchange',()=>setTimeout(rs,300));
+  r.outputEncoding=T.sRGBEncoding;r.toneMapping=T.ACESFilmicToneMapping;r.toneMappingExposure=1.05;
+  {const pm=new T.PMREMGenerator(r),es=new T.Scene();es.add(new T.Mesh(new T.SphereGeometry(5,16,8),new T.MeshBasicMaterial({color:0x7d8a99,side:T.BackSide})));
    const lamp=(x,y,z,c,i)=>{const m=new T.Mesh(new T.PlaneGeometry(3,3),new T.MeshBasicMaterial({color:new T.Color(c).multiplyScalar(i),side:T.DoubleSide}));m.position.set(x,y,z);m.lookAt(0,0,0);es.add(m)};
    lamp(0,4,0,0xffffff,5);lamp(3,1,2,0xffeedd,2.5);lamp(-3,0,-2,0x99bbff,1.5);sc.environment=pm.fromScene(es).texture}
-  /* AK-47 GLB 読み込み */
-  if(T.GLTFLoader){
-    new T.GLTFLoader().load('ak-47.glb',gl=>{
-      const m=gl.scene,b=new T.Box3().setFromObject(m),sz=b.getSize(new T.Vector3());
-      const ct=b.getCenter(new T.Vector3()),kk=LEN/Math.max(sz.x,sz.y,sz.z);
-      m.scale.setScalar(kk);
-      m.position.set(-ct.x*kk,-(b.min.y+.81*sz.y)*kk,-(b.min.z+.674*sz.z)*kk);
-      m.traverse(o=>{if(o.isMesh){o.frustumCulled=false;
-        if(o.material){o.material.metalness=Math.min(1,(o.material.metalness||0)+.2);
-          o.material.roughness=Math.max(0,(o.material.roughness||.5)-.1)}}});
-      gun.add(m);fb.visible=false;fs.position.set(0,0,-.8);showAlert('🔫 AK-47 読込完了')},
-      prog=>{const p=prog.loaded/prog.total*100;if(p>0&&p<100)$('scan-sp').textContent='AK-47 読込中 '+Math.round(p)+'%'},
-      e=>{console.warn(e);showAlert('⚠ ak-47.glb が見つかりません（簡易モデル）')})}
-  /* ポーズ定義 */
+  if(T.GLTFLoader)new T.GLTFLoader().load('ak-47.glb',gl=>{
+    const m=gl.scene,b=new T.Box3().setFromObject(m),sz=b.getSize(new T.Vector3()),ct=b.getCenter(new T.Vector3()),k=LEN/Math.max(sz.x,sz.y,sz.z);
+    m.scale.setScalar(k);m.position.set(-ct.x*k,-(b.min.y+.81*sz.y)*k,-(b.min.z+.674*sz.z)*k);
+    m.traverse(o=>{if(o.isMesh)o.frustumCulled=false});gun.add(m);fb.visible=false;fs.position.set(0,0,-.8);showAlert('🔫 AK-47 読込完了')
+  },null,e=>{console.warn(e);showAlert('⚠ ak-47.glb が見つかりません（簡易モデル）')});
   const PO={aim:{nx:0,ny:-.66,z:-.42,rx:.03,ry:0,rz:0},low:{nx:.38,ny:-.5,z:-.5,rx:-.1,ry:.85,rz:.12},
-    cover:{nx:.12,ny:-.42,z:-.4,rx:1.05,ry:.12,rz:.08},reload:{nx:.25,ny:-.82,z:-.45,rx:-.45,ry:.55,rz:.65},
-    dead:{nx:.5,ny:-1.7,z:-.5,rx:-.5,ry:.9,rz:.3}};
+    cover:{nx:.12,ny:-.42,z:-.4,rx:1.05,ry:.12,rz:.08},reload:{nx:.25,ny:-.82,z:-.45,rx:-.45,ry:.55,rz:.65},dead:{nx:.5,ny:-1.7,z:-.5,rx:-.5,ry:.9,rz:.3}};
   const P=Object.assign({},PO.low),V={nx:0,ny:0,z:0,rx:0,ry:0,rz:0},AX=['nx','ny','z','rx','ry','rz'];let ph=0,fv=0;
   G.kick=()=>{V.z+=.8;V.rx+=2.4;V.ry+=(Math.random()-.5)*1.4;V.ny+=.6;fv=1};
   G.hit=()=>{V.nx+=(Math.random()<.5?-1:1)*2;V.ny-=1.5;V.rz+=(Math.random()-.5)*5};
@@ -766,165 +618,305 @@ function initGun(){
     const a=pn==='aim'?.3:1,w=st.walkI,run=pn==='low'&&w>.7?1:0,tg=Object.assign({},PO[pn]);
     if(w>.03)ph+=dt*(6+w*5);const pc=Math.cos(ph),p2=Math.sin(ph*2),br=Math.sin(t*1.6),sk=Math.min(3,st.shk);
     const n1=Math.sin(t*17)+Math.sin(t*9.3+2),n2=Math.sin(t*13+1)+Math.sin(t*6.1);
-    tg.ny+=p2*.03*w*a+br*.006-st.pitV*.0025;tg.nx+=pc*.035*w*a-st.yawV*.0012+st.roll*(pn==='cover'?.012:.006)+n1*.004*sk;
-    tg.rx+=p2*.04*w*a+br*.006-st.pitV*.004-run*.15;tg.ry+=st.yawV*.0035+pc*.05*w*a+n2*.01*sk+run*.1;tg.rz+=-st.roll*.0085+pc*.05*w*a;
+    tg.ny+=p2*.03*w*a+br*.006-st.pitV*.0025;
+    tg.nx+=pc*.035*w*a-st.yawV*.0012+st.roll*(pn==='cover'?.012:.006)+n1*.004*sk;
+    tg.rx+=p2*.04*w*a+br*.006-st.pitV*.004-run*.15;
+    tg.ry+=st.yawV*.0035+pc*.05*w*a+n2*.01*sk+run*.1;
+    tg.rz+=-st.roll*.0085+pc*.05*w*a;
     const kk=pn==='aim'?160:75,dd=pn==='aim'?15:11;
     AX.forEach(i=>{V[i]+=(tg[i]-P[i])*kk*dt;V[i]*=Math.exp(-dd*dt);P[i]+=V[i]*dt});
     gun.position.set(P.nx*(-P.z)*TH*cam.aspect,P.ny*(-P.z)*TH,P.z);gun.rotation.set(P.rx,P.ry,P.rz);
-    const rt=(n-G.reloadStart)/1800;mag.visible=!(st.reloading&&rt>.3&&rt<.55);
-    mag.position.y=-.12-(st.reloading&&rt>=.55?Math.max(0,.8-rt)*.8:0);
+    const rt=(n-G.reloadStart)/1800;mag.visible=!(st.reloading&&rt>.3&&rt<.55);mag.position.y=-.12-(st.reloading&&rt>=.55?Math.max(0,.8-rt)*.8:0);
     fv=Math.max(0,fv-dt*14);fs.material.opacity=fv;fs.scale.setScalar(.2+Math.random()*.15);fl.intensity=fv*2;
-    r.render(sc,cam)}}
+    r.render(sc,cam)};
+}
 
-/* ════ RENDER LOOP ════ */
+/* ── render loop ── */
 const mk={};
 function frame(t){
   if(!st.gameActive)return;
   const dt=Math.min(.1,(t-last)/1000);last=t;
-  /* 方向スムージング */
+  
+  const dm = mDist(st.myPos.lat, st.myPos.lon, st.targetPos.lat, st.targetPos.lon);
+  if (dm > 0.1) {
+    const k = Math.min(1, dt * 3);
+    st.myPos.lat += (st.targetPos.lat - st.myPos.lat) * k;
+    st.myPos.lon += (st.targetPos.lon - st.myPos.lon) * k;
+  }
+  
+  if (st.trail.length === 0 || mDist(st.trail[st.trail.length-1].lat, st.trail[st.trail.length-1].lon, st.myPos.lat, st.myPos.lon) > 2) {
+    st.trail.push({lat: st.myPos.lat, lon: st.myPos.lon});
+    if (st.trail.length > 50) st.trail.shift();
+  }
+
   st.hd=(st.hd+(((st.heading-st.hd+540)%360)-180)*Math.min(1,dt*10)+360)%360;
-  /* GPS位置スムージング（カルマンフィルター済み値をさらに補間） */
-  if(st.raw){
-    const dm=mDist(st.myPos.lat,st.myPos.lon,st.raw.lat,st.raw.lon);
-    if(dm>50){st.myPos.lat=st.raw.lat;st.myPos.lon=st.raw.lon}  /* 大きなジャンプは即反映 */
-    else if(dm>1){const kk=Math.min(1,dt*3);st.myPos.lat+=(st.raw.lat-st.myPos.lat)*kk;st.myPos.lon+=(st.raw.lon-st.myPos.lon)*kk}}
-  /* プレイヤー補間 */
   st.players.forEach(p=>{
     if(p.isBot){if(p.hp>0){const s=1.6/111000*dt;p.lat+=Math.sin(p.angle)*s;p.lon+=Math.cos(p.angle)*s}}
-    else if(p.tlat!=null){const kk=Math.min(1,dt*8);p.lat+=(p.tlat-p.lat)*kk;p.lon+=(p.tlon-p.lon)*kk}});
-  /* 揺れ計算 */
+    else if(p.tlat!=null && p.tlon!=null){const k=Math.min(1,dt*8);p.lat+=(p.tlat-p.lat)*k;p.lon+=(p.tlon-p.lon)*k}});
   const d2=Math.max(dt,.004),dh=((st.hd-(st.phd??st.hd)+540)%360)-180;st.phd=st.hd;
   st.yawV+=(Math.max(-400,Math.min(400,dh/d2))-st.yawV)*Math.min(1,dt*12);
   st.pitV+=(Math.max(-300,Math.min(300,(st.pitch-(st.ppn??st.pitch))/d2))-st.pitV)*Math.min(1,dt*12);st.ppn=st.pitch;
-  const pp=st.pp||st.myPos;st.spd+=(Math.min(5,mDist(pp.lat,pp.lon,st.myPos.lat,st.myPos.lon)/d2)-st.spd)*Math.min(1,dt*3);
-  st.pp={lat:st.myPos.lat,lon:st.myPos.lon};
+  const pp=st.pp||st.myPos;st.spd+=(Math.min(5,mDist(pp.lat,pp.lon,st.myPos.lat,st.myPos.lon)/d2)-st.spd)*Math.min(1,dt*3);st.pp={lat:st.myPos.lat,lon:st.myPos.lon};
   const w=Math.max(Math.min(1,Math.max(0,(st.shk-.7)/2.2)),Math.min(1,st.spd/1.2),performance.now()-st.keyWalk<350?1:0);
   st.walkI+=(w-st.walkI)*Math.min(1,dt*6);
   G.update(d2,t/1000);
-  renderMarkers();
-  requestAnimationFrame(frame)}
+  renderMarkers();requestAnimationFrame(frame);
+}
 
-/* ════ AR マーカー（DOM プール再利用） ════ */
 function renderMarkers(){
   const W=innerWidth,H=innerHeight,fov=70,seen={};
-  /* ロックオン判定 */
-  let locked=false;
+  
   st.players.forEach(p=>{
     p.sx=null;if(p.hp<=0)return;
     const dist=mDist(st.myPos.lat,st.myPos.lon,p.lat,p.lon);if(dist>400)return;
     const rel=((bearing(st.myPos.lat,st.myPos.lon,p.lat,p.lon)-st.hd+540)%360)-180;
-    if(Math.abs(rel)>fov*1.4)return;
-    p.sx=W/2+rel/fov*W*.56;
-    /* 距離に応じてY座標: 遠いほど画面中央上寄り */
-    p.sy=H*.22+(dist/400)*H*.20;
-    p.dist=dist;seen[p.id]=1;
+    let sx = W/2 + (rel/fov) * W * 0.56;
+    sx = Math.max(30, Math.min(W-30, sx));
+    p.sx = sx;
+    p.sy = H*.28 + Math.min(1, dist/400) * H*.14;
+    p.dist = dist; seen[p.id]=1;
     const en=p.team!==st.myTeam;let e=mk[p.id];
     if(!e){const el=document.createElement('div');el.className=en?'em':'alm';
       el.innerHTML=en?'<div class="edia"></div><div class="elbl"></div><div class="hpb"><i></i></div><div class="edst"></div>':'<div class="atri"></div><div class="albl"></div>';
-      document.body.appendChild(el);
-      e=mk[p.id]={el,l:el.querySelector('.elbl,.albl'),h:el.querySelector('i'),d:el.querySelector('.edst')};
-      e.l.textContent=(p.isBot?'🤖':'')+p.name}
-    /* ロックオン表示 */
-    if(en&&Math.abs(p.sx-W/2)<50&&Math.abs(p.sy-H/2)<60){locked=true}
+      document.body.appendChild(el);e=mk[p.id]={el,l:el.querySelector('.elbl,.albl'),h:el.querySelector('i'),d:el.querySelector('.edst')};
+      e.l.textContent=(p.isBot?'🤖':'')+(p.name||'Enemy')}
     e.el.style.transform='translate3d('+p.sx+'px,'+p.sy+'px,0) translate(-50%,-50%)';
-    e.el.style.display='';
-    if(e.h)e.h.style.width=Math.max(0,p.hp)+'%';
-    if(e.d)e.d.textContent=Math.round(dist)+'m'});
-  for(const id in mk)if(!seen[id])mk[id].el.style.display='none';
-  /* クロスヘアロックオン表示 */
-  $('xh').classList.toggle('lock',locked)}
+    if(e.h)e.h.style.width=p.hp+'%';if(e.d)e.d.textContent=Math.round(dist)+'m';
+  });
 
-/* ════ COMBAT ════ */
-const dmgScale=(d,h)=>Math.round(34*Math.max(.35,1-d/500)*(h?2:1));
-let lastShot=0,lastLowHP=0,isDead=false;
+  st.objects.forEach(o => {
+    if(!o.active) return;
+    const dist = mDist(st.myPos.lat, st.myPos.lon, o.lat, o.lon);
+    if(dist > 100) return;
+    const rel = ((bearing(st.myPos.lat, st.myPos.lon, o.lat, o.lon) - st.hd + 540) % 360) - 180;
+    let sx = W/2 + (rel/fov) * W * 0.56;
+    sx = Math.max(30, Math.min(W-30, sx));
+    const sy = H*.28 + Math.min(1, dist/100) * H*.4;
+    
+    seen[o.id] = 1;
+    let e = mk[o.id];
+    if(!e) {
+      const el = document.createElement('div');
+      el.className = 'obj ' + o.type;
+      el.textContent = o.type === 'loot' ? '📦' : '🧱';
+      document.body.appendChild(el);
+      e = mk[o.id] = {el};
+    }
+    e.el.style.transform = `translate3d(${sx}px, ${sy}px, 0) translate(-50%, -50%) scale(${Math.max(0.5, 1 - dist/150)})`;
+  });
+
+  for(const id in mk)if(!seen[id]){mk[id].el.remove();delete mk[id]}
+}
+
+/* ── map ── */
+const STUD=1;
+const MAP_MAX=100*STUD;
+const tiles=new Map();
+function tileImg(z,tx,ty){const n=2**z;tx=((tx%n)+n)%n;if(ty<0||ty>=n)return null;const key=z+'/'+tx+'/'+ty;let t=tiles.get(key);
+  if(!t){t=new Image();t.onerror=()=>setTimeout(()=>tiles.delete(key),8000);
+    t.src='https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/'+z+'/'+ty+'/'+tx;tiles.set(key,t);
+    if(tiles.size>260)tiles.delete(tiles.keys().next().value)}
+  return t.complete&&t.naturalWidth?t:null}
+
+function drawMap(cv,R){
+  R=Math.min(R,MAP_MAX);
+  const x=cv.getContext('2d'),W=cv.width,c=W/2,k=c/R,mini=cv.id==='mc',u=W/(mini?110:360),rad=Math.PI/180;
+  x.clearRect(0,0,W,W);x.save();if(mini){x.beginPath();x.arc(c,c,c,0,6.283);x.clip()}
+  
+  x.fillStyle='#0d1319';x.fillRect(0,0,W,W);
+  
+  const lat=st.myPos.lat,lon=st.myPos.lon,mEq=156543.03392*Math.cos(lat*rad);
+  const z=Math.max(10,Math.min(19,Math.ceil(Math.log2(mEq/(R/c))))),n=2**z,sn=Math.sin(lat*rad);
+  const wx=(lon+180)/360*n*256,wy=(.5-Math.log((1+sn)/(1-sn))/(4*Math.PI))*n*256,s=k*mEq/n,e=c*1.45/s;
+  
+  x.save();x.translate(c,c);x.rotate(-st.hd*rad);x.scale(s,s);
+  for(let ty=Math.floor((wy-e)/256);ty<=Math.floor((wy+e)/256);ty++)for(let tx=Math.floor((wx-e)/256);tx<=Math.floor((wx+e)/256);tx++){
+    const im=tileImg(z,tx,ty);
+    if(im) x.drawImage(im,tx*256-wx,ty*256-wy,256.7,256.7);
+  }
+  x.restore();
+  
+  if(st.trail.length > 1) {
+    x.beginPath();
+    x.moveTo(c, c);
+    st.trail.forEach(p => {
+      const dN=(p.lat-st.myPos.lat)*111000, dE=(p.lon-st.myPos.lon)*111000*Math.cos(st.myPos.lat*rad);
+      const dist=Math.hypot(dE,dN), f=Math.atan2(dE,dN)-st.hd*rad;
+      const X=c + dist*Math.sin(f)*k, Y=c - dist*Math.cos(f)*k;
+      x.lineTo(X, Y);
+    });
+    x.strokeStyle = 'rgba(0, 255, 136, 0.4)';
+    x.lineWidth = 3*u;
+    x.stroke();
+  }
+
+  if(st.src==='GPS'&&st.acc>0){
+    x.beginPath();x.arc(c,c,Math.min(st.acc*k,c),0,6.283);
+    x.fillStyle='rgba(60,140,255,.18)';x.fill();
+    x.strokeStyle='rgba(60,140,255,.55)';x.lineWidth=u;x.stroke();
+  }
+
+  x.strokeStyle='rgba(255,255,255,.1)';x.lineWidth=1;
+  const step = 10 * k;
+  for(let i=-c; i<c; i+=step) {
+    x.beginPath();x.moveTo(c+i, 0);x.lineTo(c+i, W);x.stroke();
+    x.beginPath();x.moveTo(0, c+i);x.lineTo(W, c+i);x.stroke();
+  }
+
+  st.players.forEach(p=>{if(p.hp<=0)return;
+    const dN=(p.lat-st.myPos.lat)*111000,dE=(p.lon-st.myPos.lon)*111000*Math.cos(st.myPos.lat*rad),dist=Math.hypot(dE,dN),f=Math.atan2(dE,dN)-st.hd*rad;
+    let px=dist*Math.sin(f),py=-dist*Math.cos(f),edge=dist>R*.94;if(edge){const q=R*.94/dist;px*=q;py*=q}
+    const X=c+px*k,Y=c+py*k,col=p.team==='red'?'#ff4444':'#33aaff';
+    x.globalAlpha=edge?.6:1;x.beginPath();x.arc(X,Y,(mini?4:6)*u,0,6.283);x.fillStyle=col;x.fill();x.strokeStyle='#fff';x.lineWidth=1.5*u;x.stroke();
+    x.globalAlpha=1;
+  });
+
+  st.objects.forEach(o => {
+    if(!o.active) return;
+    const dN=(o.lat-st.myPos.lat)*111000,dE=(o.lon-st.myPos.lon)*111000*Math.cos(st.myPos.lat*rad),dist=Math.hypot(dE,dN),f=Math.atan2(dE,dN)-st.hd*rad;
+    if(dist > R) return;
+    const X=c+dist*Math.sin(f)*k, Y=c-dist*Math.cos(f)*k;
+    x.font = `${(mini?8:12)*u}px Arial`;
+    x.textAlign = 'center';
+    x.textBaseline = 'middle';
+    x.fillText(o.type === 'loot' ? '📦' : '🧱', X, Y);
+  });
+
+  x.translate(c,c);
+  x.beginPath();x.moveTo(0,-16*u);x.lineTo(6*u,-6*u);x.lineTo(-6*u,-6*u);x.closePath();x.fillStyle='#00ff88';x.fill();
+  x.beginPath();x.arc(0,0,7*u,0,6.283);x.fillStyle='#004422';x.fill();x.strokeStyle='#00ff88';x.lineWidth=2.5*u;x.stroke();
+  x.translate(-c,-c);
+
+  x.font='bold '+8*u+'px Courier New';x.textAlign='center';
+  x.fillStyle='#fff';
+  x.fillText(Math.round(R/STUD)+'m', c, c-c*.49-2*u);
+  
+  x.restore();
+}
+function mDist(a,b,c,d){const R=6371000,p=Math.PI/180,dL=(c-a)*p,dO=(d-b)*p;
+  const k=Math.sin(dL/2)**2+Math.cos(a*p)*Math.cos(c*p)*Math.sin(dO/2)**2;return R*2*Math.atan2(Math.sqrt(k),Math.sqrt(1-k))}
+function bearing(a,b,c,d){const p=Math.PI/180,dO=(d-b)*p,y=Math.sin(dO)*Math.cos(c*p),x=Math.cos(a*p)*Math.sin(c*p)-Math.sin(a*p)*Math.cos(c*p)*Math.cos(dO);
+  return(Math.atan2(y,x)/p+360)%360}
+
+/* ── combat ── */
+const dmgScale=(dist,head)=>Math.round(34*Math.max(.35,1-dist/500)*(head?2:1));
+let lastShot=0;
+
+function isBlockedByWall(targetLat, targetLon) {
+  const dist = mDist(st.myPos.lat, st.myPos.lon, targetLat, targetLon);
+  const brg = bearing(st.myPos.lat, st.myPos.lon, targetLat, targetLon);
+  
+  for (const o of st.objects) {
+    if (o.type !== 'wall' || !o.active) continue;
+    const oDist = mDist(st.myPos.lat, st.myPos.lon, o.lat, o.lon);
+    if (oDist > dist) continue;
+    
+    const oBrg = bearing(st.myPos.lat, st.myPos.lon, o.lat, o.lon);
+    let brgDiff = Math.abs(brg - oBrg);
+    if (brgDiff > 180) brgDiff = 360 - brgDiff;
+    
+    if (brgDiff < 5) return true;
+  }
+  return false;
+}
+
 function recoil(){
   G.aim();G.kick();
-  $('xh').animate([{transform:'translate(-50%,-50%) scale(1.5)'},{transform:'translate(-50%,-50%) scale(1)'}],{duration:150})}
+  $('xh').animate([{transform:'translate(-50%,-50%) scale(1.4)'},{transform:'translate(-50%,-50%) scale(1)'}],{duration:150});
+}
+
 function fire(){
   if(!st.gameActive||st.dead||st.reloading)return;
   const now=performance.now();if(now-lastShot<140)return;
   if(st.ammo<=0){reload();return}
   lastShot=now;st.ammo--;updateAmmoUI();recoil();
-  const cx=innerWidth/2,cy=innerHeight/2;let best=null,bd=65;
-  /* 最も近いクロスヘアのマーカーを1体だけ選択 */
-  st.players.forEach(p=>{if(p.team===st.myTeam||p.sx==null||p.hp<=0)return;
-    const d=Math.hypot(p.sx-cx,p.sy-cy);if(d<bd){bd=d;best=p}});
-  if(best){const head=bd<22,dmg=dmgScale(best.dist,head);
-    best.hp=Math.max(0,best.hp-dmg);best.lock=performance.now()+400;
-    pop((head?'HEAD ':'')+'-'+dmg,best.sx,best.sy-26,head?'hd':'');
+  
+  const cx=innerWidth/2,cy=innerHeight/2;
+  let best=null,bd=80;
+  
+  st.players.forEach(p=>{
+    if(p.team===st.myTeam||p.sx==null||p.hp<=0)return;
+    const d = Math.hypot(p.sx-cx, p.sy-cy);
+    const tolerance = Math.max(30, 80 - (p.dist / 10)); 
+    
+    if(d < tolerance){
+      if (isBlockedByWall(p.lat, p.lon)) {
+        pop('BLOCKED', p.sx, p.sy, '');
+        return;
+      }
+      if (!best || d < bd) { bd = d; best = p; }
+    }
+  });
+  
+  if(best){
+    const head=bd<20,dmg=dmgScale(best.dist,head);
+    best.hp=Math.max(0,best.hp-dmg);best.lock=now+400;
+    pop((head?'HEAD ':'')+'-'+dmg,best.sx,best.sy-24,head?'hd':'');
     $('xh').classList.add('hit');setTimeout(()=>$('xh').classList.remove('hit'),110);
-    if(!best.isBot){const m={t:'hit',to:best.id,d:dmg,fl:st.myPos.lat,fo:st.myPos.lon};
-      net.host?hostHit(m,'host'):net.hostConn.send(m)}
+    if(!best.isBot){const m={t:'hit',to:best.id,d:dmg,fl:st.myPos.lat,fo:st.myPos.lon};net.host?hostHit(m,'host'):net.hostConn.send(m)}
     if(best.hp<=0){st.kills++;showAlert('撃破！ KD:'+st.kills+'/'+st.deaths,'ka');
-      if(best.isBot){st.score[st.myTeam]++;updateScore();
-        const b=best;setTimeout(()=>{b.lat=st.myPos.lat+(Math.random()-.5)*.001;b.lon=st.myPos.lon+(Math.random()-.5)*.001;b.hp=100},4000)}}}
-  if(st.ammo<=0)setTimeout(reload,300)}
+      if(best.isBot){st.score[st.myTeam]++;updateScore();const b=best;setTimeout(()=>{b.lat=st.myPos.lat+(Math.random()-.5)*.001;b.lon=st.myPos.lon+(Math.random()-.5)*.001;b.hp=100},4000)}}
+  }
+  if(st.ammo<=0)setTimeout(reload,300);
+}
+
 function reload(){if(st.reloading||st.reserve<=0||st.ammo>=st.maxAmmo){if(!st.reserve)showAlert('弾切れ！');return}
-  st.reloading=true;$('fire').classList.add('rl');showAlert('リロード中...');G.reloadStart=performance.now();
+  st.reloading=true;$('fire').classList.add('rl');showAlert('リロード中...');
+  G.reloadStart=performance.now();
   setTimeout(()=>{const g=Math.min(st.maxAmmo-st.ammo,st.reserve);st.ammo+=g;st.reserve-=g;st.reloading=false;$('fire').classList.remove('rl');updateAmmoUI()},1800)}
+
 function takeDamage(d,src){
-  if(isDead||!st.gameActive)return;
+  if(st.dead||!st.gameActive)return;
   st.health=Math.max(0,st.health-d);updateHealthUI();
-  const f=$('flash');f.style.transition='none';f.style.opacity=Math.min(1,.4+d/30);
-  requestAnimationFrame(()=>requestAnimationFrame(()=>{f.style.transition='opacity .6s';f.style.opacity=0}));
-  G.hit();navigator.vibrate&&navigator.vibrate(Math.min(220,d*6));
+  const f=$('flash');f.style.transition='none';f.style.opacity=Math.min(1,.4+d/30);requestAnimationFrame(()=>requestAnimationFrame(()=>{f.style.transition='opacity .6s';f.style.opacity=0}));
+  G.hit();
+  navigator.vibrate&&navigator.vibrate(Math.min(220,d*6));
   pop('-'+d,innerWidth/2,innerHeight*.6,'me');
   if(src&&src.lat!=null){$('hitdir').style.transform='rotate('+(bearing(st.myPos.lat,st.myPos.lon,src.lat,src.lon)-st.hd)+'deg)';
     $('hitdir').animate([{opacity:1},{opacity:0}],{duration:900,fill:'forwards'})}
   document.body.classList.toggle('low',st.health>0&&st.health<30);
-  /* HP低下警告スロットル */
-  const now=performance.now();if(st.health<30&&now-lastLowHP>4000){lastLowHP=now;showAlert('⚠ 危険！ HP:'+st.health,'ha')}
-  if(st.health<=0){isDead=true;st.dead=true;st.deaths++;showAlert('やられた！リスポーン中...','ha');
+  if(st.health<=0){st.dead=true;st.deaths++;showAlert('やられた！リスポーン中...','ha');
     if(st.mode==='bot'){st.score[st.myTeam==='red'?'blue':'red']++;updateScore()}
     else if(net.host)scoreKill(src&&src.id);else net.hostConn.send({t:'kill',by:src&&src.id});
-    setTimeout(()=>{st.health=100;st.dead=false;isDead=false;updateHealthUI();document.body.classList.remove('low');showAlert('リスポーン！')},3000)}}
+    setTimeout(()=>{st.health=100;st.dead=false;updateHealthUI();document.body.classList.remove('low');showAlert('リスポーン！')},3000)}
+}
 
-/* ════ UI ════ */
+/* ── ui ── */
 function pop(t,x,y,c){const e=document.createElement('div');e.className='dmg '+(c||'');e.textContent=t;e.style.left=x+'px';e.style.top=y+'px';document.body.appendChild(e);setTimeout(()=>e.remove(),900)}
 function updateAmmoUI(){$('amob').style.width=st.ammo/st.maxAmmo*100+'%';$('amon').textContent=st.ammo+'/'+st.reserve}
 function updateHealthUI(){$('hpb').style.width=st.health+'%';$('hpn').textContent=st.health}
 function updateScore(){$('sc-r').textContent='RED '+st.score.red;$('sc-b').textContent='BLUE '+st.score.blue}
 function showAlert(m,c){const e=document.createElement('div');e.className='am '+(c||'');e.textContent=m;$('alerts').appendChild(e);setTimeout(()=>e.remove(),2500)}
 
-/* ════ EVENTS ════ */
-let af=null;const fb2=$('fire');
-fb2.addEventListener('pointerdown',e=>{e.preventDefault();fire();clearInterval(af);af=setInterval(fire,145)});
-['pointerup','pointercancel','pointerleave'].forEach(n=>fb2.addEventListener(n,()=>clearInterval(af)));
+/* ── events ── */
+let af=null;const fb=$('fire');
+fb.addEventListener('pointerdown',e=>{e.preventDefault();fire();clearInterval(af);af=setInterval(fire,140)});
+['pointerup','pointercancel','pointerleave'].forEach(n=>fb.addEventListener(n,()=>clearInterval(af)));
 $('camsw').addEventListener('click',switchCam);
-$('cov').addEventListener('pointerdown',e=>{e.preventDefault();st.cover=!st.cover;$('cov').classList.toggle('on',st.cover);showAlert(st.cover?'🧱 COVER ON':'COVER OFF')});
+$('scan').addEventListener('pointerdown',e=>{e.preventDefault();scanArea()});
+$('cov').addEventListener('pointerdown',e=>{e.preventDefault();st.cover=!st.cover;$('cov').classList.toggle('on',st.cover);showAlert(st.cover?'🧱 COVER: 銃を構え上げ':'COVER解除')});
 $('rld').addEventListener('pointerdown',e=>{e.preventDefault();reload()});
 $('mmap').addEventListener('click',()=>{$('bigmap').classList.add('open');drawMap($('bmc'),st.bigR)});
-$('bigmap').addEventListener('click',e=>{if(e.target===$('bigmap'))$('bigmap').classList.remove('open')});
-$('bmc-close').addEventListener('click',()=>$('bigmap').classList.remove('open'));
+$('bigmap').addEventListener('click',()=>$('bigmap').classList.remove('open'));
 document.addEventListener('keydown',e=>{if(!st.gameActive)return;
-  if(e.code==='KeyR')reload();if(e.code==='KeyC')$('cov').dispatchEvent(new PointerEvent('pointerdown'));
-  if(e.code==='KeyQ')st.roll=-25;if(e.code==='KeyE')st.roll=25;
-  if(['KeyW','KeyS','KeyA','KeyD'].includes(e.code))st.keyWalk=performance.now();
-  if(e.code==='Space'||e.code==='Enter'){e.preventDefault();fire()}
+  if(e.code==='KeyR')reload();if(e.code==='KeyC')$('cov').dispatchEvent(new Event('pointerdown'));if(e.code==='KeyQ')st.roll=-25;if(e.code==='KeyE')st.roll=25;if(e.code==='KeyW'||e.code==='KeyS')st.keyWalk=performance.now();if(e.code==='Space'||e.code==='Enter'){e.preventDefault();fire()}
   if(e.code==='ArrowLeft'||e.code==='KeyA')st.heading=(st.heading+355)%360;
   if(e.code==='ArrowRight'||e.code==='KeyD')st.heading=(st.heading+5)%360;
-  if((e.code==='KeyW'||e.code==='KeyS')&&st.src!=='GPS'){
-    st.raw=st.raw||{lat:st.myPos.lat,lon:st.myPos.lon};
-    const q=(e.code==='KeyW'?1:-1)*3/111000,a=st.heading*Math.PI/180;
-    st.raw.lat+=Math.cos(a)*q;st.raw.lon+=Math.sin(a)*q/Math.cos(st.myPos.lat*Math.PI/180)}});
+  if((e.code==='KeyW'||e.code==='KeyS')&&st.src!=='GPS'){st.targetPos.lat=st.targetPos.lat||st.myPos.lat; st.targetPos.lon=st.targetPos.lon||st.myPos.lon;
+    const q=(e.code==='KeyW'?1:-1)*3/111000,a=st.heading*Math.PI/180;st.targetPos.lat+=Math.cos(a)*q;st.targetPos.lon+=Math.sin(a)*q/Math.cos(st.myPos.lat*Math.PI/180)}});
+const dpr=Math.min(2,devicePixelRatio||1);$('mc').width=$('mc').height=220*dpr;$('bmc').width=$('bmc').height=720*dpr;
 document.addEventListener('keyup',e=>{if(e.code==='KeyQ'||e.code==='KeyE')st.roll=0});
 
-/* ════ MAP ZOOM ════ */
-const zoom=d=>e=>{e.stopPropagation();zi=Math.max(0,Math.min(4,zi+d));st.bigR=ZS[zi]*STUD;drawMap($('bmc'),st.bigR)};
-$('mz-in').addEventListener('click',zoom(-1));$('mz-out').addEventListener('click',zoom(1));
+// Load Three.js & GLTFLoader
+(()=>{const x=document.createElement('script');x.src='https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js';x.onload=()=>{const y=document.createElement('script');y.src='https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js';y.onload=y.onerror=()=>{try{initGun()}catch(e){console.error(e)}};document.head.appendChild(y)};document.head.appendChild(x)})();
 
-/* ════ INIT ════ */
-const dpr=Math.min(2,devicePixelRatio||1);
-$('mc').width=$('mc').height=Math.round(110*dpr);
-$('bmc').width=$('bmc').height=Math.round(360*dpr);
-/* Three.js + GLTFLoader 非同期ロード */
-(()=>{const x=document.createElement('script');
-  x.src='https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js';
-  x.onload=()=>{const y=document.createElement('script');
-    y.src='https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js';
-    y.onload=y.onerror=()=>{try{initGun()}catch(e){console.error(e)}};
-    document.head.appendChild(y)};document.head.appendChild(x)})();
+const ZS=[20,50,100,200];let zi=2;st.bigR=ZS[zi]*STUD;
+const zoom=d=>e=>{e.stopPropagation();zi=Math.max(0,Math.min(3,zi+d));st.bigR=ZS[zi]*STUD;drawMap($('bmc'),st.bigR)};
+$('mz-in').addEventListener('click',zoom(-1));$('mz-out').addEventListener('click',zoom(1));
 selectMode('bot');tab('host');drawMap($('mc'),MAP_MAX);
+
+// Initialize AI after DOM load
+window.addEventListener('load', initAI);
 </script>
 </body>
-</html
+</html>
