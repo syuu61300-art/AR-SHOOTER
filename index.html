@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>AR Shooter Online</title>
+<style>
+:root {
+  --g: #00ff88; --r: #ff3333; --b: #33aaff; --o: #ff8800;
+  --bg: rgba(0,0,0,0.65); --bd: rgba(0,255,136,0.35);
+  box-sizing: border-box;
+  padding-top: env(safe-area-inset-top,0px);
+  padding-bottom: env(safe-area-inset-bottom,0px);
+}
+*,*::before,*::after{box-sizing:inherit;margin:0;padding:0}
+html,body{height:100%;overflow:hidden;background:#000;color:var(--g);font-family:'Courier New',monospace;user-select:none}
+
+/* ── CAMERA ── */
+#cam{position:fixed;inset:0;width:100%;height:100%;object-fit:cover;z-index:1;background:#0a0a0a}
+
+/* ── SCANLINES ── */
+#scan{position:fixed;inset:0;z-index:2;pointer-events:none;
+  background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,255,136,.012) 2px,rgba(0,255,136,.012) 4px)}
+
+/* ── CORNERS ── */
+.cor{position:fixed;width:36px;height:36px;border-color:var(--g);border-style:solid;border-width:0;opacity:.6;z-index:3;pointer-events:none}
+#c1{top:12px;left:12px;border-top-width:2px;border-left-width:2px}
+#c2{top:12px;right:12px;border-top-width:2px;border-right-width:2px}
+#c3{bottom:55px;left:12px;border-bottom-width:2px;border-left-width:2px}
+#c4{bottom:55px;right:12px;border-bottom-width:2px;border-right-width:2px}
+
+/* ── CROSSHAIR ── */
+#xh{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:56px;height:56px;z-index:20;pointer-events:none}
+.xr{position:absolute;inset:0;border:1.5px solid rgba(255,60,60,.65);border-radius:50%}
+.xd{position:absolute;left:50%;top:50%;width:4px;height:4px;background:#ff4444;border-radius:50%;transform:translate(-50%,-50%)}
+.xl{position:absolute;background:rgba(255,60,60,.6)}
+.xl.h{width:18px;height:1px;top:50%;transform:translateY(-50%)}
+.xl.lf{left:-3px}.xl.rt{right:-3px}
+.xl.v{width:1px;height:18px;left:50%;transform:translateX(-50%)}
+.xl.tp{top:-3px}.xl.bt{bottom:-3px}
+#xh.hit .xr{border-color:#fff;animation:xhit .15s}
+@keyframes xhit{0%{transform:scale(1.4)}100%{transform:scale(1)}}
+
+/* ── TOP HUD ── */
+#htop{position:fixed;top:calc(env(safe-area-inset-top,0px)+8px);left:0;right:0;z-index:30;display:flex;justify-content:space-between;padding:0 12px;pointer-events:none}
+.hb{background:var(--bg);border:1px solid var(--bd);border-radius:4px;padding:5px 9px;font-size:10px;line-height:1.6;backdrop-filter:blur(6px)}
+.hl{color:rgba(0,255,136,.5);font-size:8px;letter-spacing:1px}
+.hv{color:var(--g);font-size:12px;font-weight:bold}
+
+/* ── TIMER / SCORE ── */
+#timer{position:fixed;top:calc(env(safe-area-inset-top,0px)+8px);left:50%;transform:translateX(-50%);z-index:30;font-size:18px;font-weight:bold;color:#fff;background:var(--bg);border:1px solid var(--bd);border-radius:4px;padding:4px 14px;pointer-events:none;letter-spacing:2px}
+#scores{position:fixed;top:calc(env(safe-area-inset-top,0px)+50px);left:50%;transform:translateX(-50%);z-index:30;display:flex;gap:12px;pointer-events:none}
+.sc{font-size:11px;font-weight:bold;padding:3px 9px;border-radius:3px}
+.sc.red{color:var(--r);background:rgba(255,50,50,.15);border:1px solid rgba(255,50,50,.4)}
+.sc.blu{color:var(--b);background:rgba(50,170,255,.15);border:1px solid rgba(50,170,255,.4)}
+
+/* ── MODE BADGE ── */
+#mode-badge{position:fixed;top:calc(env(safe-area-inset-top,0px)+90px);left:50%;transform:translateX(-50%);z-index:30;font-size:9px;letter-spacing:2px;padding:2px 10px;border-radius:10px;pointer-events:none}
+.mb-bot{color:#ffdd00;background:rgba(255,220,0,.12);border:1px solid rgba(255,220,0,.35)}
+.mb-online{color:var(--g);background:rgba(0,255,136,.1);border:1px solid var(--bd)}
+
+/* ── BOTTOM STATS ── */
+#hbot{position:fixed;bottom:calc(env(safe-area-inset-bottom,0px)+88px);left:12px;z-index:30;pointer-events:none}
+.sr{display:flex;align-items:center;gap:7px;margin-bottom:7px}
+.si{font-size:13px;width:18px;text-align:center}
+.sb{width:85px;height:7px;background:rgba(255,255,255,.1);border-radius:4px;overflow:hidden;border:1px solid rgba(255,255,255,.1)}
+.sf{height:100%;border-radius:4px;transition:width .3s}
+.sh{background:linear-gradient(90deg,#ff3333,#ff6644)}
+.sa{background:linear-gradient(90deg,#ffaa00,#ffdd00)}
+.sn{font-size:11px;color:rgba(255,255,255,.8);min-width:34px}
+
+/* ── MINIMAP ── */
+#mmap{position:fixed;bottom:calc(env(safe-area-inset-bottom,0px)+88px);right:12px;z-index:30;cursor:pointer}
+#mmap canvas{width:120px;height:120px;border-radius:50%;border:2px solid var(--bd);background:rgba(0,8,20,.85);display:block}
+#mmap .ml{font-size:8px;color:rgba(0,255,136,.5);text-align:center;margin-top:3px;letter-spacing:1px}
+
+/* ── BIG MAP ── */
+#bigmap{position:fixed;inset:0;z-index:90;background:rgba(0,8,16,.96);display:none;flex-direction:column;align-items:center;justify-content:center;gap:10px}
+#bigmap.open{display:flex}
+#bigmap canvas{width:min(88vw,380px);height:min(88vw,380px);border:1px solid var(--bd);border-radius:8px}
+.mc{color:var(--g);font-size:11px;letter-spacing:2px;cursor:pointer;padding:7px 18px;border:1px solid var(--bd);border-radius:4px;background:rgba(0,255,136,.05)}
+
+/* ── FIRE BTN ── */
+#fire{position:fixed;bottom:calc(env(safe-area-inset-bottom,0px)+88px);left:50%;transform:translateX(-50%);z-index:30;width:70px;height:70px;border-radius:50%;border:3px solid rgba(255,80,80,.8);background:rgba(255,30,30,.22);color:#fff;font-size:11px;font-family:'Courier New',monospace;font-weight:bold;letter-spacing:1px;cursor:pointer;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px);-webkit-tap-highlight-color:transparent;transition:background .1s,transform .1s}
+#fire:active{background:rgba(255,80,80,.55);transform:translateX(-50%) scale(.92)}
+#fire.reload-anim{border-color:rgba(255,170,0,.8);background:rgba(255,140,0,.2)}
+
+/* ── JOYSTICK ── */
+#joy{position:fixed;bottom:calc(env(safe-area-inset-bottom,0px)+8px);left:16px;width:105px;height:105px;z-index:30}
+#jbase{position:absolute;inset:0;border-radius:50%;border:2px solid rgba(0,255,136,.22);background:rgba(0,255,136,.04)}
+#jknob{position:absolute;width:42px;height:42px;border-radius:50%;background:rgba(0,255,136,.28);border:2px solid rgba(0,255,136,.55);left:50%;top:50%;transform:translate(-50%,-50%);transition:left .04s,top .04s}
+
+/* ── CAM SWITCH ── */
+#camsw{position:fixed;bottom:calc(env(safe-area-inset-bottom,0px)+8px);right:12px;z-index:30;background:var(--bg);border:1px solid var(--bd);color:var(--g);font-family:'Courier New',monospace;font-size:10px;padding:5px 11px;border-radius:4px;cursor:pointer;display:none;letter-spacing:1px}
+
+/* ── HIT FLASH ── */
+#flash{position:fixed;inset:0;z-index:40;pointer-events:none;background:radial-gradient(ellipse at center,rgba(255,0,0,.5),transparent 70%);opacity:0;transition:opacity .07s}
+
+/* ── ALERTS ── */
+#alerts{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:50;display:flex;flex-direction:column;align-items:center;gap:7px;pointer-events:none}
+.am{background:rgba(0,0,0,.78);border:1px solid var(--o);color:var(--o);font-size:11px;padding:5px 13px;border-radius:4px;letter-spacing:1px;animation:fa 2.6s forwards}
+@keyframes fa{0%{opacity:0;transform:scale(.9)}12%{opacity:1;transform:scale(1)}70%{opacity:1}100%{opacity:0}}
+.am.hit-alert{border-color:var(--r);color:var(--r)}
+.am.kill-alert{border-color:var(--g);color:var(--g)}
+
+/* ── ENEMY / ALLY MARKERS ── */
+.em,.alm{position:fixed;transform:translate(-50%,-50%);z-index:25;pointer-events:none;display:flex;flex-direction:column;align-items:center;gap:3px}
+.edia{width:18px;height:18px;border:2px solid var(--r);transform:rotate(45deg);background:rgba(255,50,50,.12);animation:pe 1.2s ease-in-out infinite}
+@keyframes pe{0%,100%{opacity:1}50%{opacity:.35}}
+.elbl{font-size:8px;color:var(--r);background:rgba(0,0,0,.65);padding:1px 4px;border-radius:2px;white-space:nowrap}
+.edst{font-size:7px;color:rgba(255,100,100,.8)}
+.atri{width:0;height:0;border-left:7px solid transparent;border-right:7px solid transparent;border-bottom:12px solid var(--b)}
+.albl{font-size:8px;color:var(--b);background:rgba(0,0,0,.65);padding:1px 4px;border-radius:2px}
+
+/* ══════════════════════════════════
+   START / SETUP SCREENS
+══════════════════════════════════ */
+.screen{position:fixed;inset:0;z-index:100;background:rgba(0,0,0,.94);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:24px;overflow-y:auto}
+.screen.hidden{display:none}
+
+.logo{font-size:26px;font-weight:bold;color:var(--g);letter-spacing:4px;text-shadow:0 0 18px rgba(0,255,136,.55)}
+.sub{font-size:10px;color:rgba(0,255,136,.5);letter-spacing:3px}
+
+/* MODE CARDS */
+.mode-row{display:flex;gap:12px;width:100%;max-width:300px}
+.mcard{flex:1;border:2px solid rgba(0,255,136,.25);border-radius:8px;padding:14px 8px;text-align:center;cursor:pointer;transition:all .2s;background:rgba(0,255,136,.04)}
+.mcard:hover,.mcard.sel{border-color:var(--g);background:rgba(0,255,136,.12);box-shadow:0 0 14px rgba(0,255,136,.2)}
+.mcard .mi{font-size:28px;margin-bottom:6px}
+.mcard .mt{font-size:11px;color:var(--g);letter-spacing:1px;font-weight:bold}
+.mcard .md{font-size:9px;color:rgba(0,255,136,.5);margin-top:3px}
+.mcard.bot-sel{border-color:#ffdd00;background:rgba(255,220,0,.08);box-shadow:0 0 14px rgba(255,220,0,.2)}
+.mcard.bot-sel .mt{color:#ffdd00}
+
+/* PERM BLOCKS */
+.perm{display:flex;align-items:center;gap:10px;width:100%;max-width:300px;padding:9px 13px;border-radius:6px;border:1px solid;background:rgba(0,0,0,.3);font-size:11px}
+.perm .pi{font-size:18px;flex-shrink:0}
+.perm .pt{flex:1}
+.perm .pt .ptl{font-size:9px;letter-spacing:1px;opacity:.6}
+.perm .pt .pv{font-size:12px;font-weight:bold;margin-top:1px}
+.pb{flex-shrink:0;font-size:9px;padding:4px 10px;border-radius:4px;cursor:pointer;border:1px solid;font-family:'Courier New',monospace;letter-spacing:1px}
+.perm.ok{border-color:rgba(0,255,136,.4);color:var(--g)}
+.perm.ok .pb{border-color:rgba(0,255,136,.4);color:var(--g);background:rgba(0,255,136,.08)}
+.perm.ng{border-color:rgba(255,50,50,.4);color:var(--r)}
+.perm.ng .pb{border-color:rgba(255,50,50,.4);color:var(--r);background:rgba(255,50,50,.08)}
+.perm.wt{border-color:rgba(255,136,0,.4);color:var(--o)}
+.perm.wt .pb{border-color:rgba(255,136,0,.4);color:var(--o);background:rgba(255,136,0,.08)}
+
+/* CAM SELECT */
+.cam-sel-row{width:100%;max-width:300px;display:none;flex-direction:column;gap:6px}
+.cam-sel-row label{font-size:9px;color:rgba(0,255,136,.5);letter-spacing:1px}
+select#camsel{background:rgba(0,20,10,.9);color:var(--g);border:1px solid var(--bd);border-radius:4px;padding:8px 10px;font-family:'Courier New',monospace;font-size:11px;width:100%;cursor:pointer}
+
+/* BOT COUNT */
+.bot-row{width:100%;max-width:300px;display:none;flex-direction:column;gap:6px}
+.bot-row label{font-size:9px;color:rgba(255,220,0,.6);letter-spacing:1px}
+.bot-btns{display:flex;gap:8px}
+.bbot{flex:1;padding:8px 4px;border:1px solid rgba(255,220,0,.35);border-radius:4px;background:rgba(255,220,0,.06);color:#ffdd00;font-family:'Courier New',monospace;font-size:12px;cursor:pointer;text-align:center;transition:all .15s}
+.bbot.sel{border-color:#ffdd00;background:rgba(255,220,0,.2)}
+
+/* ROOM INPUT */
+.room-row{width:100%;max-width:300px;display:none;flex-direction:column;gap:6px}
+.room-row label{font-size:9px;color:rgba(0,170,255,.6);letter-spacing:1px}
+.room-row input{background:rgba(0,20,40,.9);color:var(--b);border:1px solid rgba(50,170,255,.4);border-radius:4px;padding:8px 10px;font-family:'Courier New',monospace;font-size:13px;width:100%;letter-spacing:3px;text-transform:uppercase}
+.room-row .rid{font-size:9px;color:rgba(0,170,255,.5);margin-top:2px}
+
+/* START BTN */
+.sbtn{width:100%;max-width:300px;padding:13px;border:2px solid var(--g);background:rgba(0,255,136,.1);color:var(--g);font-family:'Courier New',monospace;font-size:14px;letter-spacing:3px;cursor:pointer;border-radius:4px;transition:background .2s;margin-top:4px}
+.sbtn:active{background:rgba(0,255,136,.25)}
+.sbtn:disabled{opacity:.4;cursor:not-allowed}
+.sbtn.bot-start{border-color:#ffdd00;background:rgba(255,220,0,.1);color:#ffdd00}
+.note{font-size:9px;color:rgba(255,255,255,.25);text-align:center;line-height:1.9;max-width:280px}
+
+@media(prefers-color-scheme:dark){}
+</style>
+</head>
+<body>
+
+<!-- Camera -->
+<video id="cam" autoplay playsinline muted></video>
+<div id="scan"></div>
+
+<!-- Corner deco -->
+<div class="cor" id="c1"></div><div class="cor" id="c2"></div>
+<div class="cor" id="c3"></div><div class="cor" id="c4"></div>
+
+<!-- Crosshair -->
+<div id="xh">
+  <div class="xr"></div><div class="xd"></div>
+  <div class="xl h lf"></div><div class="xl h rt"></div>
+  <div class="xl v tp"></div><div class="xl v bt"></div>
+</div>
+
+<!-- Timer / Score / Mode badge -->
+<div id="timer">05:00</div>
+<div id="scores">
+  <div class="sc red" id="sc-r">RED 0</div>
+  <div class="sc blu" id="sc-b">BLUE 0</div>
+</div>
+<div id="mode-badge" class="mb-bot">🤖 BOT MODE</div>
+
+<!-- Top HUD -->
+<div id="htop">
+  <div class="hb">
+    <div class="hl">GPS</div>
+    <div class="hv" id="gps-la">---.----°</div>
+    <div class="hv" id="gps-lo">---.----°</div>
+  </div>
+  <div class="hb">
+    <div class="hl">PLAYERS</div>
+    <div class="hv" id="pcnt">1 / 1</div>
+    <div class="hl" id="rid">ROOM: ----</div>
+  </div>
+</div>
+
+<!-- Stats -->
+<div id="hbot">
+  <div class="sr"><div class="si">❤️</div><div class="sb"><div class="sf sh" id="hpb" style="width:100%"></div></div><div class="sn" id="hpn">100</div></div>
+  <div class="sr"><div class="si">🔫</div><div class="sb"><div class="sf sa" id="amob" style="width:100%"></div></div><div class="sn" id="amon">30/90</div></div>
+</div>
+
+<!-- Minimap -->
+<div id="mmap"><canvas id="mc" width="120" height="120"></canvas><div class="ml">[ MAP ]</div></div>
+
+<!-- Big map -->
+<div id="bigmap">
+  <div style="color:var(--g);font-size:11px;letter-spacing:2px">TACTICAL MAP</div>
+  <canvas id="bmc" width="380" height="380"></canvas>
+  <div class="mc" id="bmc-close">[ CLOSE ]</div>
+</div>
+
+<!-- Cam switch -->
+<button id="camsw">🔄 CAM</button>
+
+<!-- Fire -->
+<button id="fire">FIRE</button>
+
+<!-- Joystick -->
+<div id="joy"><div id="jbase"></div><div id="jknob"></div></div>
+
+<!-- Hit flash -->
+<div id="flash"></div>
+
+<!-- Alerts -->
+<div id="alerts"></div>
+
+<!-- ══ SCREEN 1: MODE SELECT ══ -->
+<div class="screen" id="s-mode">
+  <div class="logo">AR SHOOTER</div>
+  <div class="sub">GPS BATTLE</div>
+
+  <div class="mode-row">
+    <div class="mcard bot-sel" id="mc-bot" onclick="selectMode('bot')">
+      <div class="mi">🤖</div>
+      <div class="mt">BOT MODE</div>
+      <div class="md">1人で練習<br>AIと対戦</div>
+    </div>
+    <div class="mcard" id="mc-online" onclick="selectMode('online')">
+      <div class="mi">🌐</div>
+      <div class="mt">ONLINE</div>
+      <div class="md">リアル対戦<br>GPSマルチ</div>
+    </div>
+  </div>
+
+  <!-- Bot count (shown in bot mode) -->
+  <div class="bot-row" id="bot-row" style="display:flex">
+    <label>BOT 数</label>
+    <div class="bot-btns">
+      <div class="bbot sel" id="bb1" onclick="setBots(1)">1</div>
+      <div class="bbot" id="bb3" onclick="setBots(3)">3</div>
+      <div class="bbot" id="bb5" onclick="setBots(5)">5</div>
+      <div class="bbot" id="bb8" onclick="setBots(8)">8</div>
+    </div>
+  </div>
+
+  <!-- Room input (shown in online mode) -->
+  <div class="room-row" id="room-row">
+    <label>ルームコード（空欄で新規作成）</label>
+    <input id="room-input" maxlength="6" placeholder="XXXXXX">
+    <div class="rid" id="room-hint">6文字で入力、または空欄で新ルーム作成</div>
+  </div>
+
+  <button class="sbtn" id="next-btn" onclick="goToSetup()">▶ 次へ（カメラ・GPS設定）</button>
+  <div class="note">スマホ・PC両対応 / カメラ背景AR</div>
+</div>
+
+<!-- ══ SCREEN 2: PERMISSIONS ══ -->
+<div class="screen hidden" id="s-perm">
+  <div class="logo" style="font-size:18px">📡 権限設定</div>
+
+  <!-- Camera perm -->
+  <div class="perm wt" id="perm-cam">
+    <div class="pi">📷</div>
+    <div class="pt">
+      <div class="ptl">CAMERA</div>
+      <div class="pv" id="pcam-v">未確認</div>
+    </div>
+    <button class="pb" id="btn-cam" onclick="doCamPerm()">許可</button>
+  </div>
+
+  <!-- Camera selector (after grant) -->
+  <div class="cam-sel-row" id="cam-sel-row">
+    <label>カメラを選択</label>
+    <select id="camsel"></select>
+    <button class="pb" style="border-color:rgba(0,255,136,.4);color:var(--g);background:rgba(0,255,136,.08);padding:5px 10px;font-family:'Courier New',monospace;font-size:9px;letter-spacing:1px;border-radius:4px;cursor:pointer;border-width:1px;border-style:solid;width:100%" onclick="applyCam()">▶ 適用</button>
+  </div>
+
+  <!-- GPS perm -->
+  <div class="perm wt" id="perm-gps">
+    <div class="pi">📍</div>
+    <div class="pt">
+      <div class="ptl">GPS / LOCATION</div>
+      <div class="pv" id="pgps-v">未確認</div>
+    </div>
+    <button class="pb" id="btn-gps" onclick="doGpsPerm()">許可</button>
+  </div>
+
+  <button class="sbtn" id="start-btn" onclick="startGame()" disabled>⚔ ゲームスタート</button>
+  <div class="note">GPSを拒否するとデモ座標を使用します<br>カメラを拒否すると背景は黒になります</div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════════
+const $ = id => document.getElementById(id);
+const st = {
+  mode: 'bot',       // 'bot' | 'online'
+  botCount: 1,
+  health: 100, ammo: 30, maxAmmo: 30, reserve: 90,
+  score: { red: 0, blue: 0 },
+  myTeam: 'red',
+  myPos: { lat: 35.6762, lon: 139.6503 },
+  heading: 0,
+  gpsReady: false, camReady: false,
+  gameActive: false,
+  timeLeft: 300, kills: 0, deaths: 0, reloading: false,
+  roomCode: null,
+  players: [],
+};
+
+const BOT_NAMES = ['Ghost','Viper','Hawk','Snake','Fox','Wolf','Eagle','Raven'];
+const BOT_TEAMS = ['blue','blue','red','blue','red','blue','red','blue'];
+
+// ═══════════════════════════════════════════════════
+//  SCREEN FLOW
+// ═══════════════════════════════════════════════════
+function selectMode(m) {
+  st.mode = m;
+  $('mc-bot').classList.toggle('bot-sel', m === 'bot');
+  $('mc-bot').classList.toggle('sel', m !== 'bot');
+  $('mc-online').classList.toggle('sel', m === 'online');
+  $('mc-online').classList.toggle('bot-sel', false);
+  $('bot-row').style.display   = m === 'bot'    ? 'flex' : 'none';
+  $('room-row').style.display  = m === 'online' ? 'flex' : 'none';
+  const btn = $('next-btn');
+  btn.className = 'sbtn' + (m === 'bot' ? ' bot-start' : '');
+}
+
+function setBots(n) {
+  st.botCount = n;
+  [1,3,5,8].forEach(x => $('bb'+x)?.classList.toggle('sel', x === n));
+}
+
+function goToSetup() {
+  $('s-mode').classList.add('hidden');
+  $('s-perm').classList.remove('hidden');
+  // Auto-try camera on entering perm screen
+  doCamPerm();
+}
+
+// ═══════════════════════════════════════════════════
+//  CAMERA
+// ═══════════════════════════════════════════════════
+let cams = [], curCam = 0, curStream = null;
+
+async function enumCams() {
+  try {
+    const devs = await navigator.mediaDevices.enumerateDevices();
+    cams = devs.filter(d => d.kind === 'videoinput');
+    const sel = $('camsel'); sel.innerHTML = '';
+    cams.forEach((c, i) => {
+      const lbl = c.label || ('カメラ ' + (i+1));
+      const icon = /front|user|face/i.test(lbl) ? '🤳' : /back|rear|env/i.test(lbl) ? '📸' : '💻';
+      const o = document.createElement('option'); o.value = i;
+      o.textContent = icon + ' ' + lbl; sel.appendChild(o);
+    });
+    const bi = cams.findIndex(c => /back|rear|env/i.test(c.label));
+    if (bi >= 0) { sel.value = bi; curCam = bi; }
+    if (cams.length > 0) $('cam-sel-row').style.display = 'flex';
+  } catch(e){}
+}
+
+async function startCam(idx) {
+  if (curStream) { curStream.getTracks().forEach(t => t.stop()); curStream = null; }
+  try {
+    let con;
+    if (cams.length && idx !== undefined) {
+      con = { video: { deviceId: { exact: cams[idx].deviceId }, width:{ideal:1280}, height:{ideal:720} } };
+    } else {
+      try { con = { video: { facingMode:'environment', width:{ideal:1280}, height:{ideal:720} } }; }
+      catch(e){ con = { video: true }; }
+    }
+    const s = await navigator.mediaDevices.getUserMedia(con);
+    curStream = s; $('cam').srcObject = s;
+    const lbl = s.getVideoTracks()[0]?.label || 'カメラ';
+    setPermUI('cam', 'ok', lbl.substring(0,30)); st.camReady = true; curCam = idx ?? 0;
+  } catch(e) {
+    setPermUI('cam', 'ng', '拒否 — 背景は黒'); st.camReady = false;
+  }
+}
+
+async function doCamPerm() {
+  setPermUI('cam', 'wt', '確認中...');
+  // enumerate first (needs temporary stream for labels)
+  try {
+    const tmp = await navigator.mediaDevices.getUserMedia({ video: true });
+    tmp.getTracks().forEach(t => t.stop());
+  } catch(e){}
+  await enumCams();
+  const idx = parseInt($('camsel').value || '0', 10);
+  await startCam(isNaN(idx) ? 0 : idx);
+  checkStartReady();
+}
+
+async function applyCam() {
+  const idx = parseInt($('camsel').value, 10);
+  await startCam(isNaN(idx) ? 0 : idx);
+}
+
+async function switchCam() {
+  if (cams.length <= 1) { showAlert('切替カメラなし'); return; }
+  curCam = (curCam + 1) % cams.length;
+  await startCam(curCam);
+  showAlert('📷 ' + (cams[curCam]?.label?.substring(0,20) || curCam+1));
+}
+
+// ═══════════════════════════════════════════════════
+//  GPS
+// ═══════════════════════════════════════════════════
+let gpsWatcher = null;
+
+function doGpsPerm() {
+  setPermUI('gps', 'wt', '取得中...');
+  if (!navigator.geolocation) {
+    setPermUI('gps', 'ng', '非対応 — デモ座標使用'); startGpsDemo(); checkStartReady(); return;
+  }
+  // Clear old watcher
+  if (gpsWatcher !== null) navigator.geolocation.clearWatch(gpsWatcher);
+
+  gpsWatcher = navigator.geolocation.watchPosition(pos => {
+    st.myPos.lat = pos.coords.latitude;
+    st.myPos.lon = pos.coords.longitude;
+    st.gpsReady = true;
+    $('gps-la').textContent = pos.coords.latitude.toFixed(5) + '°';
+    $('gps-lo').textContent = pos.coords.longitude.toFixed(5) + '°';
+    const acc = Math.round(pos.coords.accuracy);
+    setPermUI('gps', 'ok', 'OK — 精度 ±' + acc + 'm');
+    checkStartReady();
+  }, err => {
+    const msg = err.code === 1 ? '拒否 — デモ座標使用' : err.code === 2 ? '位置取得不可' : 'タイムアウト';
+    setPermUI('gps', 'ng', msg);
+    startGpsDemo();
+    checkStartReady();
+  }, { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 });
+}
+
+function startGpsDemo() {
+  st.myPos = { lat: 35.6762 + (Math.random()-.5)*.005, lon: 139.6503 + (Math.random()-.5)*.005 };
+  setInterval(() => {
+    st.myPos.lat += (Math.random()-.5) * 0.00004;
+    st.myPos.lon += (Math.random()-.5) * 0.00004;
+    $('gps-la').textContent = st.myPos.lat.toFixed(5) + '° [DEMO]';
+    $('gps-lo').textContent = st.myPos.lon.toFixed(5) + '°';
+  }, 2500);
+}
+
+// Device orientation
+window.addEventListener('deviceorientation', e => { if (e.alpha !== null) st.heading = e.alpha; });
+
+// ═══════════════════════════════════════════════════
+//  PERM UI HELPER
+// ═══════════════════════════════════════════════════
+function setPermUI(which, state, text) {
+  const el = $('perm-' + which);
+  const vEl = $(which === 'cam' ? 'pcam-v' : 'pgps-v');
+  el.className = 'perm ' + (state === 'ok' ? 'ok' : state === 'ng' ? 'ng' : 'wt');
+  if (vEl) vEl.textContent = text;
+  const btn = $(which === 'cam' ? 'btn-cam' : 'btn-gps');
+  if (btn) {
+    btn.textContent = state === 'ok' ? '✓' : state === 'ng' ? '再試行' : '...';
+    btn.disabled = state === 'wt';
+  }
+}
+
+function checkStartReady() {
+  // Can always start (GPS/camera are optional)
+  $('start-btn').disabled = false;
+}
+
+// ═══════════════════════════════════════════════════
+//  BOTS
+// ═══════════════════════════════════════════════════
+function spawnBots() {
+  st.players = [];
+  for (let i = 0; i < st.botCount; i++) {
+    const angle = (i / st.botCount) * Math.PI * 2;
+    const dist = 0.0003 + Math.random() * 0.0004;
+    st.players.push({
+      id: 'bot' + i,
+      name: BOT_NAMES[i % BOT_NAMES.length],
+      team: BOT_TEAMS[i % BOT_TEAMS.length],
+      lat: st.myPos.lat + Math.sin(angle) * dist,
+      lon: st.myPos.lon + Math.cos(angle) * dist,
+      hp: 100, isBot: true,
+      moveAngle: Math.random() * Math.PI * 2,
+      attackCooldown: 3 + Math.random() * 4,
+    });
+  }
+  $('pcnt').textContent = (st.botCount + 1) + ' / ' + (st.botCount + 1);
+  $('rid').textContent = 'BOT MODE';
+}
+
+function tickBots() {
+  if (!st.gameActive) return;
+  st.players.forEach(p => {
+    if (!p.isBot) return;
+    // Wander
+    p.moveAngle += (Math.random() - .5) * .4;
+    const spd = 0.000015;
+    p.lat += Math.sin(p.moveAngle) * spd;
+    p.lon += Math.cos(p.moveAngle) * spd;
+    // Attack player
+    p.attackCooldown -= .5;
+    if (p.attackCooldown <= 0 && p.team !== st.myTeam) {
+      const d = metersBetween(st.myPos.lat, st.myPos.lon, p.lat, p.lon);
+      if (d < 200) { takeDamage(8 + Math.floor(Math.random()*10)); }
+      p.attackCooldown = 3 + Math.random() * 5;
+    }
+  });
+}
+
+// ═══════════════════════════════════════════════════
+//  ONLINE ROOM
+// ═══════════════════════════════════════════════════
+let roomCap = null;
+
+async function initOnline() {
+  let code = $('room-input').value.trim().toUpperCase();
+  if (!code) code = Math.random().toString(36).substring(2,8).toUpperCase();
+  st.roomCode = code;
+  $('rid').textContent = 'ROOM: ' + code;
+
+  if (window.claude) {
+    try {
+      roomCap = await claude.use('room');
+      if (roomCap) {
+        await roomCap.join(code);
+        roomCap.on('pos', data => {
+          if (data.id === 'me') return;
+          let p = st.players.find(x => x.id === data.id);
+          if (!p) { st.players.push(data); p = st.players[st.players.length-1]; }
+          else Object.assign(p, data);
+          $('pcnt').textContent = (st.players.length + 1) + ' / 8';
+        });
+        roomCap.on('dmg', data => { if (data.to === 'self' || !data.to) takeDamage(data.v || 20); });
+        setInterval(() => {
+          if (roomCap && st.gameActive)
+            roomCap.emit('pos', { id: 'me_' + Date.now().toString(36), lat: st.myPos.lat, lon: st.myPos.lon, team: st.myTeam, name: 'Player' });
+        }, 3000);
+        showAlert('🌐 ルーム: ' + code);
+        return;
+      }
+    } catch(e){}
+  }
+  showAlert('⚠ オフラインモードで開始');
+}
+
+// ═══════════════════════════════════════════════════
+//  GAME START / END
+// ═══════════════════════════════════════════════════
+let timerID = null, loopID = null, botID = null;
+
+async function startGame() {
+  $('s-perm').classList.add('hidden');
+  st.gameActive = true;
+
+  // Mode badge
+  const mb = $('mode-badge');
+  if (st.mode === 'bot') {
+    mb.className = 'mb-bot'; mb.textContent = '🤖 BOT ×' + st.botCount;
+    spawnBots();
+    botID = setInterval(tickBots, 500);
+  } else {
+    mb.className = 'mb-online'; mb.textContent = '🌐 ONLINE';
+    await initOnline();
+  }
+
+  if (cams.length > 1) $('camsw').style.display = 'block';
+
+  // Timer
+  timerID = setInterval(() => {
+    if (!st.gameActive) return;
+    st.timeLeft--;
+    const m = String(Math.floor(st.timeLeft/60)).padStart(2,'0');
+    const s = String(st.timeLeft%60).padStart(2,'0');
+    $('timer').textContent = m + ':' + s;
+    if (st.timeLeft <= 0) endGame();
+    if (st.timeLeft <= 30) $('timer').style.color = '#ff4444';
+  }, 1000);
+
+  loopID = setInterval(() => { drawMinimap(); updateMarkers(); }, 500);
+  drawMinimap();
+  showAlert('⚔ ゲームスタート！ TEAM: ' + st.myTeam.toUpperCase());
+}
+
+function endGame() {
+  st.gameActive = false;
+  clearInterval(timerID); clearInterval(loopID); clearInterval(botID);
+  $('timer').textContent = '終了';
+  const winner = st.score.red > st.score.blue ? '🔴 RED WIN' : st.score.blue > st.score.red ? '🔵 BLUE WIN' : '⚖ DRAW';
+  showAlert(winner + '  KD: ' + st.kills + '/' + st.deaths);
+}
+
+// ═══════════════════════════════════════════════════
+//  MINIMAP
+// ═══════════════════════════════════════════════════
+function llToXY(lat, lon, cLat, cLon, scale, size) {
+  const mpd = 111000;
+  const dx = (lon - cLon) * mpd * Math.cos(cLat * Math.PI / 180);
+  const dy = -(lat - cLat) * mpd;
+  return { x: size/2 + dx*scale, y: size/2 + dy*scale };
+}
+
+function drawMap(cv, scale) {
+  const ctx = cv.getContext('2d'), W = cv.width, H = cv.height;
+  ctx.clearRect(0,0,W,H);
+  ctx.fillStyle = 'rgba(0,8,20,.95)'; ctx.fillRect(0,0,W,H);
+  if (W === 120) { ctx.save(); ctx.beginPath(); ctx.arc(W/2,H/2,W/2,0,Math.PI*2); ctx.clip(); }
+  // Grid
+  ctx.strokeStyle = 'rgba(0,255,136,.07)'; ctx.lineWidth = .5;
+  for (let i=0;i<W;i+=18){ ctx.beginPath();ctx.moveTo(i,0);ctx.lineTo(i,H);ctx.stroke(); ctx.beginPath();ctx.moveTo(0,i);ctx.lineTo(W,i);ctx.stroke(); }
+  // North
+  ctx.fillStyle='rgba(0,255,136,.4)';ctx.font='8px Courier New';ctx.textAlign='center';ctx.fillText('N',W/2,10);
+  // Players
+  st.players.forEach(p => {
+    const pos = llToXY(p.lat, p.lon, st.myPos.lat, st.myPos.lon, scale, W);
+    if (pos.x<-10||pos.x>W+10||pos.y<-10||pos.y>H+10) return;
+    const col = p.team==='red'?'#ff4444':'#33aaff';
+    // Bot indicator
+    if (p.isBot) { ctx.fillStyle='rgba(0,0,0,.5)'; ctx.beginPath(); ctx.arc(pos.x,pos.y,7,0,Math.PI*2); ctx.fill(); }
+    ctx.beginPath(); ctx.arc(pos.x,pos.y,4,0,Math.PI*2);
+    ctx.fillStyle=col; ctx.fill();
+    ctx.strokeStyle='rgba(255,255,255,.5)'; ctx.lineWidth=.6; ctx.stroke();
+    ctx.fillStyle=col; ctx.font='7px Courier New'; ctx.textAlign='center';
+    ctx.fillText((p.isBot?'🤖':'')+p.name, pos.x, pos.y-8);
+  });
+  // Self
+  ctx.save(); ctx.translate(W/2,H/2); ctx.rotate(st.heading*Math.PI/180);
+  ctx.beginPath(); ctx.moveTo(0,-9); ctx.lineTo(5,5); ctx.lineTo(-5,5); ctx.closePath();
+  ctx.fillStyle = st.myTeam==='red'?'#ff6644':'#44aaff'; ctx.fill(); ctx.restore();
+  ctx.beginPath(); ctx.arc(W/2,H/2,5,0,Math.PI*2); ctx.strokeStyle='rgba(255,255,255,.5)'; ctx.lineWidth=1; ctx.stroke();
+  if (W===120) ctx.restore();
+}
+
+function drawMinimap() { drawMap($('mc'), 1800); }
+
+// ═══════════════════════════════════════════════════
+//  AR MARKERS
+// ═══════════════════════════════════════════════════
+function metersBetween(la1,lo1,la2,lo2){const R=6371000,dL=(la2-la1)*Math.PI/180,dO=(lo2-lo1)*Math.PI/180,a=Math.sin(dL/2)**2+Math.cos(la1*Math.PI/180)*Math.cos(la2*Math.PI/180)*Math.sin(dO/2)**2;return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a))}
+function bearingTo(la1,lo1,la2,lo2){const dO=(lo2-lo1)*Math.PI/180,y=Math.sin(dO)*Math.cos(la2*Math.PI/180),x=Math.cos(la1*Math.PI/180)*Math.sin(la2*Math.PI/180)-Math.sin(la1*Math.PI/180)*Math.cos(la2*Math.PI/180)*Math.cos(dO);return((Math.atan2(y,x)*180/Math.PI)+360)%360}
+
+function updateMarkers() {
+  document.querySelectorAll('.em,.alm').forEach(e=>e.remove());
+  const W=window.innerWidth, H=window.innerHeight, fov=70;
+  st.players.forEach(p => {
+    const dist = metersBetween(st.myPos.lat,st.myPos.lon,p.lat,p.lon);
+    if (dist > 400) return;
+    const brg = bearingTo(st.myPos.lat,st.myPos.lon,p.lat,p.lon);
+    const rel = ((brg - st.heading + 540) % 360) - 180;
+    if (Math.abs(rel) > fov*1.5) return;
+    const sx = W/2 + (rel/fov)*W*.58;
+    const sy = H*.32 + (dist/400)*H*.12;
+    const isEnemy = p.team !== st.myTeam;
+    const el = document.createElement('div');
+    el.className = isEnemy ? 'em' : 'alm';
+    el.style.cssText = `left:${sx}px;top:${sy}px`;
+    el.innerHTML = isEnemy
+      ? `<div class="edia"></div><div class="elbl">${p.isBot?'🤖':''}${p.name}</div><div class="edst">${Math.round(dist)}m</div>`
+      : `<div class="atri"></div><div class="albl">${p.name}</div>`;
+    document.body.appendChild(el);
+  });
+}
+
+// ═══════════════════════════════════════════════════
+//  FIRE
+// ═══════════════════════════════════════════════════
+function fire() {
+  if (st.reloading) { showAlert('リロード中...'); return; }
+  if (st.ammo <= 0) { reload(); return; }
+  st.ammo--; updateAmmoUI();
+  const W=window.innerWidth, H=window.innerHeight, cx=W/2, cy=H/2;
+  let hit = false;
+  document.querySelectorAll('.em').forEach(el => {
+    const r=el.getBoundingClientRect(), ex=r.left+r.width/2, ey=r.top+r.height/2;
+    if (Math.sqrt((ex-cx)**2+(ey-cy)**2) < 65) {
+      hit = true; el.style.opacity='.15';
+      st.score[st.myTeam]++; st.kills++;
+      updateScore();
+      $('xh').classList.add('hit'); setTimeout(()=>$('xh').classList.remove('hit'),200);
+      showKill();
+      // Damage online opponent
+      if (roomCap) roomCap.emit('dmg',{to:'enemy',v:30});
+      // Respawn bot
+      const pid = el.querySelector('.elbl')?.textContent?.replace('🤖','').trim();
+      const bp = st.players.find(p=>p.isBot && (p.name===pid || pid?.includes(p.name)));
+      if (bp) { setTimeout(()=>{ bp.lat=st.myPos.lat+(Math.random()-.5)*.001; bp.lon=st.myPos.lon+(Math.random()-.5)*.001; bp.hp=100; },4000); }
+    }
+  });
+  if (!hit) { /* miss — no spam alert */ }
+  if (st.ammo <= 0) setTimeout(reload, 350);
+}
+
+function showKill() {
+  const msgs = ['キル！+1','ヘッドショット！','ナイスショット！','撃破！'];
+  showAlert(msgs[Math.floor(Math.random()*msgs.length)]+' KD:'+st.kills+'/'+st.deaths, 'kill-alert');
+}
+
+function reload() {
+  if (st.reloading || st.reserve <= 0) { if(!st.reserve) showAlert('弾切れ！'); return; }
+  st.reloading = true; $('fire').classList.add('reload-anim');
+  showAlert('リロード中...');
+  setTimeout(() => {
+    const need = st.maxAmmo - st.ammo, got = Math.min(need, st.reserve);
+    st.ammo += got; st.reserve -= got; st.reloading = false;
+    $('fire').classList.remove('reload-anim'); updateAmmoUI(); showAlert('リロード完了');
+  }, 1800);
+}
+
+function takeDamage(dmg) {
+  st.health = Math.max(0, st.health - dmg); updateHealthUI();
+  $('flash').style.opacity='1'; setTimeout(()=>$('flash').style.opacity='0', 170);
+  if (st.health <= 0) {
+    showAlert('やられた！リスポーン中...','hit-alert');
+    st.deaths++; st.score[st.myTeam==='red'?'blue':'red']++; updateScore();
+    setTimeout(()=>{ st.health=100; updateHealthUI(); showAlert('リスポーン！'); }, 3000);
+  } else if (st.health < 30) showAlert('⚠ 危険！ HP:'+st.health,'hit-alert');
+}
+
+// ═══════════════════════════════════════════════════
+//  UI
+// ═══════════════════════════════════════════════════
+function updateAmmoUI(){const p=(st.ammo/st.maxAmmo)*100;$('amob').style.width=p+'%';$('amon').textContent=st.ammo+'/'+st.reserve}
+function updateHealthUI(){$('hpb').style.width=st.health+'%';$('hpn').textContent=st.health;$('hpb').style.background=st.health>50?'linear-gradient(90deg,#ff3333,#ff6644)':st.health>25?'linear-gradient(90deg,#ff8800,#ffaa00)':'linear-gradient(90deg,#f00,#f22)'}
+function updateScore(){$('sc-r').textContent='RED '+st.score.red;$('sc-b').textContent='BLUE '+st.score.blue}
+function showAlert(msg, cls='') {
+  const el=document.createElement('div'); el.className='am '+(cls||''); el.textContent=msg;
+  $('alerts').appendChild(el); setTimeout(()=>el.remove(),2700);
+}
+
+// ═══════════════════════════════════════════════════
+//  JOYSTICK
+// ═══════════════════════════════════════════════════
+let joyOn=false;
+const jz=$('joy'), jk=$('jknob');
+jz.addEventListener('touchstart',e=>{joyOn=true;e.preventDefault()},{passive:false});
+jz.addEventListener('touchmove',e=>{
+  if(!joyOn)return;
+  const t=e.touches[0],r=jz.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2;
+  const dx=t.clientX-cx, dy=t.clientY-cy, d=Math.min(Math.sqrt(dx*dx+dy*dy),36), a=Math.atan2(dy,dx);
+  jk.style.left=(r.width/2+Math.cos(a)*d)+'px'; jk.style.top=(r.height/2+Math.sin(a)*d)+'px';
+  st.myPos.lat+=dy*-0.0000018; st.myPos.lon+=dx*0.0000018;
+  e.preventDefault();
+},{passive:false});
+['touchend','touchcancel'].forEach(ev=>jz.addEventListener(ev,()=>{joyOn=false;jk.style.left='50%';jk.style.top='50%'}));
+
+// ═══════════════════════════════════════════════════
+//  EVENTS
+// ═══════════════════════════════════════════════════
+$('fire').addEventListener('touchstart',e=>{if(st.gameActive)fire();e.preventDefault()},{passive:false});
+$('fire').addEventListener('click',()=>{if(st.gameActive)fire()});
+$('camsw').addEventListener('click',switchCam);
+$('mmap').addEventListener('click',()=>{ $('bigmap').classList.add('open'); setTimeout(()=>drawMap($('bmc'),1300),80); });
+$('bmc-close').addEventListener('click',()=>$('bigmap').classList.remove('open'));
+
+// keyboard R = reload, Space = fire
+document.addEventListener('keydown',e=>{
+  if(!st.gameActive)return;
+  if(e.code==='KeyR') reload();
+  if(e.code==='Space'||e.code==='Enter') fire();
+});
+
+// ═══════════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════════
+// Default mode selection visual
+selectMode('bot');
+drawMinimap();
+setInterval(()=>{ if(!st.gameActive) drawMinimap(); },1200);
+</script>
+</body>
+</html>
