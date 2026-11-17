@@ -8,8 +8,43 @@
 :root{--g:#00ff88;--r:#ff3333;--b:#33aaff;--o:#ff8800;--y:#ffdd00;--bg:rgba(0,0,0,.72);--bd:rgba(0,255,136,.32);--st:env(safe-area-inset-top,0px);--sb:env(safe-area-inset-bottom,0px)}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%;overflow:hidden;background:#000;color:var(--g);font-family:'Courier New',monospace;user-select:none;-webkit-user-select:none;touch-action:none}
-#cam{position:fixed;inset:0;width:100%;height:100%;object-fit:cover;z-index:1;background:#0a0a0a}
+#cam{position:fixed;inset:0;width:100%;height:100%;object-fit:cover;z-index:1;background:#0a0a0a;transition: filter 0.5s ease;}
 #ai-layer{position:fixed;inset:0;width:100%;height:100%;z-index:10;pointer-events:none}
+
+/* ナイトビジョン用オーバーレイ */
+#night-overlay {
+  position: fixed; inset: 0; z-index: 2; pointer-events: none;
+  display: none; opacity: 0; transition: opacity 0.5s ease;
+  background: 
+    repeating-linear-gradient(0deg, rgba(0,0,0,0.15) 0px, rgba(0,0,0,0.15) 1px, transparent 1px, transparent 3px),
+    radial-gradient(circle at center, rgba(0,50,0,0.1) 0%, rgba(0,20,0,0.8) 100%);
+}
+#night-overlay::after {
+  content: ''; position: absolute; inset: 0;
+  background-image: url('data:image/svg+xml;utf8,<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"><filter id="noiseFilter"><feTurbulence type="fractalNoise" baseFrequency="0.65" numOctaves="3" stitchTiles="stitch"/></filter><rect width="100%" height="100%" filter="url(%23noiseFilter)" opacity="0.05"/></svg>');
+  animation: noise 0.2s infinite;
+}
+@keyframes noise {
+  0% { transform: translate(0, 0); }
+  10% { transform: translate(-5%, -5%); }
+  20% { transform: translate(-10%, 5%); }
+  30% { transform: translate(5%, -10%); }
+  40% { transform: translate(-5%, 15%); }
+  50% { transform: translate(-10%, 5%); }
+  60% { transform: translate(15%, 0); }
+  70% { transform: translate(0, 15%); }
+  80% { transform: translate(3%, 35%); }
+  90% { transform: translate(-10%, 10%); }
+  100% { transform: translate(0, 0); }
+}
+
+/* ナイトモード適用時のカメラフィルター */
+body.night-mode #cam {
+  filter: grayscale(1) sepia(1) hue-rotate(90deg) saturate(3) contrast(1.5) brightness(1.3);
+}
+body.night-mode #night-overlay {
+  display: block; opacity: 1;
+}
 
 /* HUD */
 #hud-gps,#hud-room{position:fixed;top:calc(var(--st) + 8px);z-index:30;pointer-events:none;background:var(--bg);border:1px solid var(--bd);border-radius:4px;padding:5px 8px;line-height:1.55}
@@ -52,6 +87,11 @@ html,body{height:100%;overflow:hidden;background:#000;color:var(--g);font-family
 #gps-bar{position:fixed;bottom:calc(var(--sb) + 8px);left:50%;transform:translateX(-50%);z-index:30;font-size:9px;padding:3px 10px;border-radius:4px;pointer-events:none;white-space:nowrap;background:rgba(0,0,0,.65);border:1px solid rgba(0,255,136,.25);color:rgba(0,255,136,.7)}
 #cov{position:fixed;bottom:calc(var(--sb) + 148px);left:10px;z-index:31;width:50px;height:50px;border-radius:50%;border:2px solid rgba(120,200,255,.7);background:rgba(60,140,255,.15);color:#fff;font-size:8px;font-family:inherit;font-weight:bold;touch-action:none}
 #cov.on{background:rgba(60,140,255,.55)}
+
+/* NIGHT TOGGLE */
+#btn-night { position: fixed; top: calc(var(--st) + 72px); left: 10px; z-index: 31; background: var(--bg); border: 1px solid var(--bd); color: var(--g); font-family: inherit; font-size: 10px; padding: 5px 10px; border-radius: 4px; display: flex; align-items: center; gap: 5px; }
+#btn-night.on { background: rgba(0, 255, 136, 0.3); border-color: #00ff88; color: #fff; }
+
 /* GUN MODEL */
 #gl{position:fixed;left:0;top:0;width:100%;height:100%;z-index:22;pointer-events:none}
 /* DAMAGE FX */
@@ -68,6 +108,7 @@ body.low #vig{animation:hb 1s infinite}
 .am{background:rgba(0,0,0,.8);border:1px solid var(--o);color:var(--o);font-size:10px;padding:4px 12px;border-radius:4px;animation:fa 2.4s forwards;white-space:nowrap}
 @keyframes fa{0%{opacity:0}12%{opacity:1}70%{opacity:1}100%{opacity:0}}
 .am.ka{border-color:var(--g);color:var(--g)}.am.ha{border-color:var(--r);color:var(--r)}
+
 /* AR MARKERS */
 .em,.alm{position:fixed;left:0;top:0;z-index:25;pointer-events:none;display:flex;flex-direction:column;align-items:center;gap:2px;will-change:transform}
 .edia{width:16px;height:16px;border:2px solid var(--r);transform:rotate(45deg);background:rgba(255,50,50,.15)}
@@ -76,6 +117,7 @@ body.low #vig{animation:hb 1s infinite}
 .hpb{width:34px;height:3px;background:rgba(255,255,255,.2)}.hpb i{display:block;height:100%;background:#ff4444;width:100%}
 .atri{width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-bottom:11px solid var(--b)}
 .albl{font-size:8px;color:var(--b);background:rgba(0,0,0,.7);padding:1px 4px;border-radius:2px}
+
 /* MAP */
 #bigmap{position:fixed;inset:0;z-index:90;background:rgba(0,8,16,.96);display:none;flex-direction:column;align-items:center;justify-content:center;gap:10px}
 #bigmap.open{display:flex}
@@ -138,6 +180,7 @@ select#camsel{background:rgba(0,20,10,.9);color:var(--g);border:1px solid var(--
 </head>
 <body>
 <video id="cam" autoplay playsinline muted></video>
+<div id="night-overlay"></div>
 <canvas id="ai-layer"></canvas>
 <div id="xh"><div class="xr"></div><div class="xd"></div></div>
 <div id="vig"></div><div id="hitdir"></div><div id="flash"></div>
@@ -162,6 +205,7 @@ select#camsel{background:rgba(0,20,10,.9);color:var(--g);border:1px solid var(--
 <button id="rld">RELOAD</button>
 <button id="cov">COVER</button>
 <button id="camsw">🔄 CAM</button>
+<button id="btn-night">🌙 NIGHT</button>
 <div id="gps-bar">📍 GPS 待機中</div>
 
 <div id="bigmap">
@@ -252,7 +296,7 @@ const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',
 const st={mode:'bot',botCount:1,maxP:4,time:5,health:100,ammo:30,maxAmmo:30,reserve:90,score:{red:0,blue:0},myTeam:'red',
   myPos:{lat:35.6762,lon:139.6503},targetPos:{lat:35.6762,lon:139.6503},heading:0,hd:0,gpsReady:false,src:'DEMO',gameActive:false,timeLeft:300,kills:0,deaths:0,
   reloading:false,dead:false,roomCode:null,players:[],yawV:0,pitV:0,spd:0,walkI:0,shk:0,pitch:0,roll:0,keyWalk:0,cover:false,phd:null,ppn:null,pp:null,
-  trail:[], gpsOffset:{lat:0, lon:0}, myTerritory:null, oppTerritory:null, acc:0};
+  trail:[], gpsOffset:{lat:0, lon:0}, myTerritory:null, oppTerritory:null, acc:0, nightMode:false};
 const net={peer:null,host:false,conns:{},hostConn:null,myId:null,name:'Player',joined:false};
 const BOT_NAMES=['Ghost','Viper','Hawk','Snake','Fox','Wolf','Eagle','Raven'];
 const BOT_TEAMS=['blue','blue','red','blue','red','blue','red','blue'];
@@ -261,12 +305,16 @@ let cocoModel = null;
 let lastAIPreds = [];
 
 // マップ操作用
-let mapMode = 'view'; // 'view', 'calibrate', 'territory'
+let mapMode = 'view'; 
 let isDragging = false;
-let dragStart = {x:0, y:0};
 let tempTerritory = {lat:0, lon:0, radius:30};
 let currentZoomIdx = 2;
 const ZOOM_LEVELS = [20, 50, 100, 200];
+
+// 夜間検知用
+const brightCanvas = document.createElement('canvas');
+brightCanvas.width = 32; brightCanvas.height = 32;
+const brightCtx = brightCanvas.getContext('2d', { willReadFrequently: true });
 
 /* ── flow ── */
 document.addEventListener('click',e=>{const b=e.target.closest('.bbot');if(!b)return;const g=b.parentNode;
@@ -318,19 +366,48 @@ async function doCamPerm(){setPerm('cam','wt','確認中...');
 async function applyCam(){await startCam(parseInt($('camsel').value,10)||0)}
 async function switchCam(){if(cams.length<=1)return;curCam=(curCam+1)%cams.length;await startCam(curCam)}
 
+/* ── Night Mode ── */
+function checkBrightness() {
+  if (!st.gameActive || !curStream) return;
+  const video = $('cam');
+  if (video.readyState === 4) {
+    brightCtx.drawImage(video, 0, 0, 32, 32);
+    const imgData = brightCtx.getImageData(0, 0, 32, 32);
+    const data = imgData.data;
+    let sum = 0;
+    for (let i = 0; i < data.length; i += 4) {
+      // 輝度計算 (0.299*R + 0.587*G + 0.114*B)
+      sum += 0.299 * data[i] + 0.587 * data[i+1] + 0.114 * data[i+2];
+    }
+    const avgBrightness = sum / (data.length / 4);
+    
+    // 閾値（30未満でナイトモード発動）
+    const isDark = avgBrightness < 30;
+    if (isDark !== st.nightMode) {
+      st.nightMode = isDark;
+      document.body.classList.toggle('night-mode', st.nightMode);
+      $('btn-night').classList.toggle('on', st.nightMode);
+      if(st.nightMode) showAlert('🌙 ナイトモード起動');
+    }
+  }
+}
+
+$('btn-night').addEventListener('click', () => {
+  st.nightMode = !st.nightMode;
+  document.body.classList.toggle('night-mode', st.nightMode);
+  $('btn-night').classList.toggle('on', st.nightMode);
+});
+
 /* ── GPS ── */
 let gpsWatcher=null,ipTimer=null,permWatch=false;
 function setPos(lat,lon,acc,src){
   st.acc = acc||0;
   if (st.gpsReady && src === 'GPS') {
     const dist = mDist(st.targetPos.lat, st.targetPos.lon, lat, lon);
-    if (acc > 50 || (dist > 100 && acc > 20)) return; // 誤差許容範囲を拡大
+    if (acc > 50 || (dist > 100 && acc > 20)) return;
   }
-  
-  // 手動補正を適用
   const finalLat = lat + st.gpsOffset.lat;
   const finalLon = lon + st.gpsOffset.lon;
-
   st.targetPos = {lat: finalLat, lon: finalLon};
   if (!st.gpsReady) { st.myPos = {lat: finalLat, lon: finalLon}; st.gpsReady = true; }
   st.src = src;
@@ -519,18 +596,15 @@ function canvasToLatLon(cx, cy) {
   const k = c / R;
   const rad = Math.PI / 180;
   
-  // 中心からの相対ピクセル
   const dx = cx - c;
   const dy = cy - c;
   
-  // マップの回転を戻す（北が上になるように）
   const hd = st.hd * rad;
   const rx = dx * Math.cos(hd) - dy * Math.sin(hd);
   const ry = dx * Math.sin(hd) + dy * Math.cos(hd);
   
-  // メートルに変換
   const mx = rx / k;
-  const my = ry / k; // 南方向
+  const my = ry / k;
   
   const dLat = -my / 111000;
   const dLon = mx / (111000 * Math.cos(st.myPos.lat * rad));
@@ -552,10 +626,9 @@ function latLonToCanvas(lat, lon) {
   const dLat = lat - st.myPos.lat;
   const dLon = lon - st.myPos.lon;
   
-  const my = -dLat * 111000; // 南方向
+  const my = -dLat * 111000;
   const mx = dLon * 111000 * Math.cos(st.myPos.lat * rad);
   
-  // 回転を適用
   const hd = -st.hd * rad;
   const X = c + (mx * Math.cos(hd) - my * Math.sin(hd)) * k;
   const Y = c + (mx * Math.sin(hd) + my * Math.cos(hd)) * k;
@@ -590,7 +663,6 @@ bmc.addEventListener('pointermove', e => {
   st.gpsOffset.lat = pos.lat - st.targetPos.lat;
   st.gpsOffset.lon = pos.lon - st.targetPos.lon;
   
-  // 即時反映
   st.myPos.lat = pos.lat;
   st.myPos.lon = pos.lon;
   
@@ -746,7 +818,9 @@ function runGame(){
   st.gameActive=true;st.timeLeft=st.time*60;if(st.mode==='bot')st.timeLeft=300;
   if(cams.length>1)$('camsw').style.display='block';
   $('ai-panel').style.display='block';
+  $('btn-night').style.display='flex';
   if(cocoModel) startAIDetection();
+  ints.push(setInterval(checkBrightness, 2000)); // 2秒ごとに明るさチェック
   ints.push(setInterval(()=>{if(!st.gameActive)return;st.timeLeft--;
     $('timer').textContent=String(Math.floor(st.timeLeft/60)).padStart(2,'0')+':'+String(Math.max(0,st.timeLeft)%60).padStart(2,'0');
     if(st.timeLeft<=30)$('timer').style.color='#ff4444';if(st.timeLeft<=0)endGame()},1000));
@@ -762,6 +836,8 @@ function endGame(){st.gameActive=false;ints.forEach(clearInterval);$('timer').te
   const w=st.score.red>st.score.blue?'🔴 RED WIN':st.score.blue>st.score.red?'🔵 BLUE WIN':'⚖ DRAW';
   showAlert(w+'  KD:'+st.kills+'/'+st.deaths);
   $('ai-panel').style.display='none';$('ai-layer').getContext('2d').clearRect(0,0,innerWidth,innerHeight);
+  $('btn-night').style.display='none';
+  document.body.classList.remove('night-mode');
 }
 
 /* ── 3D weapon ── */
@@ -915,7 +991,6 @@ function drawMap(cv,R){
   }
   x.restore();
   
-  // Trail
   if(st.trail.length > 1) {
     x.beginPath();
     x.moveTo(c, c);
@@ -930,7 +1005,6 @@ function drawMap(cv,R){
     x.stroke();
   }
 
-  // Saved Territories
   const drawTerritory = (t, isTemp) => {
     if (!t) return;
     const dN=(t.lat-st.myPos.lat)*111000,dE=(t.lon-st.myPos.lon)*111000*Math.cos(st.myPos.lat*rad),dist=Math.hypot(dE,dN),f=Math.atan2(dE,dN)-st.hd*rad;
@@ -947,7 +1021,6 @@ function drawMap(cv,R){
     x.stroke();
     x.setLineDash([]);
     
-    // Center point
     x.beginPath();
     x.arc(X, Y, 3 * u, 0, 6.283);
     x.fillStyle = strokeCol;
@@ -1013,7 +1086,6 @@ function fire(){
   const cx=innerWidth/2,cy=innerHeight/2;
   let hitEnemy = null;
   
-  // AI判定（クロスヘアが人型の中にあるか）
   for (let pred of lastAIPreds) {
       if (!pred.isEnemy) continue;
       if (cx >= pred.x && cx <= pred.x + pred.w && cy >= pred.y && cy <= pred.y + pred.h) {
@@ -1029,7 +1101,6 @@ function fire(){
       }
   }
   
-  // ARマーカー判定
   if (!hitEnemy) {
       let best=null,bd=80;
       st.players.forEach(p=>{
