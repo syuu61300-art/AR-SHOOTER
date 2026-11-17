@@ -8,8 +8,7 @@
 :root{--g:#00ff88;--r:#ff3333;--b:#33aaff;--o:#ff8800;--y:#ffdd00;--bg:rgba(0,0,0,.72);--bd:rgba(0,255,136,.32);--st:env(safe-area-inset-top,0px);--sb:env(safe-area-inset-bottom,0px)}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%;overflow:hidden;background:#000;color:var(--g);font-family:'Courier New',monospace;user-select:none;-webkit-user-select:none;touch-action:none}
-#cam{position:fixed;inset:0;width:100%;height:100%;object-fit:cover;z-index:1;background:#0a0a0a;will-change:transform}
-#scan{position:fixed;inset:0;z-index:2;pointer-events:none;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,255,136,.011) 2px,rgba(0,255,136,.011) 4px)}
+#cam{position:fixed;inset:0;width:100%;height:100%;object-fit:cover;z-index:1;background:#0a0a0a}
 #xh{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:52px;height:52px;z-index:20;pointer-events:none}
 .xr{position:absolute;inset:0;border:1.5px solid rgba(255,60,60,.6);border-radius:50%}
 .xd{position:absolute;left:50%;top:50%;width:4px;height:4px;background:#ff4444;border-radius:50%;transform:translate(-50%,-50%)}
@@ -27,7 +26,7 @@ html,body{height:100%;overflow:hidden;background:#000;color:var(--g);font-family
 #mode-badge{font-size:8px;letter-spacing:2px;padding:2px 8px;border-radius:10px;background:var(--bg);border:1px solid var(--bd)}
 .hl{color:rgba(0,255,136,.55);font-size:8px;letter-spacing:1px}
 .hv{color:var(--g);font-size:11px;font-weight:bold}
-#hud-stats{position:fixed;bottom:calc(var(--sb) + 76px);left:10px;z-index:30;pointer-events:none}
+#hud-stats{position:fixed;bottom:calc(var(--sb) + 172px);left:10px;z-index:30;pointer-events:none}
 .sr{display:flex;align-items:center;gap:6px;margin-bottom:6px}
 .si{font-size:12px;width:16px;text-align:center}
 .sb{width:80px;height:6px;background:rgba(255,255,255,.12);border-radius:3px;overflow:hidden}
@@ -35,17 +34,20 @@ html,body{height:100%;overflow:hidden;background:#000;color:var(--g);font-family
 .sh{background:linear-gradient(90deg,#ff3333,#ff6644)}
 .sa{background:linear-gradient(90deg,#ffaa00,#ffdd00)}
 .sn{font-size:10px;color:#fff;min-width:32px}
-#mmap{position:fixed;bottom:calc(var(--sb) + 40px);right:10px;z-index:30;cursor:pointer}
+#mmap{position:fixed;bottom:calc(var(--sb) + 40px);left:10px;z-index:30;cursor:pointer}
 #mmap canvas{width:110px;height:110px;border-radius:50%;border:2px solid var(--bd);background:rgba(0,8,20,.85);display:block}
 #mmap .ml{font-size:7px;color:rgba(0,255,136,.5);text-align:center;margin-top:2px}
 /* FIRE moved to right-center so the gun model owns the bottom */
-#fire{position:fixed;bottom:calc(var(--sb) + 170px);right:14px;z-index:31;width:68px;height:68px;border-radius:50%;border:3px solid rgba(255,80,80,.8);background:rgba(255,30,30,.28);color:#fff;font-size:11px;font-family:inherit;font-weight:bold;cursor:pointer;touch-action:none;-webkit-tap-highlight-color:transparent}
+#fire{position:fixed;bottom:calc(var(--sb) + 56px);right:16px;z-index:31;width:78px;height:78px;border-radius:50%;border:3px solid rgba(255,80,80,.8);background:rgba(255,30,30,.28);color:#fff;font-size:11px;font-family:inherit;font-weight:bold;cursor:pointer;touch-action:none;-webkit-tap-highlight-color:transparent}
 #fire:active{background:rgba(255,80,80,.55);transform:scale(.92)}
 #fire.rl{border-color:rgba(255,170,0,.8);background:rgba(255,140,0,.22)}
-#camsw{position:fixed;bottom:calc(var(--sb) + 8px);right:10px;z-index:30;background:var(--bg);border:1px solid var(--bd);color:var(--g);font-family:inherit;font-size:9px;padding:5px 10px;border-radius:4px;display:none}
+#rld{position:fixed;bottom:calc(var(--sb) + 148px);right:26px;z-index:31;width:58px;height:58px;border-radius:50%;border:2px solid rgba(255,190,0,.75);background:rgba(255,160,0,.2);color:#fff;font-size:9px;font-family:inherit;font-weight:bold;touch-action:none;-webkit-tap-highlight-color:transparent}
+#rld:active{background:rgba(255,190,0,.5)}
+@media(max-height:420px){#gun{display:none}}
+#camsw{position:fixed;top:calc(var(--st) + 72px);right:10px;z-index:30;background:var(--bg);border:1px solid var(--bd);color:var(--g);font-family:inherit;font-size:9px;padding:5px 10px;border-radius:4px;display:none}
 #gps-bar{position:fixed;bottom:calc(var(--sb) + 8px);left:50%;transform:translateX(-50%);z-index:30;font-size:9px;padding:3px 10px;border-radius:4px;pointer-events:none;white-space:nowrap;background:rgba(0,0,0,.65);border:1px solid rgba(0,255,136,.25);color:rgba(0,255,136,.7)}
 /* GUN MODEL */
-#gun{position:fixed;left:50%;bottom:calc(var(--sb) + 30px);width:190px;margin-left:-95px;z-index:22;pointer-events:none;transform-origin:50% 100%;will-change:transform}
+#gun{position:fixed;left:50%;bottom:calc(var(--sb) + 30px);width:160px;margin-left:-80px;z-index:22;pointer-events:none;transform-origin:50% 100%;will-change:transform}
 #gun svg{display:block;width:100%;filter:drop-shadow(0 6px 10px rgba(0,0,0,.6))}
 #muz{position:absolute;left:50%;top:-34px;width:84px;height:84px;margin-left:-42px;border-radius:50%;opacity:0;background:radial-gradient(circle,#fff 0,#ffe27a 28%,rgba(255,140,0,.6) 55%,transparent 72%)}
 /* DAMAGE FX */
@@ -122,7 +124,6 @@ select#camsel{background:rgba(0,20,10,.9);color:var(--g);border:1px solid var(--
 </head>
 <body>
 <video id="cam" autoplay playsinline muted></video>
-<div id="scan"></div>
 <div id="xh"><div class="xr"></div><div class="xd"></div></div>
 <div id="vig"></div><div id="hitdir"></div><div id="flash"></div>
 
@@ -151,6 +152,7 @@ select#camsel{background:rgba(0,20,10,.9);color:var(--g);border:1px solid var(--
 </div>
 
 <button id="fire">FIRE</button>
+<button id="rld">RELOAD</button>
 <button id="camsw">🔄 CAM</button>
 <div id="gps-bar">📍 GPS 待機中</div>
 <div id="bigmap"><div style="font-size:10px;letter-spacing:2px">TACTICAL MAP</div><canvas id="bmc" width="360" height="360"></canvas><div class="mc" id="bmc-close">[ CLOSE ]</div></div>
@@ -167,7 +169,7 @@ select#camsel{background:rgba(0,20,10,.9);color:var(--g);border:1px solid var(--
     <div class="bot-btns" data-k="botCount"><div class="bbot sel" data-v="1">1</div><div class="bbot" data-v="3">3</div><div class="bbot" data-v="5">5</div><div class="bbot" data-v="8">8</div></div>
   </div>
   <button class="sbtn bot-s" id="next-btn" onclick="goToSetup()">▶ 次へ（カメラ・GPS設定）</button>
-  <div class="note">スマホ背面カメラ / PCウェブカメラ 両対応<br>PC: ←→ で向き変更 / Space 発射 / R リロード</div>
+  <div class="note">スマホ背面カメラ / PCウェブカメラ 両対応<br>PC: ←→ 向き / W S 前後移動（GPSなし時） / Space 発射 / R リロード</div>
 </div>
 
 <!-- 2: PERMISSIONS -->
@@ -266,7 +268,7 @@ async function switchCam(){if(cams.length<=1)return;curCam=(curCam+1)%cams.lengt
 
 /* ── GPS (getCurrentPosition → watch, auto re-request, IP fallback) ── */
 let gpsWatcher=null,ipTimer=null,permWatch=false;
-function setPos(lat,lon,acc,src){st.myPos.lat=lat;st.myPos.lon=lon;st.src=src;st.gpsReady=true;
+function setPos(lat,lon,acc,src){const first=!st.gpsReady||src!==st.src;st.raw={lat,lon};if(first){st.myPos.lat=lat;st.myPos.lon=lon}st.src=src;st.gpsReady=true;
   $('gps-la').textContent=lat.toFixed(5)+'°';$('gps-lo').textContent=lon.toFixed(5)+'°';
   const t=src+(acc?' ±'+Math.round(acc)+'m':'');$('gps-acc').textContent=t;$('gps-bar').textContent='📍 '+t;
   $('gps-bar').style.color=src==='GPS'?'rgba(0,255,136,.9)':'rgba(255,220,0,.8)'}
@@ -399,7 +401,7 @@ function runGame(){
   ints.push(setInterval(()=>{if(!st.gameActive)return;st.timeLeft--;
     $('timer').textContent=String(Math.floor(st.timeLeft/60)).padStart(2,'0')+':'+String(Math.max(0,st.timeLeft)%60).padStart(2,'0');
     if(st.timeLeft<=30)$('timer').style.color='#ff4444';if(st.timeLeft<=0)endGame()},1000));
-  ints.push(setInterval(()=>{drawMap($('mc'),1800);$('pcnt').textContent=(st.players.length+1)+'/'+(st.mode==='bot'?st.botCount+1:st.maxP)},250));
+  ints.push(setInterval(()=>{drawMap($('mc'),120);if($('bigmap').classList.contains('open'))drawMap($('bmc'),300);$('pcnt').textContent=(st.players.length+1)+'/'+(st.mode==='bot'?st.botCount+1:st.maxP)},250));
   last=performance.now();requestAnimationFrame(frame);
   showAlert('⚔ START — TEAM '+st.myTeam.toUpperCase());
 }
@@ -413,6 +415,9 @@ function frame(t){
   if(!st.gameActive)return;
   const dt=Math.min(.1,(t-last)/1000);last=t;
   st.hd=(st.hd+(((st.heading-st.hd+540)%360)-180)*Math.min(1,dt*10)+360)%360;
+  if(st.raw){const dm=mDist(st.myPos.lat,st.myPos.lon,st.raw.lat,st.raw.lon);
+    if(dm>40){st.myPos.lat=st.raw.lat;st.myPos.lon=st.raw.lon}
+    else if(dm>1.5){const k=Math.min(1,dt*2.5);st.myPos.lat+=(st.raw.lat-st.myPos.lat)*k;st.myPos.lon+=(st.raw.lon-st.myPos.lon)*k}}
   st.players.forEach(p=>{
     if(p.isBot){if(p.hp>0){const s=1.6/111000*dt;p.lat+=Math.sin(p.angle)*s;p.lon+=Math.cos(p.angle)*s}}
     else if(p.tlat!=null){const k=Math.min(1,dt*8);p.lat+=(p.tlat-p.lat)*k;p.lon+=(p.tlon-p.lon)*k}});
@@ -438,16 +443,27 @@ function renderMarkers(){
 }
 
 /* ── map ── */
-function llXY(la,lo,cla,clo,sc,sz){const m=111000;return{x:sz/2+(lo-clo)*m*Math.cos(cla*Math.PI/180)*sc,y:sz/2-(la-cla)*m*sc}}
-function drawMap(cv,sc){const x=cv.getContext('2d'),W=cv.width,H=cv.height;x.clearRect(0,0,W,H);x.fillStyle='rgba(0,8,20,.95)';x.fillRect(0,0,W,H);
-  if(W===110){x.save();x.beginPath();x.arc(W/2,H/2,W/2,0,6.283);x.clip()}
-  x.strokeStyle='rgba(0,255,136,.06)';x.lineWidth=.5;for(let i=0;i<W;i+=16){x.beginPath();x.moveTo(i,0);x.lineTo(i,H);x.moveTo(0,i);x.lineTo(W,i);x.stroke()}
-  x.fillStyle='rgba(0,255,136,.4)';x.font='7px Courier New';x.textAlign='center';x.fillText('N',W/2,9);
-  st.players.forEach(p=>{if(p.hp<=0)return;const o=llXY(p.lat,p.lon,st.myPos.lat,st.myPos.lon,sc,W);if(o.x<-8||o.x>W+8||o.y<-8||o.y>H+8)return;
-    const c=p.team==='red'?'#ff4444':'#33aaff';x.beginPath();x.arc(o.x,o.y,3.5,0,6.283);x.fillStyle=c;x.fill();
-    x.fillStyle=c;x.font='6px Courier New';x.fillText(p.name,o.x,o.y-7)});
-  x.save();x.translate(W/2,H/2);x.rotate(st.hd*Math.PI/180);x.beginPath();x.moveTo(0,-8);x.lineTo(4.5,4.5);x.lineTo(-4.5,4.5);x.closePath();
-  x.fillStyle=st.myTeam==='red'?'#ff6644':'#44aaff';x.fill();x.restore();if(W===110)x.restore()}
+// heading-up radar: R = radius in metres; players beyond R are pinned to the rim
+function drawMap(cv,R){
+  const x=cv.getContext('2d'),W=cv.width,c=W/2,k=c/R,mini=cv.id==='mc',u=W/(mini?110:360),rad=Math.PI/180;
+  x.clearRect(0,0,W,W);x.save();if(mini){x.beginPath();x.arc(c,c,c,0,6.283);x.clip()}
+  x.fillStyle='rgba(0,8,20,.92)';x.fillRect(0,0,W,W);
+  x.fillStyle='rgba(0,255,136,.1)';x.beginPath();x.moveTo(c,c);x.arc(c,c,c,-Math.PI/2-35*rad,-Math.PI/2+35*rad);x.closePath();x.fill();
+  x.strokeStyle='rgba(0,255,136,.2)';x.lineWidth=u;
+  [1/3,2/3,1].forEach(f=>{x.beginPath();x.arc(c,c,c*f*.98,0,6.283);x.stroke()});
+  x.beginPath();x.moveTo(c,0);x.lineTo(c,W);x.moveTo(0,c);x.lineTo(W,c);x.stroke();
+  x.font='bold '+8*u+'px Courier New';x.textAlign='center';
+  x.fillStyle='rgba(0,255,136,.55)';x.fillText(Math.round(R*2/3)+'m',c,c-c*2/3*.98-2*u);
+  const na=-st.hd*rad;x.fillStyle='#ff6644';x.fillText('N',c+Math.sin(na)*(c-9*u),c-Math.cos(na)*(c-9*u)+3*u);
+  st.players.forEach(p=>{if(p.hp<=0)return;
+    const dN=(p.lat-st.myPos.lat)*111000,dE=(p.lon-st.myPos.lon)*111000*Math.cos(st.myPos.lat*rad),dist=Math.hypot(dE,dN),f=Math.atan2(dE,dN)-st.hd*rad;
+    let px=dist*Math.sin(f),py=-dist*Math.cos(f),edge=dist>R*.94;if(edge){const q=R*.94/dist;px*=q;py*=q}
+    const X=c+px*k,Y=c+py*k,col=p.team==='red'?'#ff4444':'#33aaff';
+    x.globalAlpha=edge?.55:1;x.beginPath();x.arc(X,Y,(mini?3.6:5)*u,0,6.283);x.fillStyle=col;x.fill();x.strokeStyle='#fff';x.lineWidth=.8*u;x.stroke();
+    if(!mini){x.fillStyle=col;x.fillText(p.name+' '+Math.round(dist)+'m',X,Y-8*u)}x.globalAlpha=1});
+  x.translate(c,c);x.beginPath();x.moveTo(0,-8*u);x.lineTo(5*u,5*u);x.lineTo(0,2.5*u);x.lineTo(-5*u,5*u);x.closePath();
+  x.fillStyle=st.myTeam==='red'?'#ff7755':'#55bbff';x.fill();x.strokeStyle='#fff';x.lineWidth=.8*u;x.stroke();x.restore();
+}
 function mDist(a,b,c,d){const R=6371000,p=Math.PI/180,dL=(c-a)*p,dO=(d-b)*p;
   const k=Math.sin(dL/2)**2+Math.cos(a*p)*Math.cos(c*p)*Math.sin(dO/2)**2;return R*2*Math.atan2(Math.sqrt(k),Math.sqrt(1-k))}
 function bearing(a,b,c,d){const p=Math.PI/180,dO=(d-b)*p,y=Math.sin(dO)*Math.cos(c*p),x=Math.cos(a*p)*Math.sin(c*p)-Math.sin(a*p)*Math.cos(c*p)*Math.cos(dO);
@@ -460,7 +476,6 @@ let lastShot=0;
 function recoil(){
   $('gun').animate([{transform:'translateY(0) rotate(0)'},{transform:'translateY(24px) rotate(-5deg) scale(1.06)',offset:.25},{transform:'none'}],{duration:160,easing:'ease-out'});
   $('muz').animate([{opacity:1,transform:'scale(.6)'},{opacity:0,transform:'scale(1.4)'}],{duration:90});
-  $('cam').animate([{transform:'none'},{transform:'translateY(8px) scale(1.02)',offset:.3},{transform:'none'}],{duration:150});
   $('xh').animate([{transform:'translate(-50%,-50%) scale(1.4)'},{transform:'translate(-50%,-50%) scale(1)'}],{duration:150});
 }
 function fire(){
@@ -488,7 +503,6 @@ function takeDamage(d,src){
   if(st.dead||!st.gameActive)return;
   st.health=Math.max(0,st.health-d);updateHealthUI();
   const f=$('flash');f.style.transition='none';f.style.opacity=Math.min(1,.4+d/30);requestAnimationFrame(()=>requestAnimationFrame(()=>{f.style.transition='opacity .6s';f.style.opacity=0}));
-  $('cam').animate([{transform:'none'},{transform:'translate(-10px,6px) rotate(-.8deg)'},{transform:'translate(8px,-5px)'},{transform:'translate(-4px,2px)'},{transform:'none'}],{duration:280});
   $('gun').animate([{transform:'none'},{transform:'translate(-12px,14px) rotate(-3deg)'},{transform:'none'}],{duration:240});
   navigator.vibrate&&navigator.vibrate(Math.min(220,d*6));
   pop('-'+d,innerWidth/2,innerHeight*.6,'me');
@@ -513,13 +527,17 @@ let af=null;const fb=$('fire');
 fb.addEventListener('pointerdown',e=>{e.preventDefault();fire();clearInterval(af);af=setInterval(fire,140)});
 ['pointerup','pointercancel','pointerleave'].forEach(n=>fb.addEventListener(n,()=>clearInterval(af)));
 $('camsw').addEventListener('click',switchCam);
-$('mmap').addEventListener('click',()=>{$('bigmap').classList.add('open');setTimeout(()=>drawMap($('bmc'),1300),60)});
-$('bmc-close').addEventListener('click',()=>$('bigmap').classList.remove('open'));
+$('rld').addEventListener('pointerdown',e=>{e.preventDefault();reload()});
+$('mmap').addEventListener('click',()=>{$('bigmap').classList.add('open');drawMap($('bmc'),300)});
+$('bigmap').addEventListener('click',()=>$('bigmap').classList.remove('open'));
 document.addEventListener('keydown',e=>{if(!st.gameActive)return;
   if(e.code==='KeyR')reload();if(e.code==='Space'||e.code==='Enter'){e.preventDefault();fire()}
   if(e.code==='ArrowLeft'||e.code==='KeyA')st.heading=(st.heading+355)%360;
-  if(e.code==='ArrowRight'||e.code==='KeyD')st.heading=(st.heading+5)%360});
-selectMode('bot');tab('host');drawMap($('mc'),1800);
+  if(e.code==='ArrowRight'||e.code==='KeyD')st.heading=(st.heading+5)%360;
+  if((e.code==='KeyW'||e.code==='KeyS')&&st.src!=='GPS'){st.raw=st.raw||{lat:st.myPos.lat,lon:st.myPos.lon};
+    const q=(e.code==='KeyW'?1:-1)*3/111000,a=st.heading*Math.PI/180;st.raw.lat+=Math.cos(a)*q;st.raw.lon+=Math.sin(a)*q/Math.cos(st.myPos.lat*Math.PI/180)}});
+const dpr=Math.min(2,devicePixelRatio||1);$('mc').width=$('mc').height=110*dpr;$('bmc').width=$('bmc').height=360*dpr;
+selectMode('bot');tab('host');drawMap($('mc'),120);
 </script>
 </body>
 </html>
