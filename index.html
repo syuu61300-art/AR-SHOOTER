@@ -221,6 +221,15 @@ function goToSetup(){
   try{DeviceOrientationEvent.requestPermission&&DeviceOrientationEvent.requestPermission();DeviceMotionEvent.requestPermission&&DeviceMotionEvent.requestPermission()}catch(e){}
   show('s-perm');$('start-btn').textContent=st.mode==='bot'?'⚔ ゲームスタート':'▶ 次へ（ルーム設定）';
   doCamPerm();doGpsPerm();
+  // 権限取得がうまくいかない場合のフォールバック（5秒後に強制有効化）
+  setTimeout(() => {
+    if ($('start-btn').disabled) {
+      $('start-btn').disabled = false;
+      setPerm('cam', 'ng', 'タイムアウト（背景黒で続行）');
+      setPerm('gps', 'ng', 'タイムアウト（デモ座標）');
+      if(!st.gpsReady) setPos(35.6762, 139.6503, 0, 'DEMO');
+    }
+  }, 5000);
 }
 function proceed(){
   if(st.mode==='bot'){beginBot();return}
@@ -269,7 +278,7 @@ async function startIP(why,denied){
   const upd=async()=>{if(st.src==='GPS')return;const d=await ipLoc();
     if(st.src==='GPS')return;
     if(d){setPos(d.lat,d.lon,0,'IP'+(d.city?'('+d.city+')':''));setPerm('gps','ng',why+' → IP位置(概算)')}
-    else{setPerm('gps','ng',why+' → デモ座標');$('gps-bar').textContent='📍 デモ座標'}
+    else{setPerm('gps','ng',why+' → デモ座標');$('gps-bar').textContent='📍 デモ座標'; if(!st.gpsReady) setPos(35.6762, 139.6503, 0, 'DEMO')}
     checkReady()};
   await upd();ipTimer=setInterval(upd,30000)}
 function gpsOk(p){if(ipTimer){clearInterval(ipTimer);ipTimer=null}
@@ -331,7 +340,7 @@ function hostRecv(c,m){const now=performance.now();let p=st.players.find(x=>x.id
   if(m.t==='join'){
     if(st.players.length+1>=st.maxP||st.gameActive){c.send({t:'full'});setTimeout(()=>c.close(),300);return}
     const r=st.players.filter(x=>x.team==='red').length+1,b=st.players.length+1-r,team=r<=b?'red':'blue';
-    st.players.push({id:c.peer,name:esc(String(m.name||'Player').slice(0,10)),team,lat:st.myPos.lat,lon:st.myPos.lon,hp:100});
+    st.players.push({id:c.peer,name:esc(String(m.name||'Player').slice(0,10)),team,lat:st.myPos.lat,lon:st.myPos.lon,hp:100,tlat:st.myPos.lat,tlon:st.myPos.lon});
     net.conns[c.peer]=c;c.send({t:'welcome',team,time:st.time,max:st.maxP});lobbyPush();
   }else if(!p)return;
   else if(m.t==='pos'){p.tlat=m.la;p.tlon=m.lo;if(!p.lock||now>p.lock)p.hp=m.hp}
@@ -358,7 +367,7 @@ function clientRecv(m){const now=performance.now();
   else if(m.t==='dmg')takeDamage(m.d,{lat:m.fl,lon:m.fo,id:m.from});
   else if(m.t==='s'){const ids={};
     m.p.forEach(q=>{if(q.id===net.myId)return;ids[q.id]=1;let p=st.players.find(x=>x.id===q.id);
-      if(!p){p={id:q.id,lat:q.la,lon:q.lo,hp:100};st.players.push(p)}
+      if(!p){p={id:q.id,lat:q.la,lon:q.lo,hp:100,tlat:q.la,tlon:q.lo};st.players.push(p)}
       p.name=q.n;p.team=q.tm;p.tlat=q.la;p.tlon=q.lo;if(!p.lock||now>p.lock)p.hp=q.hp});
     st.players=st.players.filter(p=>ids[p.id]);st.score=m.sc;updateScore();
     if(Math.abs(st.timeLeft-m.tl)>1)st.timeLeft=m.tl}
@@ -468,7 +477,7 @@ function frame(t){
     else if(dm>1.5){const k=Math.min(1,dt*2.5);st.myPos.lat+=(st.raw.lat-st.myPos.lat)*k;st.myPos.lon+=(st.raw.lon-st.myPos.lon)*k}}
   st.players.forEach(p=>{
     if(p.isBot){if(p.hp>0){const s=1.6/111000*dt;p.lat+=Math.sin(p.angle)*s;p.lon+=Math.cos(p.angle)*s}}
-    else if(p.tlat!=null){const k=Math.min(1,dt*8);p.lat+=(p.tlat-p.lat)*k;p.lon+=(p.tlon-p.lon)*k}});
+    else if(p.tlat!=null && p.tlon!=null){const k=Math.min(1,dt*8);p.lat+=(p.tlat-p.lat)*k;p.lon+=(p.tlon-p.lon)*k}});
   const d2=Math.max(dt,.004),dh=((st.hd-(st.phd??st.hd)+540)%360)-180;st.phd=st.hd;
   st.yawV+=(Math.max(-400,Math.min(400,dh/d2))-st.yawV)*Math.min(1,dt*12);
   st.pitV+=(Math.max(-300,Math.min(300,(st.pitch-(st.ppn??st.pitch))/d2))-st.pitV)*Math.min(1,dt*12);st.ppn=st.pitch;
@@ -484,13 +493,17 @@ function renderMarkers(){
     p.sx=null;if(p.hp<=0)return;
     const dist=mDist(st.myPos.lat,st.myPos.lon,p.lat,p.lon);if(dist>400)return;
     const rel=((bearing(st.myPos.lat,st.myPos.lon,p.lat,p.lon)-st.hd+540)%360)-180;
-    if(Math.abs(rel)>fov*1.4)return;
-    p.sx=W/2+rel/fov*W*.56;p.sy=H*.28+dist/400*H*.14;p.dist=dist;seen[p.id]=1;
+    // 視野角で弾かず、画面端にクランプする
+    let sx = W/2 + (rel/fov) * W * 0.56;
+    sx = Math.max(30, Math.min(W-30, sx));
+    p.sx = sx;
+    p.sy = H*.28 + Math.min(1, dist/400) * H*.14;
+    p.dist = dist; seen[p.id]=1;
     const en=p.team!==st.myTeam;let e=mk[p.id];
     if(!e){const el=document.createElement('div');el.className=en?'em':'alm';
       el.innerHTML=en?'<div class="edia"></div><div class="elbl"></div><div class="hpb"><i></i></div><div class="edst"></div>':'<div class="atri"></div><div class="albl"></div>';
       document.body.appendChild(el);e=mk[p.id]={el,l:el.querySelector('.elbl,.albl'),h:el.querySelector('i'),d:el.querySelector('.edst')};
-      e.l.textContent=(p.isBot?'🤖':'')+p.name}
+      e.l.textContent=(p.isBot?'🤖':'')+(p.name||'Enemy')}
     e.el.style.transform='translate3d('+p.sx+'px,'+p.sy+'px,0) translate(-50%,-50%)';
     if(e.h)e.h.style.width=p.hp+'%';if(e.d)e.d.textContent=Math.round(dist)+'m';
   });
