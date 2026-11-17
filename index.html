@@ -5,798 +5,521 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>AR Shooter Online</title>
 <style>
-:root {
-  --g: #00ff88; --r: #ff3333; --b: #33aaff; --o: #ff8800;
-  --bg: rgba(0,0,0,0.65); --bd: rgba(0,255,136,0.35);
-  box-sizing: border-box;
-  padding-top: env(safe-area-inset-top,0px);
-  padding-bottom: env(safe-area-inset-bottom,0px);
-}
-*,*::before,*::after{box-sizing:inherit;margin:0;padding:0}
-html,body{height:100%;overflow:hidden;background:#000;color:var(--g);font-family:'Courier New',monospace;user-select:none}
-
-/* ── CAMERA ── */
-#cam{position:fixed;inset:0;width:100%;height:100%;object-fit:cover;z-index:1;background:#0a0a0a}
-
-/* ── SCANLINES ── */
-#scan{position:fixed;inset:0;z-index:2;pointer-events:none;
-  background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,255,136,.012) 2px,rgba(0,255,136,.012) 4px)}
-
-/* ── CORNERS ── */
-.cor{position:fixed;width:36px;height:36px;border-color:var(--g);border-style:solid;border-width:0;opacity:.6;z-index:3;pointer-events:none}
-#c1{top:12px;left:12px;border-top-width:2px;border-left-width:2px}
-#c2{top:12px;right:12px;border-top-width:2px;border-right-width:2px}
-#c3{bottom:55px;left:12px;border-bottom-width:2px;border-left-width:2px}
-#c4{bottom:55px;right:12px;border-bottom-width:2px;border-right-width:2px}
-
-/* ── CROSSHAIR ── */
-#xh{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:56px;height:56px;z-index:20;pointer-events:none}
-.xr{position:absolute;inset:0;border:1.5px solid rgba(255,60,60,.65);border-radius:50%}
+:root{--g:#00ff88;--r:#ff3333;--b:#33aaff;--o:#ff8800;--y:#ffdd00;--bg:rgba(0,0,0,.72);--bd:rgba(0,255,136,.32);--st:env(safe-area-inset-top,0px);--sb:env(safe-area-inset-bottom,0px)}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden;background:#000;color:var(--g);font-family:'Courier New',monospace;user-select:none;-webkit-user-select:none;touch-action:none}
+#cam{position:fixed;inset:0;width:100%;height:100%;object-fit:cover;z-index:1;background:#0a0a0a;will-change:transform}
+#scan{position:fixed;inset:0;z-index:2;pointer-events:none;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,255,136,.011) 2px,rgba(0,255,136,.011) 4px)}
+#xh{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:52px;height:52px;z-index:20;pointer-events:none}
+.xr{position:absolute;inset:0;border:1.5px solid rgba(255,60,60,.6);border-radius:50%}
 .xd{position:absolute;left:50%;top:50%;width:4px;height:4px;background:#ff4444;border-radius:50%;transform:translate(-50%,-50%)}
-.xl{position:absolute;background:rgba(255,60,60,.6)}
-.xl.h{width:18px;height:1px;top:50%;transform:translateY(-50%)}
-.xl.lf{left:-3px}.xl.rt{right:-3px}
-.xl.v{width:1px;height:18px;left:50%;transform:translateX(-50%)}
-.xl.tp{top:-3px}.xl.bt{bottom:-3px}
-#xh.hit .xr{border-color:#fff;animation:xhit .15s}
-@keyframes xhit{0%{transform:scale(1.4)}100%{transform:scale(1)}}
-
-/* ── TOP HUD ── */
-#htop{position:fixed;top:calc(env(safe-area-inset-top,0px)+8px);left:0;right:0;z-index:30;display:flex;justify-content:space-between;padding:0 12px;pointer-events:none}
-.hb{background:var(--bg);border:1px solid var(--bd);border-radius:4px;padding:5px 9px;font-size:10px;line-height:1.6;backdrop-filter:blur(6px)}
-.hl{color:rgba(0,255,136,.5);font-size:8px;letter-spacing:1px}
-.hv{color:var(--g);font-size:12px;font-weight:bold}
-
-/* ── TIMER / SCORE ── */
-#timer{position:fixed;top:calc(env(safe-area-inset-top,0px)+8px);left:50%;transform:translateX(-50%);z-index:30;font-size:18px;font-weight:bold;color:#fff;background:var(--bg);border:1px solid var(--bd);border-radius:4px;padding:4px 14px;pointer-events:none;letter-spacing:2px}
-#scores{position:fixed;top:calc(env(safe-area-inset-top,0px)+50px);left:50%;transform:translateX(-50%);z-index:30;display:flex;gap:12px;pointer-events:none}
-.sc{font-size:11px;font-weight:bold;padding:3px 9px;border-radius:3px}
-.sc.red{color:var(--r);background:rgba(255,50,50,.15);border:1px solid rgba(255,50,50,.4)}
-.sc.blu{color:var(--b);background:rgba(50,170,255,.15);border:1px solid rgba(50,170,255,.4)}
-
-/* ── MODE BADGE ── */
-#mode-badge{position:fixed;top:calc(env(safe-area-inset-top,0px)+90px);left:50%;transform:translateX(-50%);z-index:30;font-size:9px;letter-spacing:2px;padding:2px 10px;border-radius:10px;pointer-events:none}
-.mb-bot{color:#ffdd00;background:rgba(255,220,0,.12);border:1px solid rgba(255,220,0,.35)}
-.mb-online{color:var(--g);background:rgba(0,255,136,.1);border:1px solid var(--bd)}
-
-/* ── BOTTOM STATS ── */
-#hbot{position:fixed;bottom:calc(env(safe-area-inset-bottom,0px)+88px);left:12px;z-index:30;pointer-events:none}
-.sr{display:flex;align-items:center;gap:7px;margin-bottom:7px}
-.si{font-size:13px;width:18px;text-align:center}
-.sb{width:85px;height:7px;background:rgba(255,255,255,.1);border-radius:4px;overflow:hidden;border:1px solid rgba(255,255,255,.1)}
-.sf{height:100%;border-radius:4px;transition:width .3s}
+#xh.hit .xr{border-color:#fff;background:rgba(255,255,255,.18)}
+/* HUD (blur removed: it was a major lag source on phones) */
+#hud-gps,#hud-room{position:fixed;top:calc(var(--st) + 8px);z-index:30;pointer-events:none;background:var(--bg);border:1px solid var(--bd);border-radius:4px;padding:5px 8px;line-height:1.55}
+#hud-gps{left:10px;min-width:110px}
+#hud-room{right:10px;min-width:90px;text-align:right}
+#hud-center{position:fixed;top:calc(var(--st) + 8px);left:50%;transform:translateX(-50%);z-index:30;pointer-events:none;display:flex;flex-direction:column;align-items:center;gap:4px}
+#timer{background:var(--bg);border:1px solid var(--bd);border-radius:4px;padding:3px 14px;font-size:17px;font-weight:bold;color:#fff;letter-spacing:2px}
+#scores{display:flex;gap:8px}
+.sc{font-size:10px;font-weight:bold;padding:2px 8px;border-radius:3px;white-space:nowrap}
+.sc.red{color:var(--r);background:rgba(60,0,0,.7);border:1px solid rgba(255,50,50,.35)}
+.sc.blu{color:var(--b);background:rgba(0,20,50,.7);border:1px solid rgba(50,170,255,.35)}
+#mode-badge{font-size:8px;letter-spacing:2px;padding:2px 8px;border-radius:10px;background:var(--bg);border:1px solid var(--bd)}
+.hl{color:rgba(0,255,136,.55);font-size:8px;letter-spacing:1px}
+.hv{color:var(--g);font-size:11px;font-weight:bold}
+#hud-stats{position:fixed;bottom:calc(var(--sb) + 76px);left:10px;z-index:30;pointer-events:none}
+.sr{display:flex;align-items:center;gap:6px;margin-bottom:6px}
+.si{font-size:12px;width:16px;text-align:center}
+.sb{width:80px;height:6px;background:rgba(255,255,255,.12);border-radius:3px;overflow:hidden}
+.sf{height:100%;border-radius:3px;transition:width .2s}
 .sh{background:linear-gradient(90deg,#ff3333,#ff6644)}
 .sa{background:linear-gradient(90deg,#ffaa00,#ffdd00)}
-.sn{font-size:11px;color:rgba(255,255,255,.8);min-width:34px}
-
-/* ── MINIMAP ── */
-#mmap{position:fixed;bottom:calc(env(safe-area-inset-bottom,0px)+88px);right:12px;z-index:30;cursor:pointer}
-#mmap canvas{width:120px;height:120px;border-radius:50%;border:2px solid var(--bd);background:rgba(0,8,20,.85);display:block}
-#mmap .ml{font-size:8px;color:rgba(0,255,136,.5);text-align:center;margin-top:3px;letter-spacing:1px}
-
-/* ── BIG MAP ── */
+.sn{font-size:10px;color:#fff;min-width:32px}
+#mmap{position:fixed;bottom:calc(var(--sb) + 40px);right:10px;z-index:30;cursor:pointer}
+#mmap canvas{width:110px;height:110px;border-radius:50%;border:2px solid var(--bd);background:rgba(0,8,20,.85);display:block}
+#mmap .ml{font-size:7px;color:rgba(0,255,136,.5);text-align:center;margin-top:2px}
+/* FIRE moved to right-center so the gun model owns the bottom */
+#fire{position:fixed;bottom:calc(var(--sb) + 170px);right:14px;z-index:31;width:68px;height:68px;border-radius:50%;border:3px solid rgba(255,80,80,.8);background:rgba(255,30,30,.28);color:#fff;font-size:11px;font-family:inherit;font-weight:bold;cursor:pointer;touch-action:none;-webkit-tap-highlight-color:transparent}
+#fire:active{background:rgba(255,80,80,.55);transform:scale(.92)}
+#fire.rl{border-color:rgba(255,170,0,.8);background:rgba(255,140,0,.22)}
+#camsw{position:fixed;bottom:calc(var(--sb) + 8px);right:10px;z-index:30;background:var(--bg);border:1px solid var(--bd);color:var(--g);font-family:inherit;font-size:9px;padding:5px 10px;border-radius:4px;display:none}
+#gps-bar{position:fixed;bottom:calc(var(--sb) + 8px);left:50%;transform:translateX(-50%);z-index:30;font-size:9px;padding:3px 10px;border-radius:4px;pointer-events:none;white-space:nowrap;background:rgba(0,0,0,.65);border:1px solid rgba(0,255,136,.25);color:rgba(0,255,136,.7)}
+/* GUN MODEL */
+#gun{position:fixed;left:50%;bottom:calc(var(--sb) + 30px);width:190px;margin-left:-95px;z-index:22;pointer-events:none;transform-origin:50% 100%;will-change:transform}
+#gun svg{display:block;width:100%;filter:drop-shadow(0 6px 10px rgba(0,0,0,.6))}
+#muz{position:absolute;left:50%;top:-34px;width:84px;height:84px;margin-left:-42px;border-radius:50%;opacity:0;background:radial-gradient(circle,#fff 0,#ffe27a 28%,rgba(255,140,0,.6) 55%,transparent 72%)}
+/* DAMAGE FX */
+#flash{position:fixed;inset:0;z-index:40;pointer-events:none;background:radial-gradient(ellipse at center,rgba(255,0,0,.1),rgba(255,0,0,.75) 100%);opacity:0}
+#vig{position:fixed;inset:0;z-index:39;pointer-events:none;box-shadow:inset 0 0 90px 30px rgba(255,0,0,.55);opacity:0}
+body.low #vig{animation:hb 1s infinite}
+@keyframes hb{0%,100%{opacity:.35}45%{opacity:1}}
+#hitdir{position:fixed;left:50%;top:50%;width:0;height:0;z-index:41;opacity:0;pointer-events:none}
+#hitdir::before{content:'';position:absolute;left:-26px;top:-140px;border-left:26px solid transparent;border-right:26px solid transparent;border-bottom:44px solid rgba(255,40,40,.9);filter:drop-shadow(0 0 8px red)}
+.dmg{position:fixed;z-index:45;pointer-events:none;font-weight:bold;font-size:15px;color:#ffe14d;text-shadow:0 0 4px #000,0 0 4px #000;transform:translate(-50%,-50%);animation:fl .85s forwards}
+.dmg.hd{color:#ff4a4a;font-size:19px}.dmg.me{color:#ff5555}
+@keyframes fl{to{opacity:0;margin-top:-46px}}
+#alerts{position:fixed;top:36%;left:50%;transform:translate(-50%,-50%);z-index:50;display:flex;flex-direction:column;align-items:center;gap:6px;pointer-events:none}
+.am{background:rgba(0,0,0,.8);border:1px solid var(--o);color:var(--o);font-size:10px;padding:4px 12px;border-radius:4px;animation:fa 2.4s forwards;white-space:nowrap}
+@keyframes fa{0%{opacity:0}12%{opacity:1}70%{opacity:1}100%{opacity:0}}
+.am.ka{border-color:var(--g);color:var(--g)}.am.ha{border-color:var(--r);color:var(--r)}
+/* AR MARKERS (persistent pool, moved via transform only) */
+.em,.alm{position:fixed;left:0;top:0;z-index:25;pointer-events:none;display:flex;flex-direction:column;align-items:center;gap:2px;will-change:transform}
+.edia{width:16px;height:16px;border:2px solid var(--r);transform:rotate(45deg);background:rgba(255,50,50,.15)}
+.elbl{font-size:8px;color:var(--r);background:rgba(0,0,0,.7);padding:1px 4px;border-radius:2px;white-space:nowrap}
+.edst{font-size:7px;color:rgba(255,120,120,.85)}
+.hpb{width:34px;height:3px;background:rgba(255,255,255,.2)}.hpb i{display:block;height:100%;background:#ff4444;width:100%}
+.atri{width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-bottom:11px solid var(--b)}
+.albl{font-size:8px;color:var(--b);background:rgba(0,0,0,.7);padding:1px 4px;border-radius:2px}
 #bigmap{position:fixed;inset:0;z-index:90;background:rgba(0,8,16,.96);display:none;flex-direction:column;align-items:center;justify-content:center;gap:10px}
 #bigmap.open{display:flex}
-#bigmap canvas{width:min(88vw,380px);height:min(88vw,380px);border:1px solid var(--bd);border-radius:8px}
-.mc{color:var(--g);font-size:11px;letter-spacing:2px;cursor:pointer;padding:7px 18px;border:1px solid var(--bd);border-radius:4px;background:rgba(0,255,136,.05)}
-
-/* ── FIRE BTN ── */
-#fire{position:fixed;bottom:calc(env(safe-area-inset-bottom,0px)+88px);left:50%;transform:translateX(-50%);z-index:30;width:70px;height:70px;border-radius:50%;border:3px solid rgba(255,80,80,.8);background:rgba(255,30,30,.22);color:#fff;font-size:11px;font-family:'Courier New',monospace;font-weight:bold;letter-spacing:1px;cursor:pointer;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px);-webkit-tap-highlight-color:transparent;transition:background .1s,transform .1s}
-#fire:active{background:rgba(255,80,80,.55);transform:translateX(-50%) scale(.92)}
-#fire.reload-anim{border-color:rgba(255,170,0,.8);background:rgba(255,140,0,.2)}
-
-/* ── JOYSTICK ── */
-#joy{position:fixed;bottom:calc(env(safe-area-inset-bottom,0px)+8px);left:16px;width:105px;height:105px;z-index:30}
-#jbase{position:absolute;inset:0;border-radius:50%;border:2px solid rgba(0,255,136,.22);background:rgba(0,255,136,.04)}
-#jknob{position:absolute;width:42px;height:42px;border-radius:50%;background:rgba(0,255,136,.28);border:2px solid rgba(0,255,136,.55);left:50%;top:50%;transform:translate(-50%,-50%);transition:left .04s,top .04s}
-
-/* ── CAM SWITCH ── */
-#camsw{position:fixed;bottom:calc(env(safe-area-inset-bottom,0px)+8px);right:12px;z-index:30;background:var(--bg);border:1px solid var(--bd);color:var(--g);font-family:'Courier New',monospace;font-size:10px;padding:5px 11px;border-radius:4px;cursor:pointer;display:none;letter-spacing:1px}
-
-/* ── HIT FLASH ── */
-#flash{position:fixed;inset:0;z-index:40;pointer-events:none;background:radial-gradient(ellipse at center,rgba(255,0,0,.5),transparent 70%);opacity:0;transition:opacity .07s}
-
-/* ── ALERTS ── */
-#alerts{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:50;display:flex;flex-direction:column;align-items:center;gap:7px;pointer-events:none}
-.am{background:rgba(0,0,0,.78);border:1px solid var(--o);color:var(--o);font-size:11px;padding:5px 13px;border-radius:4px;letter-spacing:1px;animation:fa 2.6s forwards}
-@keyframes fa{0%{opacity:0;transform:scale(.9)}12%{opacity:1;transform:scale(1)}70%{opacity:1}100%{opacity:0}}
-.am.hit-alert{border-color:var(--r);color:var(--r)}
-.am.kill-alert{border-color:var(--g);color:var(--g)}
-
-/* ── ENEMY / ALLY MARKERS ── */
-.em,.alm{position:fixed;transform:translate(-50%,-50%);z-index:25;pointer-events:none;display:flex;flex-direction:column;align-items:center;gap:3px}
-.edia{width:18px;height:18px;border:2px solid var(--r);transform:rotate(45deg);background:rgba(255,50,50,.12);animation:pe 1.2s ease-in-out infinite}
-@keyframes pe{0%,100%{opacity:1}50%{opacity:.35}}
-.elbl{font-size:8px;color:var(--r);background:rgba(0,0,0,.65);padding:1px 4px;border-radius:2px;white-space:nowrap}
-.edst{font-size:7px;color:rgba(255,100,100,.8)}
-.atri{width:0;height:0;border-left:7px solid transparent;border-right:7px solid transparent;border-bottom:12px solid var(--b)}
-.albl{font-size:8px;color:var(--b);background:rgba(0,0,0,.65);padding:1px 4px;border-radius:2px}
-
-/* ══════════════════════════════════
-   START / SETUP SCREENS
-══════════════════════════════════ */
-.screen{position:fixed;inset:0;z-index:100;background:rgba(0,0,0,.94);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:24px;overflow-y:auto}
+#bigmap canvas{width:min(88vw,360px);height:min(88vw,360px);border:1px solid var(--bd);border-radius:8px}
+.mc{color:var(--g);font-size:10px;letter-spacing:2px;padding:7px 18px;border:1px solid var(--bd);border-radius:4px}
+/* SCREENS */
+.screen{position:fixed;inset:0;z-index:100;background:rgba(0,0,0,.94);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:20px;overflow-y:auto;touch-action:pan-y}
 .screen.hidden{display:none}
-
-.logo{font-size:26px;font-weight:bold;color:var(--g);letter-spacing:4px;text-shadow:0 0 18px rgba(0,255,136,.55)}
-.sub{font-size:10px;color:rgba(0,255,136,.5);letter-spacing:3px}
-
-/* MODE CARDS */
-.mode-row{display:flex;gap:12px;width:100%;max-width:300px}
-.mcard{flex:1;border:2px solid rgba(0,255,136,.25);border-radius:8px;padding:14px 8px;text-align:center;cursor:pointer;transition:all .2s;background:rgba(0,255,136,.04)}
-.mcard:hover,.mcard.sel{border-color:var(--g);background:rgba(0,255,136,.12);box-shadow:0 0 14px rgba(0,255,136,.2)}
-.mcard .mi{font-size:28px;margin-bottom:6px}
-.mcard .mt{font-size:11px;color:var(--g);letter-spacing:1px;font-weight:bold}
-.mcard .md{font-size:9px;color:rgba(0,255,136,.5);margin-top:3px}
-.mcard.bot-sel{border-color:#ffdd00;background:rgba(255,220,0,.08);box-shadow:0 0 14px rgba(255,220,0,.2)}
-.mcard.bot-sel .mt{color:#ffdd00}
-
-/* PERM BLOCKS */
-.perm{display:flex;align-items:center;gap:10px;width:100%;max-width:300px;padding:9px 13px;border-radius:6px;border:1px solid;background:rgba(0,0,0,.3);font-size:11px}
-.perm .pi{font-size:18px;flex-shrink:0}
-.perm .pt{flex:1}
-.perm .pt .ptl{font-size:9px;letter-spacing:1px;opacity:.6}
-.perm .pt .pv{font-size:12px;font-weight:bold;margin-top:1px}
-.pb{flex-shrink:0;font-size:9px;padding:4px 10px;border-radius:4px;cursor:pointer;border:1px solid;font-family:'Courier New',monospace;letter-spacing:1px}
-.perm.ok{border-color:rgba(0,255,136,.4);color:var(--g)}
-.perm.ok .pb{border-color:rgba(0,255,136,.4);color:var(--g);background:rgba(0,255,136,.08)}
-.perm.ng{border-color:rgba(255,50,50,.4);color:var(--r)}
-.perm.ng .pb{border-color:rgba(255,50,50,.4);color:var(--r);background:rgba(255,50,50,.08)}
-.perm.wt{border-color:rgba(255,136,0,.4);color:var(--o)}
-.perm.wt .pb{border-color:rgba(255,136,0,.4);color:var(--o);background:rgba(255,136,0,.08)}
-
-/* CAM SELECT */
-.cam-sel-row{width:100%;max-width:300px;display:none;flex-direction:column;gap:6px}
-.cam-sel-row label{font-size:9px;color:rgba(0,255,136,.5);letter-spacing:1px}
-select#camsel{background:rgba(0,20,10,.9);color:var(--g);border:1px solid var(--bd);border-radius:4px;padding:8px 10px;font-family:'Courier New',monospace;font-size:11px;width:100%;cursor:pointer}
-
-/* BOT COUNT */
-.bot-row{width:100%;max-width:300px;display:none;flex-direction:column;gap:6px}
-.bot-row label{font-size:9px;color:rgba(255,220,0,.6);letter-spacing:1px}
-.bot-btns{display:flex;gap:8px}
-.bbot{flex:1;padding:8px 4px;border:1px solid rgba(255,220,0,.35);border-radius:4px;background:rgba(255,220,0,.06);color:#ffdd00;font-family:'Courier New',monospace;font-size:12px;cursor:pointer;text-align:center;transition:all .15s}
-.bbot.sel{border-color:#ffdd00;background:rgba(255,220,0,.2)}
-
-/* ROOM INPUT */
-.room-row{width:100%;max-width:300px;display:none;flex-direction:column;gap:6px}
-.room-row label{font-size:9px;color:rgba(0,170,255,.6);letter-spacing:1px}
-.room-row input{background:rgba(0,20,40,.9);color:var(--b);border:1px solid rgba(50,170,255,.4);border-radius:4px;padding:8px 10px;font-family:'Courier New',monospace;font-size:13px;width:100%;letter-spacing:3px;text-transform:uppercase}
-.room-row .rid{font-size:9px;color:rgba(0,170,255,.5);margin-top:2px}
-
-/* START BTN */
-.sbtn{width:100%;max-width:300px;padding:13px;border:2px solid var(--g);background:rgba(0,255,136,.1);color:var(--g);font-family:'Courier New',monospace;font-size:14px;letter-spacing:3px;cursor:pointer;border-radius:4px;transition:background .2s;margin-top:4px}
-.sbtn:active{background:rgba(0,255,136,.25)}
-.sbtn:disabled{opacity:.4;cursor:not-allowed}
-.sbtn.bot-start{border-color:#ffdd00;background:rgba(255,220,0,.1);color:#ffdd00}
-.note{font-size:9px;color:rgba(255,255,255,.25);text-align:center;line-height:1.9;max-width:280px}
-
-@media(prefers-color-scheme:dark){}
+.logo{font-size:24px;font-weight:bold;color:var(--g);letter-spacing:4px;text-shadow:0 0 16px rgba(0,255,136,.5)}
+.sub{font-size:9px;color:rgba(0,255,136,.5);letter-spacing:3px}
+.mode-row{display:flex;gap:10px;width:100%;max-width:300px}
+.mcard{flex:1;border:2px solid rgba(0,255,136,.22);border-radius:8px;padding:12px 6px;text-align:center;cursor:pointer;background:rgba(0,255,136,.03)}
+.mcard.sel{border-color:var(--g);background:rgba(0,255,136,.1)}
+.mcard.bot-sel{border-color:var(--y);background:rgba(255,220,0,.07)}
+.mcard .mi{font-size:26px;margin-bottom:5px}
+.mcard .mt{font-size:10px;font-weight:bold}
+.mcard.bot-sel .mt{color:var(--y)}
+.mcard .md{font-size:8px;color:rgba(255,255,255,.4);margin-top:2px}
+.opt-row{width:100%;max-width:300px;display:flex;flex-direction:column;gap:5px}
+.opt-row label{font-size:8px;color:rgba(255,220,0,.6);letter-spacing:1px}
+.bot-btns{display:flex;gap:7px}
+.bbot{flex:1;padding:7px 2px;border:1px solid rgba(255,220,0,.3);border-radius:4px;background:rgba(255,220,0,.05);color:var(--y);font-size:12px;cursor:pointer;text-align:center}
+.bbot.sel{border-color:var(--y);background:rgba(255,220,0,.2)}
+.online label{color:rgba(50,170,255,.65)}
+.online .bbot{color:var(--b);border-color:rgba(50,170,255,.3);background:rgba(50,170,255,.05)}
+.online .bbot.sel{border-color:var(--b);background:rgba(50,170,255,.2)}
+.opt-row input{background:rgba(0,20,40,.9);color:var(--b);border:1px solid rgba(50,170,255,.35);border-radius:4px;padding:8px 10px;font-family:inherit;font-size:12px;width:100%;letter-spacing:2px}
+.code-big{font-size:28px;font-weight:bold;letter-spacing:8px;color:var(--b);text-align:center;padding:8px;border:1px dashed rgba(50,170,255,.5);border-radius:6px;cursor:pointer}
+.lob{display:flex;flex-direction:column;gap:4px;max-height:34vh;overflow-y:auto}
+.lob div{font-size:11px;padding:5px 8px;border-radius:4px;border:1px solid rgba(255,255,255,.15)}
+.lob .red{color:var(--r);border-color:rgba(255,50,50,.4)}.lob .blue{color:var(--b);border-color:rgba(50,170,255,.4)}
+.perm{display:flex;align-items:center;gap:10px;width:100%;max-width:300px;padding:8px 12px;border-radius:6px;border:1px solid;background:rgba(0,0,0,.3)}
+.perm .pi{font-size:16px}.perm .pt{flex:1;min-width:0}
+.perm .ptl{font-size:8px;opacity:.6}
+.perm .pv{font-size:11px;font-weight:bold;margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pb{font-size:9px;padding:4px 9px;border-radius:4px;cursor:pointer;border:1px solid;font-family:inherit;white-space:nowrap;background:transparent;color:inherit}
+.perm.ok{border-color:rgba(0,255,136,.35);color:var(--g)}
+.perm.ng{border-color:rgba(255,50,50,.35);color:var(--r)}
+.perm.wt{border-color:rgba(255,136,0,.35);color:var(--o)}
+#gps-help{display:none;width:100%;max-width:300px;font-size:9px;line-height:1.8;color:var(--y);border:1px solid rgba(255,220,0,.35);border-radius:6px;padding:8px 10px;background:rgba(255,220,0,.06)}
+.cam-sel{width:100%;max-width:300px;display:none;flex-direction:column;gap:5px}
+.cam-sel label{font-size:8px;color:rgba(0,255,136,.5)}
+select#camsel{background:rgba(0,20,10,.9);color:var(--g);border:1px solid var(--bd);border-radius:4px;padding:7px 9px;font-family:inherit;font-size:10px;width:100%}
+.cam-apply{padding:6px;width:100%;background:rgba(0,255,136,.07);border:1px solid var(--bd);border-radius:4px;color:var(--g);font-family:inherit;font-size:9px}
+.sbtn{width:100%;max-width:300px;padding:12px;border:2px solid var(--g);background:rgba(0,255,136,.09);color:var(--g);font-family:inherit;font-size:13px;letter-spacing:3px;cursor:pointer;border-radius:4px}
+.sbtn:active{background:rgba(0,255,136,.22)}
+.sbtn:disabled{opacity:.35}
+.sbtn.bot-s{border-color:var(--y);background:rgba(255,220,0,.09);color:var(--y)}
+.note{font-size:9px;color:rgba(255,255,255,.4);text-align:center;line-height:1.9;max-width:290px}
 </style>
 </head>
 <body>
-
-<!-- Camera -->
 <video id="cam" autoplay playsinline muted></video>
 <div id="scan"></div>
+<div id="xh"><div class="xr"></div><div class="xd"></div></div>
+<div id="vig"></div><div id="hitdir"></div><div id="flash"></div>
 
-<!-- Corner deco -->
-<div class="cor" id="c1"></div><div class="cor" id="c2"></div>
-<div class="cor" id="c3"></div><div class="cor" id="c4"></div>
-
-<!-- Crosshair -->
-<div id="xh">
-  <div class="xr"></div><div class="xd"></div>
-  <div class="xl h lf"></div><div class="xl h rt"></div>
-  <div class="xl v tp"></div><div class="xl v bt"></div>
-</div>
-
-<!-- Timer / Score / Mode badge -->
-<div id="timer">05:00</div>
-<div id="scores">
-  <div class="sc red" id="sc-r">RED 0</div>
-  <div class="sc blu" id="sc-b">BLUE 0</div>
-</div>
-<div id="mode-badge" class="mb-bot">🤖 BOT MODE</div>
-
-<!-- Top HUD -->
-<div id="htop">
-  <div class="hb">
-    <div class="hl">GPS</div>
-    <div class="hv" id="gps-la">---.----°</div>
-    <div class="hv" id="gps-lo">---.----°</div>
-  </div>
-  <div class="hb">
-    <div class="hl">PLAYERS</div>
-    <div class="hv" id="pcnt">1 / 1</div>
-    <div class="hl" id="rid">ROOM: ----</div>
-  </div>
-</div>
-
-<!-- Stats -->
-<div id="hbot">
+<div id="hud-gps"><div class="hl">GPS</div><div class="hv" id="gps-la">---.-----°</div><div class="hv" id="gps-lo">---.-----°</div><div class="hl" id="gps-acc">...</div></div>
+<div id="hud-center"><div id="timer">05:00</div><div id="scores"><div class="sc red" id="sc-r">RED 0</div><div class="sc blu" id="sc-b">BLUE 0</div></div><div id="mode-badge">BOT</div></div>
+<div id="hud-room"><div class="hl">PLAYERS</div><div class="hv" id="pcnt">1/1</div><div class="hl" id="rid">----</div></div>
+<div id="hud-stats">
   <div class="sr"><div class="si">❤️</div><div class="sb"><div class="sf sh" id="hpb" style="width:100%"></div></div><div class="sn" id="hpn">100</div></div>
   <div class="sr"><div class="si">🔫</div><div class="sb"><div class="sf sa" id="amob" style="width:100%"></div></div><div class="sn" id="amon">30/90</div></div>
 </div>
+<div id="mmap"><canvas id="mc" width="110" height="110"></canvas><div class="ml">[ MAP ]</div></div>
 
-<!-- Minimap -->
-<div id="mmap"><canvas id="mc" width="120" height="120"></canvas><div class="ml">[ MAP ]</div></div>
-
-<!-- Big map -->
-<div id="bigmap">
-  <div style="color:var(--g);font-size:11px;letter-spacing:2px">TACTICAL MAP</div>
-  <canvas id="bmc" width="380" height="380"></canvas>
-  <div class="mc" id="bmc-close">[ CLOSE ]</div>
+<div id="gun">
+  <div id="muz"></div>
+  <svg viewBox="0 0 200 160" xmlns="http://www.w3.org/2000/svg">
+    <path d="M66 160 L80 96 L120 96 L134 160Z" fill="#15181d" stroke="#2c323a" stroke-width="1.5"/>
+    <path d="M72 140h56M74 128h52M76 116h48" stroke="#262c34" stroke-width="2"/>
+    <polygon points="62,98 138,98 116,26 84,26" fill="#2a2f37" stroke="#3b424d" stroke-width="1.5"/>
+    <polygon points="84,26 116,26 112,16 88,16" fill="#3e4652"/>
+    <path d="M70 90h60M73 80h54M76 70h48M79 60h42" stroke="#1f242b" stroke-width="2.2"/>
+    <rect x="68" y="86" width="14" height="12" rx="1.5" fill="#1b1f25" stroke="#4a525e"/>
+    <rect x="118" y="86" width="14" height="12" rx="1.5" fill="#1b1f25" stroke="#4a525e"/>
+    <rect x="96.5" y="8" width="7" height="14" rx="1" fill="#1b1f25"/>
+    <circle cx="100" cy="10" r="2.6" fill="#00ff88"/>
+  </svg>
 </div>
 
-<!-- Cam switch -->
-<button id="camsw">🔄 CAM</button>
-
-<!-- Fire -->
 <button id="fire">FIRE</button>
-
-<!-- Joystick -->
-<div id="joy"><div id="jbase"></div><div id="jknob"></div></div>
-
-<!-- Hit flash -->
-<div id="flash"></div>
-
-<!-- Alerts -->
+<button id="camsw">🔄 CAM</button>
+<div id="gps-bar">📍 GPS 待機中</div>
+<div id="bigmap"><div style="font-size:10px;letter-spacing:2px">TACTICAL MAP</div><canvas id="bmc" width="360" height="360"></canvas><div class="mc" id="bmc-close">[ CLOSE ]</div></div>
 <div id="alerts"></div>
 
-<!-- ══ SCREEN 1: MODE SELECT ══ -->
+<!-- 1: MODE -->
 <div class="screen" id="s-mode">
-  <div class="logo">AR SHOOTER</div>
-  <div class="sub">GPS BATTLE</div>
-
+  <div class="logo">AR SHOOTER</div><div class="sub">GPS BATTLE</div>
   <div class="mode-row">
-    <div class="mcard bot-sel" id="mc-bot" onclick="selectMode('bot')">
-      <div class="mi">🤖</div>
-      <div class="mt">BOT MODE</div>
-      <div class="md">1人で練習<br>AIと対戦</div>
-    </div>
-    <div class="mcard" id="mc-online" onclick="selectMode('online')">
-      <div class="mi">🌐</div>
-      <div class="mt">ONLINE</div>
-      <div class="md">リアル対戦<br>GPSマルチ</div>
-    </div>
+    <div class="mcard bot-sel" id="mc-bot" onclick="selectMode('bot')"><div class="mi">🤖</div><div class="mt">BOT MODE</div><div class="md">1人練習<br>AI対戦</div></div>
+    <div class="mcard" id="mc-on" onclick="selectMode('online')"><div class="mi">🌐</div><div class="mt">ONLINE</div><div class="md">リアル対戦<br>GPSマルチ</div></div>
   </div>
-
-  <!-- Bot count (shown in bot mode) -->
-  <div class="bot-row" id="bot-row" style="display:flex">
-    <label>BOT 数</label>
-    <div class="bot-btns">
-      <div class="bbot sel" id="bb1" onclick="setBots(1)">1</div>
-      <div class="bbot" id="bb3" onclick="setBots(3)">3</div>
-      <div class="bbot" id="bb5" onclick="setBots(5)">5</div>
-      <div class="bbot" id="bb8" onclick="setBots(8)">8</div>
-    </div>
+  <div class="opt-row" id="bot-row"><label>BOT 数</label>
+    <div class="bot-btns" data-k="botCount"><div class="bbot sel" data-v="1">1</div><div class="bbot" data-v="3">3</div><div class="bbot" data-v="5">5</div><div class="bbot" data-v="8">8</div></div>
   </div>
-
-  <!-- Room input (shown in online mode) -->
-  <div class="room-row" id="room-row">
-    <label>ルームコード（空欄で新規作成）</label>
-    <input id="room-input" maxlength="6" placeholder="XXXXXX">
-    <div class="rid" id="room-hint">6文字で入力、または空欄で新ルーム作成</div>
-  </div>
-
-  <button class="sbtn" id="next-btn" onclick="goToSetup()">▶ 次へ（カメラ・GPS設定）</button>
-  <div class="note">スマホ・PC両対応 / カメラ背景AR</div>
+  <button class="sbtn bot-s" id="next-btn" onclick="goToSetup()">▶ 次へ（カメラ・GPS設定）</button>
+  <div class="note">スマホ背面カメラ / PCウェブカメラ 両対応<br>PC: ←→ で向き変更 / Space 発射 / R リロード</div>
 </div>
 
-<!-- ══ SCREEN 2: PERMISSIONS ══ -->
+<!-- 2: PERMISSIONS -->
 <div class="screen hidden" id="s-perm">
-  <div class="logo" style="font-size:18px">📡 権限設定</div>
+  <div class="logo" style="font-size:17px;letter-spacing:2px">📡 カメラ・GPS設定</div>
+  <div class="perm wt" id="perm-cam"><div class="pi">📷</div><div class="pt"><div class="ptl">CAMERA</div><div class="pv" id="pcam-v">未確認</div></div><button class="pb" id="btn-cam" onclick="doCamPerm()">許可</button></div>
+  <div class="cam-sel" id="cam-sel"><label>カメラを選択</label><select id="camsel"></select><button class="cam-apply" onclick="applyCam()">▶ このカメラを使う</button></div>
+  <div class="perm wt" id="perm-gps"><div class="pi">📍</div><div class="pt"><div class="ptl">GPS / LOCATION</div><div class="pv" id="pgps-v">未確認</div></div><button class="pb" id="btn-gps" onclick="doGpsPerm()">許可</button></div>
+  <div id="gps-help">位置情報がブロックされています。<br>① アドレスバー左の設定アイコン（🔒）をタップ<br>② 「権限」→「位置情報」→「許可」に変更<br>③ 許可すると自動で再取得します（されない場合は再読み込み）<br>それまではIPアドレスの概算位置で動作します。</div>
+  <button class="sbtn" id="start-btn" onclick="proceed()" disabled>⚔ ゲームスタート</button>
+  <div class="note">GPS拒否 → IP位置（概算）で代替 / カメラ拒否 → 背景は黒で続行</div>
+</div>
 
-  <!-- Camera perm -->
-  <div class="perm wt" id="perm-cam">
-    <div class="pi">📷</div>
-    <div class="pt">
-      <div class="ptl">CAMERA</div>
-      <div class="pv" id="pcam-v">未確認</div>
-    </div>
-    <button class="pb" id="btn-cam" onclick="doCamPerm()">許可</button>
+<!-- 3: ONLINE (host / join) -->
+<div class="screen hidden" id="s-online">
+  <div class="logo" style="font-size:17px">🌐 ONLINE</div>
+  <div class="mode-row">
+    <div class="mcard sel" id="t-host" onclick="tab('host')"><div class="mi">🛰️</div><div class="mt">ルームを作る</div></div>
+    <div class="mcard" id="t-join" onclick="tab('join')"><div class="mi">🔑</div><div class="mt">参加する</div></div>
   </div>
-
-  <!-- Camera selector (after grant) -->
-  <div class="cam-sel-row" id="cam-sel-row">
-    <label>カメラを選択</label>
-    <select id="camsel"></select>
-    <button class="pb" style="border-color:rgba(0,255,136,.4);color:var(--g);background:rgba(0,255,136,.08);padding:5px 10px;font-family:'Courier New',monospace;font-size:9px;letter-spacing:1px;border-radius:4px;cursor:pointer;border-width:1px;border-style:solid;width:100%" onclick="applyCam()">▶ 適用</button>
+  <div class="opt-row online"><label>プレイヤー名</label><input id="pname" maxlength="10" placeholder="NAME"></div>
+  <div class="opt-row online" id="p-host">
+    <label>ルームコード（タップでコピー）</label><div class="code-big" id="hcode" onclick="copyCode()"></div>
+    <label>最大人数</label><div class="bot-btns" data-k="maxP"><div class="bbot" data-v="2">2</div><div class="bbot sel" data-v="4">4</div><div class="bbot" data-v="8">8</div></div>
+    <label>制限時間（分）</label><div class="bot-btns" data-k="time"><div class="bbot" data-v="3">3</div><div class="bbot sel" data-v="5">5</div><div class="bbot" data-v="10">10</div></div>
   </div>
+  <div class="opt-row online" id="p-join" style="display:none"><label>ルームコード（6文字）</label><input id="jcode" maxlength="6" placeholder="XXXXXX" style="text-transform:uppercase;text-align:center;font-size:18px"></div>
+  <div class="note" id="net-msg"></div>
+  <button class="sbtn" id="net-go" onclick="netGo()">ルームを作成</button>
+  <div class="note" style="cursor:pointer" onclick="backPerm()">← 戻る</div>
+</div>
 
-  <!-- GPS perm -->
-  <div class="perm wt" id="perm-gps">
-    <div class="pi">📍</div>
-    <div class="pt">
-      <div class="ptl">GPS / LOCATION</div>
-      <div class="pv" id="pgps-v">未確認</div>
-    </div>
-    <button class="pb" id="btn-gps" onclick="doGpsPerm()">許可</button>
-  </div>
-
-  <button class="sbtn" id="start-btn" onclick="startGame()" disabled>⚔ ゲームスタート</button>
-  <div class="note">GPSを拒否するとデモ座標を使用します<br>カメラを拒否すると背景は黒になります</div>
+<!-- 4: LOBBY -->
+<div class="screen hidden" id="s-lobby">
+  <div class="logo" style="font-size:17px">ロビー</div>
+  <div class="code-big" id="lcode"></div>
+  <div class="opt-row online"><label id="lcount"></label><div class="lob" id="lob"></div></div>
+  <button class="sbtn" id="lob-start" onclick="hostStart()">⚔ ゲーム開始</button>
+  <div class="note" id="lob-wait"></div>
+  <div class="note" style="cursor:pointer" onclick="location.reload()">退出</div>
 </div>
 
 <script>
-// ═══════════════════════════════════════════════════
-//  STATE
-// ═══════════════════════════════════════════════════
-const $ = id => document.getElementById(id);
-const st = {
-  mode: 'bot',       // 'bot' | 'online'
-  botCount: 1,
-  health: 100, ammo: 30, maxAmmo: 30, reserve: 90,
-  score: { red: 0, blue: 0 },
-  myTeam: 'red',
-  myPos: { lat: 35.6762, lon: 139.6503 },
-  heading: 0,
-  gpsReady: false, camReady: false,
-  gameActive: false,
-  timeLeft: 300, kills: 0, deaths: 0, reloading: false,
-  roomCode: null,
-  players: [],
-};
+'use strict';
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const st={mode:'bot',botCount:1,maxP:4,time:5,health:100,ammo:30,maxAmmo:30,reserve:90,score:{red:0,blue:0},myTeam:'red',
+  myPos:{lat:35.6762,lon:139.6503},heading:0,hd:0,gpsReady:false,src:'DEMO',gameActive:false,timeLeft:300,kills:0,deaths:0,
+  reloading:false,dead:false,roomCode:null,players:[]};
+const net={peer:null,host:false,conns:{},hostConn:null,myId:null,name:'Player',joined:false};
+const BOT_NAMES=['Ghost','Viper','Hawk','Snake','Fox','Wolf','Eagle','Raven'];
+const BOT_TEAMS=['blue','blue','red','blue','red','blue','red','blue'];
+const ints=[];
 
-const BOT_NAMES = ['Ghost','Viper','Hawk','Snake','Fox','Wolf','Eagle','Raven'];
-const BOT_TEAMS = ['blue','blue','red','blue','red','blue','red','blue'];
-
-// ═══════════════════════════════════════════════════
-//  SCREEN FLOW
-// ═══════════════════════════════════════════════════
-function selectMode(m) {
-  st.mode = m;
-  $('mc-bot').classList.toggle('bot-sel', m === 'bot');
-  $('mc-bot').classList.toggle('sel', m !== 'bot');
-  $('mc-online').classList.toggle('sel', m === 'online');
-  $('mc-online').classList.toggle('bot-sel', false);
-  $('bot-row').style.display   = m === 'bot'    ? 'flex' : 'none';
-  $('room-row').style.display  = m === 'online' ? 'flex' : 'none';
-  const btn = $('next-btn');
-  btn.className = 'sbtn' + (m === 'bot' ? ' bot-start' : '');
+/* ── flow ── */
+document.addEventListener('click',e=>{const b=e.target.closest('.bbot');if(!b)return;const g=b.parentNode;
+  g.querySelectorAll('.bbot').forEach(x=>x.classList.toggle('sel',x===b));st[g.dataset.k]=+b.dataset.v});
+function show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.add('hidden'));$(id).classList.remove('hidden')}
+function selectMode(m){st.mode=m;$('mc-bot').className='mcard '+(m==='bot'?'bot-sel':'');$('mc-on').className='mcard '+(m==='online'?'sel':'');
+  $('bot-row').style.display=m==='bot'?'flex':'none';$('next-btn').className='sbtn'+(m==='bot'?' bot-s':'')}
+function goToSetup(){
+  try{DeviceOrientationEvent.requestPermission&&DeviceOrientationEvent.requestPermission()}catch(e){}
+  show('s-perm');$('start-btn').textContent=st.mode==='bot'?'⚔ ゲームスタート':'▶ 次へ（ルーム設定）';
+  doCamPerm();doGpsPerm();
 }
-
-function setBots(n) {
-  st.botCount = n;
-  [1,3,5,8].forEach(x => $('bb'+x)?.classList.toggle('sel', x === n));
+function proceed(){
+  if(st.mode==='bot'){beginBot();return}
+  st.roomCode=genCode();$('hcode').textContent=st.roomCode;show('s-online');
 }
+function backPerm(){show('s-perm')}
+function genCode(){const c='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';let s='';for(let i=0;i<6;i++)s+=c[Math.floor(Math.random()*c.length)];return s}
+function tab(t){$('t-host').className='mcard '+(t==='host'?'sel':'');$('t-join').className='mcard '+(t==='join'?'sel':'');
+  $('p-host').style.display=t==='host'?'flex':'none';$('p-join').style.display=t==='join'?'flex':'none';
+  $('net-go').textContent=t==='host'?'ルームを作成':'ルームに参加';$('net-go').dataset.t=t;$('net-msg').textContent=''}
+function copyCode(){navigator.clipboard&&navigator.clipboard.writeText(st.roomCode).then(()=>setNet('コードをコピーしました'))}
+function setNet(t){$('net-msg').textContent=t}
 
-function goToSetup() {
-  $('s-mode').classList.add('hidden');
-  $('s-perm').classList.remove('hidden');
-  // Auto-try camera on entering perm screen
-  doCamPerm();
+/* ── camera ── */
+let cams=[],curCam=0,curStream=null;
+async function enumCams(){try{const d=await navigator.mediaDevices.enumerateDevices();cams=d.filter(x=>x.kind==='videoinput');
+  const sel=$('camsel');sel.innerHTML='';cams.forEach((c,i)=>{const l=c.label||('カメラ '+(i+1));const o=document.createElement('option');o.value=i;o.textContent=l;sel.appendChild(o)});
+  const bi=cams.findIndex(c=>/back|rear|env/i.test(c.label));if(bi>=0){sel.value=bi;curCam=bi}
+  if(cams.length)$('cam-sel').style.display='flex'}catch(e){}}
+async function startCam(idx){
+  if(curStream){curStream.getTracks().forEach(t=>t.stop());curStream=null}
+  try{const con=cams.length&&idx!==undefined?{video:{deviceId:{exact:cams[idx].deviceId},width:{ideal:1280},height:{ideal:720}}}:{video:{facingMode:'environment'}};
+    const s=await navigator.mediaDevices.getUserMedia(con);curStream=s;$('cam').srcObject=s;
+    setPerm('cam','ok',(s.getVideoTracks()[0]?.label||'カメラ').substring(0,28));curCam=idx??0}
+  catch(e){setPerm('cam','ng','拒否 — 背景は黒で続行')}
+  checkReady()}
+async function doCamPerm(){setPerm('cam','wt','確認中...');
+  try{const t=await navigator.mediaDevices.getUserMedia({video:true});t.getTracks().forEach(x=>x.stop())}catch(e){}
+  await enumCams();const i=parseInt($('camsel').value||'0',10);await startCam(isNaN(i)?0:i)}
+async function applyCam(){await startCam(parseInt($('camsel').value,10)||0)}
+async function switchCam(){if(cams.length<=1)return;curCam=(curCam+1)%cams.length;await startCam(curCam)}
+
+/* ── GPS (getCurrentPosition → watch, auto re-request, IP fallback) ── */
+let gpsWatcher=null,ipTimer=null,permWatch=false;
+function setPos(lat,lon,acc,src){st.myPos.lat=lat;st.myPos.lon=lon;st.src=src;st.gpsReady=true;
+  $('gps-la').textContent=lat.toFixed(5)+'°';$('gps-lo').textContent=lon.toFixed(5)+'°';
+  const t=src+(acc?' ±'+Math.round(acc)+'m':'');$('gps-acc').textContent=t;$('gps-bar').textContent='📍 '+t;
+  $('gps-bar').style.color=src==='GPS'?'rgba(0,255,136,.9)':'rgba(255,220,0,.8)'}
+async function ipLoc(){
+  const apis=[()=>fetch('https://ipwho.is/').then(r=>r.json()).then(d=>({lat:+d.latitude,lon:+d.longitude,city:d.city})),
+    ()=>fetch('https://ipapi.co/json/').then(r=>r.json()).then(d=>({lat:+d.latitude,lon:+d.longitude,city:d.city}))];
+  for(const f of apis){try{const d=await f();if(d.lat&&d.lon)return d}catch(e){}}return null}
+async function startIP(why,denied){
+  if(ipTimer)return;
+  setPerm('gps','wt','IP位置取得中...');if(denied)$('gps-help').style.display='block';
+  const upd=async()=>{if(st.src==='GPS')return;const d=await ipLoc();
+    if(st.src==='GPS')return;
+    if(d){setPos(d.lat,d.lon,0,'IP'+(d.city?'('+d.city+')':''));setPerm('gps','ng',why+' → IP位置(概算)')}
+    else{setPerm('gps','ng',why+' → デモ座標');$('gps-bar').textContent='📍 デモ座標'}
+    checkReady()};
+  await upd();ipTimer=setInterval(upd,30000)}
+function gpsOk(p){if(ipTimer){clearInterval(ipTimer);ipTimer=null}
+  setPos(p.coords.latitude,p.coords.longitude,p.coords.accuracy,'GPS');
+  $('gps-help').style.display='none';setPerm('gps','ok','GPS OK ±'+Math.round(p.coords.accuracy)+'m');checkReady()}
+function doGpsPerm(){
+  if(gpsWatcher!==null){navigator.geolocation.clearWatch(gpsWatcher);gpsWatcher=null}
+  if(!navigator.geolocation){startIP('非対応');return}
+  if(!isSecureContext){startIP('HTTPS必須');return}
+  setPerm('gps','wt','GPS取得中...');
+  const why={1:'拒否',2:'位置不明',3:'タイムアウト'};
+  const ft=setTimeout(()=>{if(st.src!=='GPS')startIP('応答なし')},9000);
+  navigator.geolocation.getCurrentPosition(p=>{clearTimeout(ft);gpsOk(p)},e=>{clearTimeout(ft);startIP(why[e.code]||'エラー',e.code===1)},
+    {enableHighAccuracy:false,timeout:8000,maximumAge:60000});
+  gpsWatcher=navigator.geolocation.watchPosition(gpsOk,e=>{if(e.code===1)startIP('拒否',true)},{enableHighAccuracy:true,timeout:30000,maximumAge:1000});
+  if(!permWatch&&navigator.permissions){permWatch=true;
+    navigator.permissions.query({name:'geolocation'}).then(r=>{r.onchange=()=>{if(r.state==='granted')doGpsPerm()}}).catch(()=>{})}
 }
+function onOri(e){let h=e.webkitCompassHeading;
+  if(h==null&&e.alpha!=null&&(e.absolute||e.type==='deviceorientationabsolute'))h=360-e.alpha;
+  if(h!=null)st.heading=h}
+addEventListener('deviceorientationabsolute',onOri,true);addEventListener('deviceorientation',onOri,true);
 
-// ═══════════════════════════════════════════════════
-//  CAMERA
-// ═══════════════════════════════════════════════════
-let cams = [], curCam = 0, curStream = null;
+function setPerm(w,s,t){$('perm-'+w).className='perm '+s;$(w==='cam'?'pcam-v':'pgps-v').textContent=t;
+  const b=$(w==='cam'?'btn-cam':'btn-gps');b.textContent=s==='ok'?'✓':s==='ng'?'再試行':'...';b.disabled=s==='wt'}
+function checkReady(){const c=!$('perm-cam').classList.contains('wt'),g=!$('perm-gps').classList.contains('wt');
+  if(c&&g)$('start-btn').disabled=false}
 
-async function enumCams() {
-  try {
-    const devs = await navigator.mediaDevices.enumerateDevices();
-    cams = devs.filter(d => d.kind === 'videoinput');
-    const sel = $('camsel'); sel.innerHTML = '';
-    cams.forEach((c, i) => {
-      const lbl = c.label || ('カメラ ' + (i+1));
-      const icon = /front|user|face/i.test(lbl) ? '🤳' : /back|rear|env/i.test(lbl) ? '📸' : '💻';
-      const o = document.createElement('option'); o.value = i;
-      o.textContent = icon + ' ' + lbl; sel.appendChild(o);
-    });
-    const bi = cams.findIndex(c => /back|rear|env/i.test(c.label));
-    if (bi >= 0) { sel.value = bi; curCam = bi; }
-    if (cams.length > 0) $('cam-sel-row').style.display = 'flex';
-  } catch(e){}
+/* ── bots ── */
+function spawnBots(){st.players=[];for(let i=0;i<st.botCount;i++){const a=i/st.botCount*Math.PI*2,d=.0003+Math.random()*.0004;
+  st.players.push({id:'bot'+i,name:BOT_NAMES[i%8],team:BOT_TEAMS[i%8],lat:st.myPos.lat+Math.sin(a)*d,lon:st.myPos.lon+Math.cos(a)*d,hp:100,isBot:true,angle:Math.random()*6.28,atk:3+Math.random()*4})}}
+function tickBots(){if(!st.gameActive)return;st.players.forEach(p=>{if(!p.isBot||p.hp<=0)return;
+  p.angle+=(Math.random()-.5)*.9;p.atk-=.5;
+  if(p.atk<=0&&p.team!==st.myTeam&&!st.dead){const d=mDist(st.myPos.lat,st.myPos.lon,p.lat,p.lon);
+    if(d<200)takeDamage(Math.max(3,Math.round((8+Math.random()*8)*Math.max(.4,1-d/250))),p);p.atk=3+Math.random()*5}})}
+
+/* ── online (PeerJS: host = relay, guests connect by room code) ── */
+function loadPeer(){return new Promise((ok,ng)=>{if(window.Peer)return ok();const s=document.createElement('script');
+  s.src='https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js';s.onload=ok;s.onerror=ng;document.head.appendChild(s)})}
+async function netGo(){
+  net.name=($('pname').value.trim()||'Player').slice(0,10);
+  const host=($('net-go').dataset.t||'host')==='host';
+  if(!host){const c=$('jcode').value.trim().toUpperCase();if(c.length!==6){setNet('6文字のコードを入力してください');return}st.roomCode=c}
+  setNet('接続中...');$('net-go').disabled=true;
+  try{await loadPeer()}catch(e){setNet('通信ライブラリを読み込めません。ネットワークを確認してください');$('net-go').disabled=false;return}
+  host?hostRoom():joinRoom();
 }
-
-async function startCam(idx) {
-  if (curStream) { curStream.getTracks().forEach(t => t.stop()); curStream = null; }
-  try {
-    let con;
-    if (cams.length && idx !== undefined) {
-      con = { video: { deviceId: { exact: cams[idx].deviceId }, width:{ideal:1280}, height:{ideal:720} } };
-    } else {
-      try { con = { video: { facingMode:'environment', width:{ideal:1280}, height:{ideal:720} } }; }
-      catch(e){ con = { video: true }; }
-    }
-    const s = await navigator.mediaDevices.getUserMedia(con);
-    curStream = s; $('cam').srcObject = s;
-    const lbl = s.getVideoTracks()[0]?.label || 'カメラ';
-    setPermUI('cam', 'ok', lbl.substring(0,30)); st.camReady = true; curCam = idx ?? 0;
-  } catch(e) {
-    setPermUI('cam', 'ng', '拒否 — 背景は黒'); st.camReady = false;
-  }
-}
-
-async function doCamPerm() {
-  setPermUI('cam', 'wt', '確認中...');
-  // enumerate first (needs temporary stream for labels)
-  try {
-    const tmp = await navigator.mediaDevices.getUserMedia({ video: true });
-    tmp.getTracks().forEach(t => t.stop());
-  } catch(e){}
-  await enumCams();
-  const idx = parseInt($('camsel').value || '0', 10);
-  await startCam(isNaN(idx) ? 0 : idx);
-  checkStartReady();
-}
-
-async function applyCam() {
-  const idx = parseInt($('camsel').value, 10);
-  await startCam(isNaN(idx) ? 0 : idx);
-}
-
-async function switchCam() {
-  if (cams.length <= 1) { showAlert('切替カメラなし'); return; }
-  curCam = (curCam + 1) % cams.length;
-  await startCam(curCam);
-  showAlert('📷 ' + (cams[curCam]?.label?.substring(0,20) || curCam+1));
-}
-
-// ═══════════════════════════════════════════════════
-//  GPS
-// ═══════════════════════════════════════════════════
-let gpsWatcher = null;
-
-function doGpsPerm() {
-  setPermUI('gps', 'wt', '取得中...');
-  if (!navigator.geolocation) {
-    setPermUI('gps', 'ng', '非対応 — デモ座標使用'); startGpsDemo(); checkStartReady(); return;
-  }
-  // Clear old watcher
-  if (gpsWatcher !== null) navigator.geolocation.clearWatch(gpsWatcher);
-
-  gpsWatcher = navigator.geolocation.watchPosition(pos => {
-    st.myPos.lat = pos.coords.latitude;
-    st.myPos.lon = pos.coords.longitude;
-    st.gpsReady = true;
-    $('gps-la').textContent = pos.coords.latitude.toFixed(5) + '°';
-    $('gps-lo').textContent = pos.coords.longitude.toFixed(5) + '°';
-    const acc = Math.round(pos.coords.accuracy);
-    setPermUI('gps', 'ok', 'OK — 精度 ±' + acc + 'm');
-    checkStartReady();
-  }, err => {
-    const msg = err.code === 1 ? '拒否 — デモ座標使用' : err.code === 2 ? '位置取得不可' : 'タイムアウト';
-    setPermUI('gps', 'ng', msg);
-    startGpsDemo();
-    checkStartReady();
-  }, { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 });
-}
-
-function startGpsDemo() {
-  st.myPos = { lat: 35.6762 + (Math.random()-.5)*.005, lon: 139.6503 + (Math.random()-.5)*.005 };
-  setInterval(() => {
-    st.myPos.lat += (Math.random()-.5) * 0.00004;
-    st.myPos.lon += (Math.random()-.5) * 0.00004;
-    $('gps-la').textContent = st.myPos.lat.toFixed(5) + '° [DEMO]';
-    $('gps-lo').textContent = st.myPos.lon.toFixed(5) + '°';
-  }, 2500);
-}
-
-// Device orientation
-window.addEventListener('deviceorientation', e => { if (e.alpha !== null) st.heading = e.alpha; });
-
-// ═══════════════════════════════════════════════════
-//  PERM UI HELPER
-// ═══════════════════════════════════════════════════
-function setPermUI(which, state, text) {
-  const el = $('perm-' + which);
-  const vEl = $(which === 'cam' ? 'pcam-v' : 'pgps-v');
-  el.className = 'perm ' + (state === 'ok' ? 'ok' : state === 'ng' ? 'ng' : 'wt');
-  if (vEl) vEl.textContent = text;
-  const btn = $(which === 'cam' ? 'btn-cam' : 'btn-gps');
-  if (btn) {
-    btn.textContent = state === 'ok' ? '✓' : state === 'ng' ? '再試行' : '...';
-    btn.disabled = state === 'wt';
-  }
-}
-
-function checkStartReady() {
-  // Can always start (GPS/camera are optional)
-  $('start-btn').disabled = false;
-}
-
-// ═══════════════════════════════════════════════════
-//  BOTS
-// ═══════════════════════════════════════════════════
-function spawnBots() {
-  st.players = [];
-  for (let i = 0; i < st.botCount; i++) {
-    const angle = (i / st.botCount) * Math.PI * 2;
-    const dist = 0.0003 + Math.random() * 0.0004;
-    st.players.push({
-      id: 'bot' + i,
-      name: BOT_NAMES[i % BOT_NAMES.length],
-      team: BOT_TEAMS[i % BOT_TEAMS.length],
-      lat: st.myPos.lat + Math.sin(angle) * dist,
-      lon: st.myPos.lon + Math.cos(angle) * dist,
-      hp: 100, isBot: true,
-      moveAngle: Math.random() * Math.PI * 2,
-      attackCooldown: 3 + Math.random() * 4,
-    });
-  }
-  $('pcnt').textContent = (st.botCount + 1) + ' / ' + (st.botCount + 1);
-  $('rid').textContent = 'BOT MODE';
-}
-
-function tickBots() {
-  if (!st.gameActive) return;
-  st.players.forEach(p => {
-    if (!p.isBot) return;
-    // Wander
-    p.moveAngle += (Math.random() - .5) * .4;
-    const spd = 0.000015;
-    p.lat += Math.sin(p.moveAngle) * spd;
-    p.lon += Math.cos(p.moveAngle) * spd;
-    // Attack player
-    p.attackCooldown -= .5;
-    if (p.attackCooldown <= 0 && p.team !== st.myTeam) {
-      const d = metersBetween(st.myPos.lat, st.myPos.lon, p.lat, p.lon);
-      if (d < 200) { takeDamage(8 + Math.floor(Math.random()*10)); }
-      p.attackCooldown = 3 + Math.random() * 5;
-    }
+function hostRoom(){
+  const p=net.peer=new Peer('arsh-'+st.roomCode);net.host=true;net.myId='host';st.myTeam='red';st.players=[];
+  p.on('error',e=>{setNet(e.type==='unavailable-id'?'コードが使用中です。戻ってやり直してください':'エラー: '+e.type);$('net-go').disabled=false});
+  p.on('open',()=>openLobby());
+  p.on('connection',c=>{
+    c.on('data',m=>hostRecv(c,m));
+    c.on('close',()=>{delete net.conns[c.peer];st.players=st.players.filter(x=>x.id!==c.peer);lobbyPush()});
   });
 }
-
-// ═══════════════════════════════════════════════════
-//  ONLINE ROOM
-// ═══════════════════════════════════════════════════
-let roomCap = null;
-
-async function initOnline() {
-  let code = $('room-input').value.trim().toUpperCase();
-  if (!code) code = Math.random().toString(36).substring(2,8).toUpperCase();
-  st.roomCode = code;
-  $('rid').textContent = 'ROOM: ' + code;
-
-  if (window.claude) {
-    try {
-      roomCap = await claude.use('room');
-      if (roomCap) {
-        await roomCap.join(code);
-        roomCap.on('pos', data => {
-          if (data.id === 'me') return;
-          let p = st.players.find(x => x.id === data.id);
-          if (!p) { st.players.push(data); p = st.players[st.players.length-1]; }
-          else Object.assign(p, data);
-          $('pcnt').textContent = (st.players.length + 1) + ' / 8';
-        });
-        roomCap.on('dmg', data => { if (data.to === 'self' || !data.to) takeDamage(data.v || 20); });
-        setInterval(() => {
-          if (roomCap && st.gameActive)
-            roomCap.emit('pos', { id: 'me_' + Date.now().toString(36), lat: st.myPos.lat, lon: st.myPos.lon, team: st.myTeam, name: 'Player' });
-        }, 3000);
-        showAlert('🌐 ルーム: ' + code);
-        return;
-      }
-    } catch(e){}
-  }
-  showAlert('⚠ オフラインモードで開始');
+function hostRecv(c,m){const now=performance.now();let p=st.players.find(x=>x.id===c.peer);
+  if(m.t==='join'){
+    if(st.players.length+1>=st.maxP||st.gameActive){c.send({t:'full'});setTimeout(()=>c.close(),300);return}
+    const r=st.players.filter(x=>x.team==='red').length+1,b=st.players.length+1-r,team=r<=b?'red':'blue';
+    st.players.push({id:c.peer,name:esc(String(m.name||'Player').slice(0,10)),team,lat:st.myPos.lat,lon:st.myPos.lon,hp:100});
+    net.conns[c.peer]=c;c.send({t:'welcome',team,time:st.time,max:st.maxP});lobbyPush();
+  }else if(!p)return;
+  else if(m.t==='pos'){p.tlat=m.la;p.tlon=m.lo;if(!p.lock||now>p.lock)p.hp=m.hp}
+  else if(m.t==='hit')hostHit(m,c.peer);
+  else if(m.t==='kill')scoreKill(m.by);
 }
-
-// ═══════════════════════════════════════════════════
-//  GAME START / END
-// ═══════════════════════════════════════════════════
-let timerID = null, loopID = null, botID = null;
-
-async function startGame() {
-  $('s-perm').classList.add('hidden');
-  st.gameActive = true;
-
-  // Mode badge
-  const mb = $('mode-badge');
-  if (st.mode === 'bot') {
-    mb.className = 'mb-bot'; mb.textContent = '🤖 BOT ×' + st.botCount;
-    spawnBots();
-    botID = setInterval(tickBots, 500);
-  } else {
-    mb.className = 'mb-online'; mb.textContent = '🌐 ONLINE';
-    await initOnline();
-  }
-
-  if (cams.length > 1) $('camsw').style.display = 'block';
-
-  // Timer
-  timerID = setInterval(() => {
-    if (!st.gameActive) return;
-    st.timeLeft--;
-    const m = String(Math.floor(st.timeLeft/60)).padStart(2,'0');
-    const s = String(st.timeLeft%60).padStart(2,'0');
-    $('timer').textContent = m + ':' + s;
-    if (st.timeLeft <= 0) endGame();
-    if (st.timeLeft <= 30) $('timer').style.color = '#ff4444';
-  }, 1000);
-
-  loopID = setInterval(() => { drawMinimap(); updateMarkers(); }, 500);
-  drawMinimap();
-  showAlert('⚔ ゲームスタート！ TEAM: ' + st.myTeam.toUpperCase());
+function hostHit(m,from){if(m.to==='host')takeDamage(m.d,{lat:m.fl,lon:m.fo,id:from});
+  else net.conns[m.to]&&net.conns[m.to].send({t:'dmg',d:m.d,fl:m.fl,fo:m.fo,from})}
+function scoreKill(id){const k=id==='host'?{team:st.myTeam}:st.players.find(p=>p.id===id);
+  const t=k?k.team:(st.myTeam==='red'?'blue':'red');st.score[t]++;updateScore()}
+function joinRoom(){
+  net.joined=false;const p=net.peer=new Peer();
+  p.on('error',e=>{setNet(e.type==='peer-unavailable'?'ルームが見つかりません':'エラー: '+e.type);$('net-go').disabled=false});
+  p.on('open',id=>{net.myId=id;const c=net.hostConn=p.connect('arsh-'+st.roomCode,{serialization:'json',reliable:true});
+    c.on('open',()=>c.send({t:'join',name:net.name}));c.on('data',clientRecv);
+    c.on('close',()=>{if(st.gameActive){endGame();showAlert('ホストが切断しました','ha')}else if(!net.joined)return;else location.reload()});
+    setTimeout(()=>{if(!net.joined){setNet('ルームが見つかりません');$('net-go').disabled=false}},9000)});
 }
-
-function endGame() {
-  st.gameActive = false;
-  clearInterval(timerID); clearInterval(loopID); clearInterval(botID);
-  $('timer').textContent = '終了';
-  const winner = st.score.red > st.score.blue ? '🔴 RED WIN' : st.score.blue > st.score.red ? '🔵 BLUE WIN' : '⚖ DRAW';
-  showAlert(winner + '  KD: ' + st.kills + '/' + st.deaths);
+function clientRecv(m){const now=performance.now();
+  if(m.t==='welcome'){net.joined=true;st.myTeam=m.team;st.time=m.time;st.maxP=m.max;openLobby()}
+  else if(m.t==='full'){setNet('満員、または開始済みです');$('net-go').disabled=false}
+  else if(m.t==='lobby'){st.maxP=m.max;lobbyShow(m.l)}
+  else if(m.t==='start'){st.time=m.time;beginOnline()}
+  else if(m.t==='dmg')takeDamage(m.d,{lat:m.fl,lon:m.fo,id:m.from});
+  else if(m.t==='s'){const ids={};
+    m.p.forEach(q=>{if(q.id===net.myId)return;ids[q.id]=1;let p=st.players.find(x=>x.id===q.id);
+      if(!p){p={id:q.id,lat:q.la,lon:q.lo,hp:100};st.players.push(p)}
+      p.name=q.n;p.team=q.tm;p.tlat=q.la;p.tlon=q.lo;if(!p.lock||now>p.lock)p.hp=q.hp});
+    st.players=st.players.filter(p=>ids[p.id]);st.score=m.sc;updateScore();
+    if(Math.abs(st.timeLeft-m.tl)>1)st.timeLeft=m.tl}
 }
+function lobbyData(){return[{id:'host',name:net.name,team:'red'}].concat(st.players.map(p=>({id:p.id,name:p.name,team:p.team})))}
+function lobbyShow(l){$('lob').innerHTML=l.map(x=>`<div class="${x.team}">${x.id==='host'?'👑 ':'● '}${esc(x.name)}</div>`).join('');$('lcount').textContent='参加者 '+l.length+'/'+st.maxP}
+function lobbyPush(){const l=lobbyData();lobbyShow(l);Object.values(net.conns).forEach(c=>c.send({t:'lobby',l,max:st.maxP}))}
+function openLobby(){show('s-lobby');$('lcode').textContent=st.roomCode;$('rid').textContent=st.roomCode;
+  $('lob-start').style.display=net.host?'block':'none';$('lob-wait').textContent=net.host?'コードを友達に伝えて、揃ったら開始':'ホストの開始を待っています...';
+  if(net.host)lobbyPush()}
+function hostStart(){Object.values(net.conns).forEach(c=>c.send({t:'start',time:st.time}));beginOnline()}
 
-// ═══════════════════════════════════════════════════
-//  MINIMAP
-// ═══════════════════════════════════════════════════
-function llToXY(lat, lon, cLat, cLon, scale, size) {
-  const mpd = 111000;
-  const dx = (lon - cLon) * mpd * Math.cos(cLat * Math.PI / 180);
-  const dy = -(lat - cLat) * mpd;
-  return { x: size/2 + dx*scale, y: size/2 + dy*scale };
+/* ── game start / end ── */
+let last=0;
+function beginBot(){st.mode='bot';spawnBots();setBadge('🤖 BOT ×'+st.botCount);$('rid').textContent='BOT';ints.push(setInterval(tickBots,500));runGame()}
+function beginOnline(){setBadge('🌐 ONLINE');
+  ints.push(setInterval(()=>{if(!st.gameActive)return;
+    if(net.host){const p=[{id:'host',n:net.name,tm:st.myTeam,la:st.myPos.lat,lo:st.myPos.lon,hp:st.health}]
+      .concat(st.players.map(x=>({id:x.id,n:x.name,tm:x.team,la:x.lat,lo:x.lon,hp:x.hp})));
+      const m={t:'s',p,sc:st.score,tl:st.timeLeft};Object.values(net.conns).forEach(c=>c.send(m))}
+    else net.hostConn.send({t:'pos',la:st.myPos.lat,lo:st.myPos.lon,hp:st.health})},150));
+  runGame()}
+function setBadge(t){const m=$('mode-badge');m.textContent=t}
+function runGame(){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.add('hidden'));
+  st.gameActive=true;st.timeLeft=st.time*60;if(st.mode==='bot')st.timeLeft=300;
+  if(cams.length>1)$('camsw').style.display='block';
+  ints.push(setInterval(()=>{if(!st.gameActive)return;st.timeLeft--;
+    $('timer').textContent=String(Math.floor(st.timeLeft/60)).padStart(2,'0')+':'+String(Math.max(0,st.timeLeft)%60).padStart(2,'0');
+    if(st.timeLeft<=30)$('timer').style.color='#ff4444';if(st.timeLeft<=0)endGame()},1000));
+  ints.push(setInterval(()=>{drawMap($('mc'),1800);$('pcnt').textContent=(st.players.length+1)+'/'+(st.mode==='bot'?st.botCount+1:st.maxP)},250));
+  last=performance.now();requestAnimationFrame(frame);
+  showAlert('⚔ START — TEAM '+st.myTeam.toUpperCase());
 }
+function endGame(){st.gameActive=false;ints.forEach(clearInterval);$('timer').textContent='終了';
+  const w=st.score.red>st.score.blue?'🔴 RED WIN':st.score.blue>st.score.red?'🔵 BLUE WIN':'⚖ DRAW';
+  showAlert(w+'  KD:'+st.kills+'/'+st.deaths)}
 
-function drawMap(cv, scale) {
-  const ctx = cv.getContext('2d'), W = cv.width, H = cv.height;
-  ctx.clearRect(0,0,W,H);
-  ctx.fillStyle = 'rgba(0,8,20,.95)'; ctx.fillRect(0,0,W,H);
-  if (W === 120) { ctx.save(); ctx.beginPath(); ctx.arc(W/2,H/2,W/2,0,Math.PI*2); ctx.clip(); }
-  // Grid
-  ctx.strokeStyle = 'rgba(0,255,136,.07)'; ctx.lineWidth = .5;
-  for (let i=0;i<W;i+=18){ ctx.beginPath();ctx.moveTo(i,0);ctx.lineTo(i,H);ctx.stroke(); ctx.beginPath();ctx.moveTo(0,i);ctx.lineTo(W,i);ctx.stroke(); }
-  // North
-  ctx.fillStyle='rgba(0,255,136,.4)';ctx.font='8px Courier New';ctx.textAlign='center';ctx.fillText('N',W/2,10);
-  // Players
-  st.players.forEach(p => {
-    const pos = llToXY(p.lat, p.lon, st.myPos.lat, st.myPos.lon, scale, W);
-    if (pos.x<-10||pos.x>W+10||pos.y<-10||pos.y>H+10) return;
-    const col = p.team==='red'?'#ff4444':'#33aaff';
-    // Bot indicator
-    if (p.isBot) { ctx.fillStyle='rgba(0,0,0,.5)'; ctx.beginPath(); ctx.arc(pos.x,pos.y,7,0,Math.PI*2); ctx.fill(); }
-    ctx.beginPath(); ctx.arc(pos.x,pos.y,4,0,Math.PI*2);
-    ctx.fillStyle=col; ctx.fill();
-    ctx.strokeStyle='rgba(255,255,255,.5)'; ctx.lineWidth=.6; ctx.stroke();
-    ctx.fillStyle=col; ctx.font='7px Courier New'; ctx.textAlign='center';
-    ctx.fillText((p.isBot?'🤖':'')+p.name, pos.x, pos.y-8);
-  });
-  // Self
-  ctx.save(); ctx.translate(W/2,H/2); ctx.rotate(st.heading*Math.PI/180);
-  ctx.beginPath(); ctx.moveTo(0,-9); ctx.lineTo(5,5); ctx.lineTo(-5,5); ctx.closePath();
-  ctx.fillStyle = st.myTeam==='red'?'#ff6644':'#44aaff'; ctx.fill(); ctx.restore();
-  ctx.beginPath(); ctx.arc(W/2,H/2,5,0,Math.PI*2); ctx.strokeStyle='rgba(255,255,255,.5)'; ctx.lineWidth=1; ctx.stroke();
-  if (W===120) ctx.restore();
-}
-
-function drawMinimap() { drawMap($('mc'), 1800); }
-
-// ═══════════════════════════════════════════════════
-//  AR MARKERS
-// ═══════════════════════════════════════════════════
-function metersBetween(la1,lo1,la2,lo2){const R=6371000,dL=(la2-la1)*Math.PI/180,dO=(lo2-lo1)*Math.PI/180,a=Math.sin(dL/2)**2+Math.cos(la1*Math.PI/180)*Math.cos(la2*Math.PI/180)*Math.sin(dO/2)**2;return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a))}
-function bearingTo(la1,lo1,la2,lo2){const dO=(lo2-lo1)*Math.PI/180,y=Math.sin(dO)*Math.cos(la2*Math.PI/180),x=Math.cos(la1*Math.PI/180)*Math.sin(la2*Math.PI/180)-Math.sin(la1*Math.PI/180)*Math.cos(la2*Math.PI/180)*Math.cos(dO);return((Math.atan2(y,x)*180/Math.PI)+360)%360}
-
-function updateMarkers() {
-  document.querySelectorAll('.em,.alm').forEach(e=>e.remove());
-  const W=window.innerWidth, H=window.innerHeight, fov=70;
-  st.players.forEach(p => {
-    const dist = metersBetween(st.myPos.lat,st.myPos.lon,p.lat,p.lon);
-    if (dist > 400) return;
-    const brg = bearingTo(st.myPos.lat,st.myPos.lon,p.lat,p.lon);
-    const rel = ((brg - st.heading + 540) % 360) - 180;
-    if (Math.abs(rel) > fov*1.5) return;
-    const sx = W/2 + (rel/fov)*W*.58;
-    const sy = H*.32 + (dist/400)*H*.12;
-    const isEnemy = p.team !== st.myTeam;
-    const el = document.createElement('div');
-    el.className = isEnemy ? 'em' : 'alm';
-    el.style.cssText = `left:${sx}px;top:${sy}px`;
-    el.innerHTML = isEnemy
-      ? `<div class="edia"></div><div class="elbl">${p.isBot?'🤖':''}${p.name}</div><div class="edst">${Math.round(dist)}m</div>`
-      : `<div class="atri"></div><div class="albl">${p.name}</div>`;
-    document.body.appendChild(el);
-  });
-}
-
-// ═══════════════════════════════════════════════════
-//  FIRE
-// ═══════════════════════════════════════════════════
-function fire() {
-  if (st.reloading) { showAlert('リロード中...'); return; }
-  if (st.ammo <= 0) { reload(); return; }
-  st.ammo--; updateAmmoUI();
-  const W=window.innerWidth, H=window.innerHeight, cx=W/2, cy=H/2;
-  let hit = false;
-  document.querySelectorAll('.em').forEach(el => {
-    const r=el.getBoundingClientRect(), ex=r.left+r.width/2, ey=r.top+r.height/2;
-    if (Math.sqrt((ex-cx)**2+(ey-cy)**2) < 65) {
-      hit = true; el.style.opacity='.15';
-      st.score[st.myTeam]++; st.kills++;
-      updateScore();
-      $('xh').classList.add('hit'); setTimeout(()=>$('xh').classList.remove('hit'),200);
-      showKill();
-      // Damage online opponent
-      if (roomCap) roomCap.emit('dmg',{to:'enemy',v:30});
-      // Respawn bot
-      const pid = el.querySelector('.elbl')?.textContent?.replace('🤖','').trim();
-      const bp = st.players.find(p=>p.isBot && (p.name===pid || pid?.includes(p.name)));
-      if (bp) { setTimeout(()=>{ bp.lat=st.myPos.lat+(Math.random()-.5)*.001; bp.lon=st.myPos.lon+(Math.random()-.5)*.001; bp.hp=100; },4000); }
-    }
-  });
-  if (!hit) { /* miss — no spam alert */ }
-  if (st.ammo <= 0) setTimeout(reload, 350);
-}
-
-function showKill() {
-  const msgs = ['キル！+1','ヘッドショット！','ナイスショット！','撃破！'];
-  showAlert(msgs[Math.floor(Math.random()*msgs.length)]+' KD:'+st.kills+'/'+st.deaths, 'kill-alert');
-}
-
-function reload() {
-  if (st.reloading || st.reserve <= 0) { if(!st.reserve) showAlert('弾切れ！'); return; }
-  st.reloading = true; $('fire').classList.add('reload-anim');
-  showAlert('リロード中...');
-  setTimeout(() => {
-    const need = st.maxAmmo - st.ammo, got = Math.min(need, st.reserve);
-    st.ammo += got; st.reserve -= got; st.reloading = false;
-    $('fire').classList.remove('reload-anim'); updateAmmoUI(); showAlert('リロード完了');
-  }, 1800);
-}
-
-function takeDamage(dmg) {
-  st.health = Math.max(0, st.health - dmg); updateHealthUI();
-  $('flash').style.opacity='1'; setTimeout(()=>$('flash').style.opacity='0', 170);
-  if (st.health <= 0) {
-    showAlert('やられた！リスポーン中...','hit-alert');
-    st.deaths++; st.score[st.myTeam==='red'?'blue':'red']++; updateScore();
-    setTimeout(()=>{ st.health=100; updateHealthUI(); showAlert('リスポーン！'); }, 3000);
-  } else if (st.health < 30) showAlert('⚠ 危険！ HP:'+st.health,'hit-alert');
-}
-
-// ═══════════════════════════════════════════════════
-//  UI
-// ═══════════════════════════════════════════════════
-function updateAmmoUI(){const p=(st.ammo/st.maxAmmo)*100;$('amob').style.width=p+'%';$('amon').textContent=st.ammo+'/'+st.reserve}
-function updateHealthUI(){$('hpb').style.width=st.health+'%';$('hpn').textContent=st.health;$('hpb').style.background=st.health>50?'linear-gradient(90deg,#ff3333,#ff6644)':st.health>25?'linear-gradient(90deg,#ff8800,#ffaa00)':'linear-gradient(90deg,#f00,#f22)'}
-function updateScore(){$('sc-r').textContent='RED '+st.score.red;$('sc-b').textContent='BLUE '+st.score.blue}
-function showAlert(msg, cls='') {
-  const el=document.createElement('div'); el.className='am '+(cls||''); el.textContent=msg;
-  $('alerts').appendChild(el); setTimeout(()=>el.remove(),2700);
-}
-
-// ═══════════════════════════════════════════════════
-//  JOYSTICK
-// ═══════════════════════════════════════════════════
-let joyOn=false;
-const jz=$('joy'), jk=$('jknob');
-jz.addEventListener('touchstart',e=>{joyOn=true;e.preventDefault()},{passive:false});
-jz.addEventListener('touchmove',e=>{
-  if(!joyOn)return;
-  const t=e.touches[0],r=jz.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2;
-  const dx=t.clientX-cx, dy=t.clientY-cy, d=Math.min(Math.sqrt(dx*dx+dy*dy),36), a=Math.atan2(dy,dx);
-  jk.style.left=(r.width/2+Math.cos(a)*d)+'px'; jk.style.top=(r.height/2+Math.sin(a)*d)+'px';
-  st.myPos.lat+=dy*-0.0000018; st.myPos.lon+=dx*0.0000018;
-  e.preventDefault();
-},{passive:false});
-['touchend','touchcancel'].forEach(ev=>jz.addEventListener(ev,()=>{joyOn=false;jk.style.left='50%';jk.style.top='50%'}));
-
-// ═══════════════════════════════════════════════════
-//  EVENTS
-// ═══════════════════════════════════════════════════
-$('fire').addEventListener('touchstart',e=>{if(st.gameActive)fire();e.preventDefault()},{passive:false});
-$('fire').addEventListener('click',()=>{if(st.gameActive)fire()});
-$('camsw').addEventListener('click',switchCam);
-$('mmap').addEventListener('click',()=>{ $('bigmap').classList.add('open'); setTimeout(()=>drawMap($('bmc'),1300),80); });
-$('bmc-close').addEventListener('click',()=>$('bigmap').classList.remove('open'));
-
-// keyboard R = reload, Space = fire
-document.addEventListener('keydown',e=>{
+/* ── render loop (single rAF; DOM markers are reused, not rebuilt) ── */
+const mk={};
+function frame(t){
   if(!st.gameActive)return;
-  if(e.code==='KeyR') reload();
-  if(e.code==='Space'||e.code==='Enter') fire();
-});
+  const dt=Math.min(.1,(t-last)/1000);last=t;
+  st.hd=(st.hd+(((st.heading-st.hd+540)%360)-180)*Math.min(1,dt*10)+360)%360;
+  st.players.forEach(p=>{
+    if(p.isBot){if(p.hp>0){const s=1.6/111000*dt;p.lat+=Math.sin(p.angle)*s;p.lon+=Math.cos(p.angle)*s}}
+    else if(p.tlat!=null){const k=Math.min(1,dt*8);p.lat+=(p.tlat-p.lat)*k;p.lon+=(p.tlon-p.lon)*k}});
+  renderMarkers();requestAnimationFrame(frame);
+}
+function renderMarkers(){
+  const W=innerWidth,H=innerHeight,fov=70,seen={};
+  st.players.forEach(p=>{
+    p.sx=null;if(p.hp<=0)return;
+    const dist=mDist(st.myPos.lat,st.myPos.lon,p.lat,p.lon);if(dist>400)return;
+    const rel=((bearing(st.myPos.lat,st.myPos.lon,p.lat,p.lon)-st.hd+540)%360)-180;
+    if(Math.abs(rel)>fov*1.4)return;
+    p.sx=W/2+rel/fov*W*.56;p.sy=H*.28+dist/400*H*.14;p.dist=dist;seen[p.id]=1;
+    const en=p.team!==st.myTeam;let e=mk[p.id];
+    if(!e){const el=document.createElement('div');el.className=en?'em':'alm';
+      el.innerHTML=en?'<div class="edia"></div><div class="elbl"></div><div class="hpb"><i></i></div><div class="edst"></div>':'<div class="atri"></div><div class="albl"></div>';
+      document.body.appendChild(el);e=mk[p.id]={el,l:el.querySelector('.elbl,.albl'),h:el.querySelector('i'),d:el.querySelector('.edst')};
+      e.l.textContent=(p.isBot?'🤖':'')+p.name}
+    e.el.style.transform='translate3d('+p.sx+'px,'+p.sy+'px,0) translate(-50%,-50%)';
+    if(e.h)e.h.style.width=p.hp+'%';if(e.d)e.d.textContent=Math.round(dist)+'m';
+  });
+  for(const id in mk)if(!seen[id]){mk[id].el.remove();delete mk[id]}
+}
 
-// ═══════════════════════════════════════════════════
-//  INIT
-// ═══════════════════════════════════════════════════
-// Default mode selection visual
-selectMode('bot');
-drawMinimap();
-setInterval(()=>{ if(!st.gameActive) drawMinimap(); },1200);
+/* ── map ── */
+function llXY(la,lo,cla,clo,sc,sz){const m=111000;return{x:sz/2+(lo-clo)*m*Math.cos(cla*Math.PI/180)*sc,y:sz/2-(la-cla)*m*sc}}
+function drawMap(cv,sc){const x=cv.getContext('2d'),W=cv.width,H=cv.height;x.clearRect(0,0,W,H);x.fillStyle='rgba(0,8,20,.95)';x.fillRect(0,0,W,H);
+  if(W===110){x.save();x.beginPath();x.arc(W/2,H/2,W/2,0,6.283);x.clip()}
+  x.strokeStyle='rgba(0,255,136,.06)';x.lineWidth=.5;for(let i=0;i<W;i+=16){x.beginPath();x.moveTo(i,0);x.lineTo(i,H);x.moveTo(0,i);x.lineTo(W,i);x.stroke()}
+  x.fillStyle='rgba(0,255,136,.4)';x.font='7px Courier New';x.textAlign='center';x.fillText('N',W/2,9);
+  st.players.forEach(p=>{if(p.hp<=0)return;const o=llXY(p.lat,p.lon,st.myPos.lat,st.myPos.lon,sc,W);if(o.x<-8||o.x>W+8||o.y<-8||o.y>H+8)return;
+    const c=p.team==='red'?'#ff4444':'#33aaff';x.beginPath();x.arc(o.x,o.y,3.5,0,6.283);x.fillStyle=c;x.fill();
+    x.fillStyle=c;x.font='6px Courier New';x.fillText(p.name,o.x,o.y-7)});
+  x.save();x.translate(W/2,H/2);x.rotate(st.hd*Math.PI/180);x.beginPath();x.moveTo(0,-8);x.lineTo(4.5,4.5);x.lineTo(-4.5,4.5);x.closePath();
+  x.fillStyle=st.myTeam==='red'?'#ff6644':'#44aaff';x.fill();x.restore();if(W===110)x.restore()}
+function mDist(a,b,c,d){const R=6371000,p=Math.PI/180,dL=(c-a)*p,dO=(d-b)*p;
+  const k=Math.sin(dL/2)**2+Math.cos(a*p)*Math.cos(c*p)*Math.sin(dO/2)**2;return R*2*Math.atan2(Math.sqrt(k),Math.sqrt(1-k))}
+function bearing(a,b,c,d){const p=Math.PI/180,dO=(d-b)*p,y=Math.sin(dO)*Math.cos(c*p),x=Math.cos(a*p)*Math.sin(c*p)-Math.sin(a*p)*Math.cos(c*p)*Math.cos(dO);
+  return(Math.atan2(y,x)/p+360)%360}
+
+/* ── combat ── */
+// damage scale: closer = stronger (100% ≤0m → min 35% at 325m+), head ×2
+const dmgScale=(dist,head)=>Math.round(34*Math.max(.35,1-dist/500)*(head?2:1));
+let lastShot=0;
+function recoil(){
+  $('gun').animate([{transform:'translateY(0) rotate(0)'},{transform:'translateY(24px) rotate(-5deg) scale(1.06)',offset:.25},{transform:'none'}],{duration:160,easing:'ease-out'});
+  $('muz').animate([{opacity:1,transform:'scale(.6)'},{opacity:0,transform:'scale(1.4)'}],{duration:90});
+  $('cam').animate([{transform:'none'},{transform:'translateY(8px) scale(1.02)',offset:.3},{transform:'none'}],{duration:150});
+  $('xh').animate([{transform:'translate(-50%,-50%) scale(1.4)'},{transform:'translate(-50%,-50%) scale(1)'}],{duration:150});
+}
+function fire(){
+  if(!st.gameActive||st.dead||st.reloading)return;
+  const now=performance.now();if(now-lastShot<140)return;
+  if(st.ammo<=0){reload();return}
+  lastShot=now;st.ammo--;updateAmmoUI();recoil();
+  const cx=innerWidth/2,cy=innerHeight/2;let best=null,bd=62;
+  st.players.forEach(p=>{if(p.team===st.myTeam||p.sx==null||p.hp<=0)return;const d=Math.hypot(p.sx-cx,p.sy-cy);if(d<bd){bd=d;best=p}});
+  if(best){const head=bd<20,dmg=dmgScale(best.dist,head);
+    best.hp=Math.max(0,best.hp-dmg);best.lock=now+400;
+    pop((head?'HEAD ':'')+'-'+dmg,best.sx,best.sy-24,head?'hd':'');
+    $('xh').classList.add('hit');setTimeout(()=>$('xh').classList.remove('hit'),110);
+    if(!best.isBot){const m={t:'hit',to:best.id,d:dmg,fl:st.myPos.lat,fo:st.myPos.lon};net.host?hostHit(m,'host'):net.hostConn.send(m)}
+    if(best.hp<=0){st.kills++;showAlert('撃破！ KD:'+st.kills+'/'+st.deaths,'ka');
+      if(best.isBot){st.score[st.myTeam]++;updateScore();const b=best;setTimeout(()=>{b.lat=st.myPos.lat+(Math.random()-.5)*.001;b.lon=st.myPos.lon+(Math.random()-.5)*.001;b.hp=100},4000)}}
+  }
+  if(st.ammo<=0)setTimeout(reload,300);
+}
+function reload(){if(st.reloading||st.reserve<=0||st.ammo>=st.maxAmmo){if(!st.reserve)showAlert('弾切れ！');return}
+  st.reloading=true;$('fire').classList.add('rl');showAlert('リロード中...');
+  $('gun').animate([{transform:'none'},{transform:'translateY(90px) rotate(8deg)',offset:.2},{transform:'translateY(90px) rotate(8deg)',offset:.8},{transform:'none'}],{duration:1800});
+  setTimeout(()=>{const g=Math.min(st.maxAmmo-st.ammo,st.reserve);st.ammo+=g;st.reserve-=g;st.reloading=false;$('fire').classList.remove('rl');updateAmmoUI()},1800)}
+function takeDamage(d,src){
+  if(st.dead||!st.gameActive)return;
+  st.health=Math.max(0,st.health-d);updateHealthUI();
+  const f=$('flash');f.style.transition='none';f.style.opacity=Math.min(1,.4+d/30);requestAnimationFrame(()=>requestAnimationFrame(()=>{f.style.transition='opacity .6s';f.style.opacity=0}));
+  $('cam').animate([{transform:'none'},{transform:'translate(-10px,6px) rotate(-.8deg)'},{transform:'translate(8px,-5px)'},{transform:'translate(-4px,2px)'},{transform:'none'}],{duration:280});
+  $('gun').animate([{transform:'none'},{transform:'translate(-12px,14px) rotate(-3deg)'},{transform:'none'}],{duration:240});
+  navigator.vibrate&&navigator.vibrate(Math.min(220,d*6));
+  pop('-'+d,innerWidth/2,innerHeight*.6,'me');
+  if(src&&src.lat!=null){$('hitdir').style.transform='rotate('+(bearing(st.myPos.lat,st.myPos.lon,src.lat,src.lon)-st.hd)+'deg)';
+    $('hitdir').animate([{opacity:1},{opacity:0}],{duration:900,fill:'forwards'})}
+  document.body.classList.toggle('low',st.health>0&&st.health<30);
+  if(st.health<=0){st.dead=true;st.deaths++;showAlert('やられた！リスポーン中...','ha');
+    if(st.mode==='bot'){st.score[st.myTeam==='red'?'blue':'red']++;updateScore()}
+    else if(net.host)scoreKill(src&&src.id);else net.hostConn.send({t:'kill',by:src&&src.id});
+    setTimeout(()=>{st.health=100;st.dead=false;updateHealthUI();document.body.classList.remove('low');showAlert('リスポーン！')},3000)}
+}
+
+/* ── ui ── */
+function pop(t,x,y,c){const e=document.createElement('div');e.className='dmg '+(c||'');e.textContent=t;e.style.left=x+'px';e.style.top=y+'px';document.body.appendChild(e);setTimeout(()=>e.remove(),900)}
+function updateAmmoUI(){$('amob').style.width=st.ammo/st.maxAmmo*100+'%';$('amon').textContent=st.ammo+'/'+st.reserve}
+function updateHealthUI(){$('hpb').style.width=st.health+'%';$('hpn').textContent=st.health}
+function updateScore(){$('sc-r').textContent='RED '+st.score.red;$('sc-b').textContent='BLUE '+st.score.blue}
+function showAlert(m,c){const e=document.createElement('div');e.className='am '+(c||'');e.textContent=m;$('alerts').appendChild(e);setTimeout(()=>e.remove(),2500)}
+
+/* ── events (hold FIRE = auto fire) ── */
+let af=null;const fb=$('fire');
+fb.addEventListener('pointerdown',e=>{e.preventDefault();fire();clearInterval(af);af=setInterval(fire,140)});
+['pointerup','pointercancel','pointerleave'].forEach(n=>fb.addEventListener(n,()=>clearInterval(af)));
+$('camsw').addEventListener('click',switchCam);
+$('mmap').addEventListener('click',()=>{$('bigmap').classList.add('open');setTimeout(()=>drawMap($('bmc'),1300),60)});
+$('bmc-close').addEventListener('click',()=>$('bigmap').classList.remove('open'));
+document.addEventListener('keydown',e=>{if(!st.gameActive)return;
+  if(e.code==='KeyR')reload();if(e.code==='Space'||e.code==='Enter'){e.preventDefault();fire()}
+  if(e.code==='ArrowLeft'||e.code==='KeyA')st.heading=(st.heading+355)%360;
+  if(e.code==='ArrowRight'||e.code==='KeyD')st.heading=(st.heading+5)%360});
+selectMode('bot');tab('host');drawMap($('mc'),1800);
 </script>
 </body>
 </html>
