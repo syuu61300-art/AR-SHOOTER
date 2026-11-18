@@ -43,7 +43,7 @@ html,body{height:100%;overflow:hidden;background:#000;color:var(--g);font-family
 #rld:active{background:rgba(255,190,0,.5)}
 #cov{position:fixed;bottom:calc(var(--sb) + 148px);left:10px;z-index:31;width:50px;height:50px;border-radius:50%;border:2px solid rgba(120,200,255,.7);background:rgba(60,140,255,.15);color:#fff;font-size:8px;font-family:inherit;font-weight:bold;touch-action:none}
 #cov.on{background:rgba(60,140,255,.55)}
-#camsw{position:fixed;top:calc(var(--st) + 72px);right:10px;z-index:30;background:var(--bg);border:1px solid var(--bd);color:var(--g);font-family:inherit;font-size:9px;padding:5px 10px;border-radius:4px;display:none}
+#camsw{position:fixed;top:calc(var(--st) + 72px);right:10px;z-index:30;background:var(--bg);border:1px solid var(--bd);color:var(--g);font-family:inherit;font-size:9px;padding:5px 10px;border-radius:4px;display:none !important}
 #gps-bar{position:fixed;bottom:calc(var(--sb) + 8px);left:50%;transform:translateX(-50%);z-index:30;font-size:9px;padding:3px 10px;border-radius:4px;pointer-events:none;white-space:nowrap;background:rgba(0,0,0,.65);border:1px solid rgba(0,255,136,.25);color:rgba(0,255,136,.7)}
 #debug-hud{position:fixed;top:calc(var(--st) + 120px);left:10px;z-index:50;background:rgba(0,0,0,.8);border:1px solid var(--y);padding:5px;font-size:9px;color:var(--y);display:none;pointer-events:none;line-height:1.4}
 #gl{position:fixed;left:0;top:0;width:100%;height:100%;z-index:22;pointer-events:none}
@@ -127,18 +127,18 @@ select#camsel{background:rgba(0,20,10,.9);color:var(--g);border:1px solid var(--
 #countdown-overlay.active{display:flex}
 #countdown-text{font-size:100px;font-weight:bold;color:#fff;text-shadow:0 0 30px var(--g);animation:pop 1s ease-out infinite}
 @keyframes pop{0%{transform:scale(0.5);opacity:0}50%{transform:scale(1.2);opacity:1}100%{transform:scale(1);opacity:1}}
-#ready-btn{width:100%;max-width:300px;padding:12px;border:2px solid var(--y);background:rgba(255,220,0,.1);color:var(--y);font-family:inherit;font-size:14px;font-weight:bold;letter-spacing:2px;cursor:pointer;border-radius:4px}
-#ready-btn:active{background:rgba(255,220,0,.3)}
+#ready-btn{width:280px;padding:14px;border:2px solid var(--y);background:rgba(255,220,0,.15);color:var(--y);font-family:inherit;font-size:14px;font-weight:bold;letter-spacing:2px;cursor:pointer;border-radius:8px}
+#ready-btn:active{background:rgba(255,220,0,.35)}
 #ready-btn.ready{border-color:var(--g);color:var(--g);background:rgba(0,255,136,.2)}
 /* スキャンHUD */
-#scan-overlay{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
-.scan-hud{position:absolute;top:calc(var(--st) + 20px);left:50%;transform:translateX(-50%);text-align:center;background:rgba(0,0,0,.75);padding:10px 20px;border-radius:8px;border:1px solid var(--bd);min-width:220px}
+#scan-overlay{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:2}
+.scan-hud{position:absolute;top:calc(var(--st) + 20px);left:50%;transform:translateX(-50%);text-align:center;background:rgba(0,0,0,.78);padding:10px 20px;border-radius:8px;border:1px solid var(--bd);min-width:220px;z-index:3}
 .scan-hud .st1{font-size:14px;font-weight:bold;letter-spacing:2px}
 .scan-hud .st2{font-size:11px;color:rgba(0,255,136,.7);margin-top:4px}
 .scan-bar{width:180px;height:6px;background:rgba(255,255,255,.15);border-radius:3px;margin:6px auto 0;overflow:hidden}
 #scan-bar-fill{height:100%;width:0%;background:linear-gradient(90deg,#00ff88,#00ffcc);transition:width .3s}
-.scan-instr{position:absolute;bottom:100px;left:50%;transform:translateX(-50%);font-size:11px;color:rgba(0,255,136,.85);text-align:center;background:rgba(0,0,0,.7);padding:6px 14px;border-radius:6px;max-width:300px;line-height:1.7}
-.scan-instr small{font-size:9px;color:rgba(255,255,255,.5)}
+.scan-instr{position:absolute;bottom:130px;left:50%;transform:translateX(-50%);font-size:11px;color:rgba(0,255,136,.9);text-align:center;background:rgba(0,0,0,.75);padding:8px 16px;border-radius:6px;max-width:320px;line-height:1.7;z-index:3}
+.scan-instr small{font-size:9px;color:rgba(255,255,255,.55)}
 </style>
 </head>
 <body>
@@ -183,8 +183,8 @@ select#camsel{background:rgba(0,20,10,.9);color:var(--g);border:1px solid var(--
 
 <div class="screen hidden" id="s-perm">
   <div class="logo" style="font-size:17px;letter-spacing:2px">📡 カメラ・GPS設定</div>
-  <div class="perm wt" id="perm-cam"><div class="pi">📷</div><div class="pt"><div class="ptl">CAMERA</div><div class="pv" id="pcam-v">未確認</div></div><button class="pb" id="btn-cam" onclick="doCamPerm()">許可</button></div>
-  <div class="cam-sel" id="cam-sel"><label>カメラを選択</label><select id="camsel"></select><button class="cam-apply" onclick="applyCam()">▶ このカメラを使う</button></div>
+  <div class="perm wt" id="perm-cam"><div class="pi">📷</div><div class="pt"><div class="ptl">CAMERA (REAR FIXED)</div><div class="pv" id="pcam-v">未確認</div></div><button class="pb" id="btn-cam" onclick="doCamPerm()">許可</button></div>
+  <div class="cam-sel" id="cam-sel"><label>カメラを選択（外カメ優先）</label><select id="camsel"></select><button class="cam-apply" onclick="applyCam()">▶ このカメラを使う</button></div>
   <div class="perm wt" id="perm-gps"><div class="pi">📍</div><div class="pt"><div class="ptl">GPS / LOCATION</div><div class="pv" id="pgps-v">未確認</div></div><button class="pb" id="btn-gps" onclick="doGpsPerm()">許可</button></div>
   <div id="gps-help">位置情報がブロックされています。<br>① アドレスバー左の設定アイコン（🔒）をタップ<br>② 「権限」→「位置情報」→「許可」に変更<br>③ 許可すると自動で再取得します。<br>※屋内ではGPSの誤差が大きくなります。</div>
   <button class="sbtn" id="start-btn" onclick="proceed()" disabled>⚔ ゲームスタート</button>
@@ -218,7 +218,6 @@ select#camsel{background:rgba(0,20,10,.9);color:var(--g);border:1px solid var(--
   <div class="note" style="cursor:pointer" onclick="location.reload()">退出</div>
 </div>
 
-<!-- 新スキャン画面: 背景透過でカメラが見える -->
 <div class="screen hidden" id="s-scan">
   <canvas id="scan-overlay"></canvas>
   <div class="scan-hud">
@@ -226,9 +225,9 @@ select#camsel{background:rgba(0,20,10,.9);color:var(--g);border:1px solid var(--
     <div class="st2">SCANNED: <span id="scan-count">0/16</span></div>
     <div class="scan-bar"><div id="scan-bar-fill"></div></div>
   </div>
-  <div class="scan-instr">デバイスを動かして周囲をスキャンしてください<br><small>緑の枠 = スキャン済み</small></div>
-  <button class="sbtn" id="ready-btn" onclick="toggleReady()" style="display:none;bottom:40px;left:50%;transform:translateX(-50%);width:280px">▶ SCAN COMPLETE</button>
-  <div id="scan-wait" style="display:none;bottom:40px;left:50%;transform:translateX(-50%);color:var(--y);font-size:12px;background:rgba(0,0,0,.75);padding:8px 16px;border-radius:6px;border:1px solid rgba(255,220,0,.3)">他のプレイヤーの準備を待っています...</div>
+  <div class="scan-instr">デバイスを動かして周囲をスキャンしてください<br><small>緑の枠 = スキャン済み / 全16セル完了で START</small></div>
+  <button id="ready-btn" onclick="toggleReady()" style="display:none;bottom:40px;left:50%;transform:translateX(-50%)">▶ SCAN COMPLETE</button>
+  <div id="scan-wait" style="display:none;bottom:40px;left:50%;transform:translateX(-50%);color:var(--y);font-size:12px;background:rgba(0,0,0,.78);padding:8px 16px;border-radius:6px;border:1px solid rgba(255,220,0,.3);z-index:3">他のプレイヤーの準備を待っています...</div>
 </div>
 
 <div id="countdown-overlay">
@@ -241,10 +240,10 @@ select#camsel{background:rgba(0,20,10,.9);color:var(--g);border:1px solid var(--
 <script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.5/dist/peerjs.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 
+<!-- ============================================================
+     GPS MODULE (カルマン + IMU補間)
+     ============================================================ -->
 <script>
-/* ============================================================
-   GPS MODULE (カルマン + IMU補間)
-   ============================================================ */
 (function(global){
 'use strict';
 function makeKalman(R, Q) {
@@ -410,7 +409,7 @@ global.GPS = gps;
 <script>
 'use strict';
 /* ============================================================
-   メインゲームスクリプト
+   メインゲームスクリプト（完全版）
    ============================================================ */
 const $ = id => document.getElementById(id);
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c]));
@@ -491,46 +490,136 @@ function tab(t) {
 function copyCode() { navigator.clipboard && navigator.clipboard.writeText(st.roomCode).then(() => setNet('コードをコピーしました')); }
 function setNet(t) { $('net-msg').textContent = t; }
 
-/* ── CAMERA ── */
+/* ============================================================
+   カメラモジュール（リア/外カメ固定版）
+   ============================================================ */
 let cams = [], curCam = 0, curStream = null;
+
+const REAR_CAM_PATTERN =
+  /back|rear|environment|外|リア|後|背|usb|external|facing.?back|world/i;
+
 async function enumCams() {
   try {
     const d = await navigator.mediaDevices.enumerateDevices();
     cams = d.filter(x => x.kind === 'videoinput');
     const sel = $('camsel'); sel.innerHTML = '';
+
+    let rearIdx = -1;
     cams.forEach((c, i) => {
-      const o = document.createElement('option'); o.value = i;
-      o.textContent = c.label || ('カメラ ' + (i + 1)); sel.appendChild(o);
+      const label = c.label || ('カメラ ' + (i + 1));
+      const o = document.createElement('option');
+      o.value = i;
+      o.textContent = label;
+      sel.appendChild(o);
+      if (rearIdx < 0 && REAR_CAM_PATTERN.test(label)) rearIdx = i;
     });
-    const bi = cams.findIndex(c => /back|rear|env/i.test(c.label));
-    if (bi >= 0) { sel.value = bi; curCam = bi; }
+
+    // 優先順位: リア/外付け → 最後のカメラ(外付けの可能性) → 0
+    if (rearIdx >= 0)          curCam = rearIdx;
+    else if (cams.length > 1)  curCam = cams.length - 1;
+    else                       curCam = 0;
+
+    if (sel.options.length) sel.value = curCam;
     if (cams.length) $('cam-sel').style.display = 'flex';
+
+    // 切替ボタンは常に非表示（外カメ固定）
+    $('camsw').style.display = 'none';
   } catch (e) {}
 }
+
 async function startCam(idx) {
   if (curStream) { curStream.getTracks().forEach(t => t.stop()); curStream = null; }
   try {
-    const con = cams.length && idx !== undefined
-      ? { video: { deviceId: { exact: cams[idx].deviceId }, width: { ideal: 1920 }, height: { ideal: 1080 } } }
-      : { video: { facingMode: 'environment', width: { ideal: 1920 }, height: { ideal: 1080 } } };
-    const s = await navigator.mediaDevices.getUserMedia(con);
-    curStream = s; $('cam').srcObject = s;
+    let s = null;
+
+    // ① モバイル: exact environment でリア強制（最優先・最も確実）
+    try {
+      s = await navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: { exact: 'environment' },
+          width: { ideal: 1920 }, height: { ideal: 1080 }
+        }
+      });
+    } catch (e1) {
+      // ② デスクトップ等: ラベルからリア/外付けを探して deviceId 指定
+      if (cams.length === 0) await enumCams();
+      const rearIdx = cams.findIndex(c => REAR_CAM_PATTERN.test(c.label || ''));
+      const pickIdx = rearIdx >= 0
+        ? rearIdx
+        : ((typeof idx === 'number' && idx >= 0 && idx < cams.length) ? idx : curCam);
+
+      if (cams[pickIdx]) {
+        try {
+          s = await navigator.mediaDevices.getUserMedia({
+            video: {
+              deviceId: { exact: cams[pickIdx].deviceId },
+              width: { ideal: 1920 }, height: { ideal: 1080 }
+            }
+          });
+          curCam = pickIdx;
+        } catch (e2) { s = null; }
+      }
+
+      // ③ ideal environment（exact が効かない環境の保険）
+      if (!s) {
+        try {
+          s = await navigator.mediaDevices.getUserMedia({
+            video: {
+              facingMode: { ideal: 'environment' },
+              width: { ideal: 1920 }, height: { ideal: 1080 }
+            }
+          });
+        } catch (e3) { s = null; }
+      }
+
+      // ④ 最後の手段（カメラ1台のみの環境など）
+      if (!s) {
+        s = await navigator.mediaDevices.getUserMedia({ video: true });
+      }
+    }
+
+    curStream = s;
+    $('cam').srcObject = s;
     setPerm('cam', 'ok', (s.getVideoTracks()[0]?.label || 'カメラ').substring(0, 28));
-    curCam = idx ?? 0;
-  } catch (e) { setPerm('cam', 'ng', '拒否 — 背景は黒で続行'); }
+  } catch (e) {
+    setPerm('cam', 'ng', '拒否 — 背景は黒で続行');
+  }
   checkReady();
 }
+
 async function doCamPerm() {
   setPerm('cam', 'wt', '確認中...');
-  try { const t = await navigator.mediaDevices.getUserMedia({ video: true }); t.getTracks().forEach(x => x.stop()); } catch (e) {}
-  await enumCams();
-  const i = parseInt($('camsel').value || '0', 10);
-  await startCam(isNaN(i) ? 0 : i);
-}
-async function applyCam() { await startCam(parseInt($('camsel').value, 10) || 0); }
-async function switchCam() { if (cams.length <= 1) return; curCam = (curCam + 1) % cams.length; await startCam(curCam); }
 
-/* ── GPS UI ── */
+  // 権限を取得（ラベル付きで enumerateDevices するため）
+  try {
+    const t = await navigator.mediaDevices.getUserMedia({ video: true });
+    t.getTracks().forEach(x => x.stop());
+  } catch (e) {
+    setPerm('cam', 'ng', '拒否 — 背景は黒で続行');
+    checkReady();
+    return;
+  }
+
+  await enumCams();          // curCam がリア/外付けに設定される
+  await startCam(curCam);    // リア固定で起動
+}
+
+async function applyCam() {
+  const i = parseInt($('camsel').value, 10);
+  if (!isNaN(i)) curCam = i;
+  await startCam(curCam);
+}
+
+// 手動切替は残すが UI ボタンは非表示なので実質未使用
+async function switchCam() {
+  if (cams.length <= 1) return;
+  curCam = (curCam + 1) % cams.length;
+  await startCam(curCam);
+}
+
+/* ============================================================
+   GPS UI
+   ============================================================ */
 function doGpsPerm() {
   setPerm('gps', 'wt', 'GPS取得中...');
   GPS.onSourceChange = (src) => {
@@ -592,7 +681,9 @@ function checkReady() {
   if (c && g) $('start-btn').disabled = false;
 }
 
-/* ── AI MODEL ── */
+/* ============================================================
+   AI MODEL
+   ============================================================ */
 let model = null;
 let detections = [];
 let lastDetectTime = 0;
@@ -645,7 +736,7 @@ function drawAIDebug(dets) {
   });
 }
 
-/* AI人物検知 → 誰かにダメージ */
+/* AI人物検知 → 誰かに自動ダメージ */
 function processPersonDetection(dets) {
   if (!st.gameActive || dets.length === 0 || st.dead) return;
   const now = performance.now();
@@ -692,7 +783,9 @@ function applyAIDamage(target, dmg) {
   }
 }
 
-/* ── NETWORKING ── */
+/* ============================================================
+   NETWORKING
+   ============================================================ */
 function loadPeerLib() {
   return new Promise((ok, ng) => {
     if (window.Peer) return ok();
@@ -856,16 +949,13 @@ function hostStart() {
 }
 
 /* ============================================================
-   新スキャンシステム
-   - 8方位 × 2仰角 = 16セル
-   - ジャイロの向きでセルをスキャン
-   - 全セルスキャンで「SCAN COMPLETE」ボタン表示
+   スキャンシステム (8方位 × 2仰角 = 16セル)
    ============================================================ */
 const SCAN_AZ_SECTORS = 8;
 const SCAN_EL_BANDS = 2;
-const SCAN_AZ_STEP = 360 / SCAN_AZ_SECTORS;  // 45
+const SCAN_AZ_STEP = 360 / SCAN_AZ_SECTORS;
 const SCAN_EL_MIN = -60, SCAN_EL_MAX = 60;
-const SCAN_EL_STEP = (SCAN_EL_MAX - SCAN_EL_MIN) / SCAN_EL_BANDS; // 60
+const SCAN_EL_STEP = (SCAN_EL_MAX - SCAN_EL_MIN) / SCAN_EL_BANDS;
 
 let scanCells = [];
 let scanComplete = false;
@@ -880,8 +970,7 @@ function initScanCells() {
     for (let j = 0; j < SCAN_EL_BANDS; j++) {
       scanCells.push({
         i, j,
-        azMin: i * SCAN_AZ_STEP,
-        azMax: (i + 1) * SCAN_AZ_STEP,
+        azMin: i * SCAN_AZ_STEP, azMax: (i + 1) * SCAN_AZ_STEP,
         elMin: SCAN_EL_MIN + j * SCAN_EL_STEP,
         elMax: SCAN_EL_MIN + (j + 1) * SCAN_EL_STEP,
         scanned: false, heldSince: 0
@@ -914,7 +1003,6 @@ function updateScanCells(now) {
     lastProgressTime = now;
   }
 
-  // フォールバック: 8秒進展なし or 全体30秒超過で自動スキャン
   const noProgress = now - lastProgressTime;
   const totalElapsed = now - scanStartTime;
   if (noProgress > 8000 || totalElapsed > 30000) {
@@ -936,24 +1024,20 @@ function updateScanCells(now) {
   return { scanned: scannedCount, total: scanCells.length };
 }
 
-/* 指定方向をスクリーンに投影 */
 function projectDirection(azDeg, elDeg) {
   const d2r = Math.PI / 180;
   const az = azDeg * d2r, el = elDeg * d2r;
   const h = normDeg(st.heading) * d2r;
   const p = st.pitch * d2r;
 
-  // World direction
   const wx = Math.sin(az) * Math.cos(el);
   const wy = Math.sin(el);
   const wz = -Math.cos(az) * Math.cos(el);
 
-  // Apply Ry(h)
   const x1 = wx * Math.cos(h) + wz * Math.sin(h);
   const y1 = wy;
   const z1 = -wx * Math.sin(h) + wz * Math.cos(h);
 
-  // Apply Rx(-p)
   const cx = x1;
   const cy = y1 * Math.cos(p) + z1 * Math.sin(p);
   const cz = -y1 * Math.sin(p) + z1 * Math.cos(p);
@@ -982,12 +1066,10 @@ function renderScanOverlay() {
   const W = cv.width, H = cv.height;
   ctx.clearRect(0, 0, W, H);
 
-  // 現在のセル(クロスヘア上)
   const curHeading = normDeg(st.heading);
   const curPitch = st.pitch;
 
   for (const cell of scanCells) {
-    // 中心からの角度差が大きすぎるセルはスキップ
     const cxAz = (cell.azMin + cell.azMax) / 2;
     const cxEl = (cell.elMin + cell.elMax) / 2;
     let dAz = Math.abs(cxAz - curHeading);
@@ -995,7 +1077,6 @@ function renderScanOverlay() {
     const dEl = Math.abs(cxEl - curPitch);
     if (dAz > 60 || dEl > 55) continue;
 
-    // 4隅を投影
     const c4 = [
       projectDirection(cell.azMin, cell.elMin),
       projectDirection(cell.azMax, cell.elMin),
@@ -1003,9 +1084,7 @@ function renderScanOverlay() {
       projectDirection(cell.azMin, cell.elMax)
     ];
 
-    // 全部見えている場合は塗りつぶし
     if (c4.every(p => p !== null)) {
-      // 画面外チェック
       const allRight = c4.every(p => p.x > W + 50);
       const allLeft = c4.every(p => p.x < -50);
       const allUp = c4.every(p => p.y > H + 50);
@@ -1024,7 +1103,6 @@ function renderScanOverlay() {
         ctx.lineWidth = 3;
         ctx.stroke();
       } else {
-        // 現在スキャン中のセルをハイライト
         const isCurrent = curHeading >= cell.azMin && curHeading < cell.azMax
                        && curPitch >= cell.elMin && curPitch < cell.elMax;
         ctx.strokeStyle = isCurrent ? 'rgba(255, 220, 0, 0.9)' : 'rgba(255, 255, 255, 0.35)';
@@ -1034,7 +1112,6 @@ function renderScanOverlay() {
         ctx.setLineDash([]);
       }
     } else {
-      // 一部だけ見える場合は線を引く
       const edges = [[0,1],[1,2],[2,3],[3,0]];
       for (const [a, b] of edges) {
         const pa = c4[a], pb = c4[b];
@@ -1050,7 +1127,6 @@ function renderScanOverlay() {
     }
   }
 
-  // 中央マーカー
   ctx.strokeStyle = 'rgba(0, 255, 136, 0.5)';
   ctx.lineWidth = 1;
   ctx.beginPath(); ctx.arc(W/2, H/2, 22, 0, Math.PI * 2); ctx.stroke();
@@ -1076,7 +1152,6 @@ function scanLoop() {
 
 function startScanPhase() {
   show('s-scan');
-  // ゲームUI非表示
   ['fire', 'rld', 'cov', 'mmap', 'camsw'].forEach(id => { const e = $(id); if (e) e.style.display = 'none'; });
 
   st.scanState = 'scanning';
@@ -1109,7 +1184,6 @@ function onScanComplete() {
 function toggleReady() {
   if (st.scanState !== 'ready') return;
 
-  // 座標系確定(GPSから)
   const s = GPS.state;
   if (s && Math.abs(s.lat) < 90) {
     st.origin = { lat: s.lat, lon: s.lon };
@@ -1173,7 +1247,9 @@ function startCountdown() {
   }, 1000);
 }
 
-/* ── GAME CORE ── */
+/* ============================================================
+   GAME CORE
+   ============================================================ */
 let last = 0;
 let gunInitialized = false;
 function ensureGun() { if (gunInitialized) return; gunInitialized = true; try { initGun(); } catch (e) { console.error('[Gun]', e); } }
@@ -1206,9 +1282,9 @@ function setBadge(t) { $('mode-badge').textContent = t; }
 function runGame() {
   document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
   $('countdown-overlay').classList.remove('active');
-  // ゲームUI表示
   ['fire', 'rld', 'cov', 'mmap'].forEach(id => { const e = $(id); if (e) e.style.display = 'block'; });
-  if (cams.length > 1) $('camsw').style.display = 'block';
+  // 外カメ固定のため CAM 切替ボタンは常に非表示
+  $('camsw').style.display = 'none';
 
   st.gameActive = true;
   st.dead = false; st.health = 100; st.ammo = st.maxAmmo;
@@ -1278,7 +1354,9 @@ function tickBots() {
   });
 }
 
-/* ── HUD ── */
+/* ============================================================
+   HUD
+   ============================================================ */
 function updateHUD() {
   $('hpb').style.width = Math.max(0, st.health) + '%';
   $('hpn').textContent = Math.max(0, Math.round(st.health));
@@ -1310,7 +1388,9 @@ function spawnDamage(x, y, dmg, isMe) {
   setTimeout(() => el.remove(), 900);
 }
 
-/* ── COMBAT ── */
+/* ============================================================
+   COMBAT
+   ============================================================ */
 function takeDamage(dmg, from) {
   if (st.dead || !st.gameActive) return;
   st.health -= dmg;
@@ -1419,7 +1499,7 @@ function toggleCover() {
 }
 
 /* ============================================================
-   3D GUN (修正版: 視野内に収まるよう位置・スケール調整)
+   3D GUN (視野内に収まるよう調整済み)
    ============================================================ */
 const G = {
   aimUntil: 0, kickK: 0, baseX: 0.1, baseY: -0.15, baseZ: -0.65,
@@ -1470,7 +1550,6 @@ function initGun() {
     o.rotation.x = Math.PI / 2; o.position.set(x, y, z); group.add(o);
   };
 
-  // AK-47風
   B(.062, .09, .30, 0, 0, 0, steel);
   B(.050, .016, .30, 0, .052, 0, dark);
   B(.030, .012, .55, 0, .066, -.10, dark);
@@ -1487,7 +1566,6 @@ function initGun() {
   B(.060, .140, .040, 0, -.115, -.15, dark);
   B(.010, .060, .010, 0, .020, -.75, dark);
 
-  // アスペクトに応じた安全な配置
   G.baseX = aspect < 0.7 ? 0.09 : 0.15;
   G.baseY = -0.15;
   G.baseZ = -0.65;
@@ -1511,10 +1589,8 @@ function initGun() {
 function animateGun(dt, ts) {
   if (!G.group) return;
   G.kickK *= 0.82;
-  const targetY = G.baseY;
-  const targetZ = G.baseZ;
-  G.group.position.y += (targetY - G.group.position.y) * 0.12;
-  G.group.position.z += (targetZ - G.group.position.z) * 0.12;
+  G.group.position.y += (G.baseY - G.group.position.y) * 0.12;
+  G.group.position.z += (G.baseZ - G.group.position.z) * 0.12;
   G.group.rotation.x = G.kickK * 0.15;
   const walk = Math.min(1, (st.spd || 0) * 0.02);
   G.group.position.x = G.baseX + Math.sin(ts * 0.006) * walk * 0.012;
@@ -1523,7 +1599,9 @@ function animateGun(dt, ts) {
   if (G.gunRenderer) G.gunRenderer.render(G.gunScene, G.gunCam);
 }
 
-/* ── AR ENEMY ── */
+/* ============================================================
+   AR ENEMY
+   ============================================================ */
 function renderEnemies() {
   const w = window.innerWidth, h = window.innerHeight;
   const fov = 60;
@@ -1555,7 +1633,9 @@ function renderEnemies() {
   Object.keys(enemyEls).forEach(id => { if (!active[id]) { enemyEls[id].remove(); delete enemyEls[id]; } });
 }
 
-/* ── MINIMAP ── */
+/* ============================================================
+   MINIMAP
+   ============================================================ */
 function drawMap(canvas, maxR) {
   const ctx = canvas.getContext('2d');
   const w = canvas.width, h = canvas.height;
@@ -1604,7 +1684,9 @@ function drawMap(canvas, maxR) {
   ctx.lineTo(cx + Math.sin(hr) * 20, cy - Math.cos(hr) * 20); ctx.stroke();
 }
 
-/* ── MAIN LOOP ── */
+/* ============================================================
+   MAIN LOOP
+   ============================================================ */
 function frame(ts) {
   if (!st.gameActive) return;
   const dt = Math.min(0.1, (ts - last) / 1000);
@@ -1631,7 +1713,9 @@ function frame(ts) {
   requestAnimationFrame(frame);
 }
 
-/* ── EVENTS ── */
+/* ============================================================
+   EVENTS
+   ============================================================ */
 $('fire').addEventListener('click', fire);
 $('rld').addEventListener('click', reload);
 $('cov').addEventListener('click', toggleCover);
@@ -1660,7 +1744,9 @@ document.addEventListener('keyup', e => {
 
 window.addEventListener('load', () => { setTimeout(loadAIModel, 1200); });
 
-/* ── SELF TEST ── */
+/* ============================================================
+   SELF TEST
+   ============================================================ */
 async function runSelfTest() {
   showAlert('🧪 テスト実行中...');
   const r = [];
