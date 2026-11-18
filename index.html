@@ -3,18 +3,24 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>AR Shooter AI - Tactical Edge (Complete)</title>
+<title>AR Shooter - Tactical Edge</title>
 <style>
 :root{--g:#00ff88;--r:#ff3333;--b:#33aaff;--o:#ff8800;--y:#ffdd00;--bg:rgba(0,0,0,.72);--bd:rgba(0,255,136,.32);--st:env(safe-area-inset-top,0px);--sb:env(safe-area-inset-bottom,0px)}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%;overflow:hidden;background:#000;color:var(--g);font-family:'Courier New',monospace;user-select:none;-webkit-user-select:none;touch-action:none}
 #cam{position:fixed;inset:0;width:100%;height:100%;object-fit:cover;z-index:1;background:#0a0a0a}
-#xh{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:52px;height:52px;z-index:20;pointer-events:none}
-.xr{position:absolute;inset:0;border:1.5px solid rgba(255,60,60,.6);border-radius:50%}
+#gl{position:fixed;inset:0;width:100%;height:100%;z-index:22;pointer-events:none}
+#ai{position:fixed;inset:0;z-index:21;pointer-events:none}
+/* crosshair */
+#xh{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:52px;height:52px;z-index:26;pointer-events:none}
+.xr{position:absolute;inset:0;border:1.5px solid rgba(255,60,60,.7);border-radius:50%}
 .xd{position:absolute;left:50%;top:50%;width:4px;height:4px;background:#ff4444;border-radius:50%;transform:translate(-50%,-50%)}
 #xh.hit .xr{border-color:#fff;background:rgba(255,255,255,.18)}
+#xh.lock .xr{border-color:var(--y);box-shadow:0 0 10px var(--y)}
+#xh.ads .xr,#xh.ads .xd{display:none}
+/* HUD */
 #hud-gps,#hud-room{position:fixed;top:calc(var(--st) + 8px);z-index:30;pointer-events:none;background:var(--bg);border:1px solid var(--bd);border-radius:4px;padding:5px 8px;line-height:1.55}
-#hud-gps{left:10px;min-width:110px}
+#hud-gps{left:10px;min-width:112px}
 #hud-room{right:10px;min-width:90px;text-align:right}
 #hud-center{position:fixed;top:calc(var(--st) + 8px);left:50%;transform:translateX(-50%);z-index:30;pointer-events:none;display:flex;flex-direction:column;align-items:center;gap:4px}
 #timer{background:var(--bg);border:1px solid var(--bd);border-radius:4px;padding:3px 14px;font-size:17px;font-weight:bold;color:#fff;letter-spacing:2px}
@@ -23,64 +29,74 @@ html,body{height:100%;overflow:hidden;background:#000;color:var(--g);font-family
 .sc.red{color:var(--r);background:rgba(60,0,0,.7);border:1px solid rgba(255,50,50,.35)}
 .sc.blu{color:var(--b);background:rgba(0,20,50,.7);border:1px solid rgba(50,170,255,.35)}
 #mode-badge{font-size:8px;letter-spacing:2px;padding:2px 8px;border-radius:10px;background:var(--bg);border:1px solid var(--bd)}
+#near{position:fixed;top:calc(var(--st) + 98px);left:50%;transform:translateX(-50%);z-index:30;display:flex;flex-direction:column;align-items:center;gap:3px;pointer-events:none}
+#near div{font-size:9px;padding:2px 8px;border-radius:3px;background:rgba(60,0,0,.75);border:1px solid rgba(255,50,50,.5);color:#ff7777;white-space:nowrap}
 .hl{color:rgba(0,255,136,.55);font-size:8px;letter-spacing:1px}
 .hv{color:var(--g);font-size:11px;font-weight:bold}
+/* AI tracking panel (監視カメラ風) */
+#aipanel{position:fixed;top:calc(var(--st) + 74px);left:10px;z-index:30;pointer-events:none;background:rgba(25,25,25,.74);border-radius:4px;padding:6px 9px;font-family:Arial,Helvetica,sans-serif;min-width:150px;max-width:56vw;display:none}
+#aipanel .t{font-size:10px;font-weight:bold;color:#fff;letter-spacing:.4px}
+#aipanel .s{font-size:8px;color:#bbb;margin-bottom:3px}
+#aipanel .r{font-size:9px;font-weight:bold;display:flex;align-items:center;gap:5px;line-height:1.65;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#aipanel .r b{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+#aipanel .f{font-size:8px;color:#ddd;margin-top:3px}
 #hud-stats{position:fixed;bottom:calc(var(--sb) + 172px);left:10px;z-index:30;pointer-events:none}
 .sr{display:flex;align-items:center;gap:6px;margin-bottom:6px}
 .si{font-size:12px;width:16px;text-align:center}
-.sb{width:80px;height:6px;background:rgba(255,255,255,.12);border-radius:3px;overflow:hidden}
+.sbar{width:80px;height:6px;background:rgba(255,255,255,.12);border-radius:3px;overflow:hidden}
 .sf{height:100%;border-radius:3px;transition:width .2s}
 .sh{background:linear-gradient(90deg,#ff3333,#ff6644)}
 .sa{background:linear-gradient(90deg,#ffaa00,#ffdd00)}
 .sn{font-size:10px;color:#fff;min-width:32px}
 #mmap{position:fixed;bottom:calc(var(--sb) + 40px);left:10px;z-index:30;cursor:pointer}
-#mmap canvas{width:110px;height:110px;border-radius:50%;border:2px solid var(--bd);background:rgba(0,8,20,.85);display:block}
+#mmap canvas{width:110px;height:110px;border-radius:50%;border:2px solid var(--bd);display:block}
 #mmap .ml{font-size:7px;color:rgba(0,255,136,.5);text-align:center;margin-top:2px}
-#fire{position:fixed;bottom:calc(var(--sb) + 56px);right:16px;z-index:31;width:78px;height:78px;border-radius:50%;border:3px solid rgba(255,80,80,.8);background:rgba(255,30,30,.28);color:#fff;font-size:11px;font-family:inherit;font-weight:bold;cursor:pointer;touch-action:none;-webkit-tap-highlight-color:transparent}
-#fire:active{background:rgba(255,80,80,.55);transform:scale(.92)}
+/* buttons */
+.gb{position:fixed;z-index:31;border-radius:50%;color:#fff;font-family:inherit;font-weight:bold;touch-action:none;-webkit-tap-highlight-color:transparent}
+#fire{bottom:calc(var(--sb) + 56px);right:16px;width:78px;height:78px;border:3px solid rgba(255,80,80,.8);background:rgba(255,30,30,.28);font-size:11px}
+#fire:active{background:rgba(255,80,80,.55)}
 #fire.rl{border-color:rgba(255,170,0,.8);background:rgba(255,140,0,.22)}
-#rld{position:fixed;bottom:calc(var(--sb) + 148px);right:26px;z-index:31;width:58px;height:58px;border-radius:50%;border:2px solid rgba(255,190,0,.75);background:rgba(255,160,0,.2);color:#fff;font-size:9px;font-family:inherit;font-weight:bold;touch-action:none;-webkit-tap-highlight-color:transparent}
-#rld:active{background:rgba(255,190,0,.5)}
-#cov{position:fixed;bottom:calc(var(--sb) + 148px);left:10px;z-index:31;width:50px;height:50px;border-radius:50%;border:2px solid rgba(120,200,255,.7);background:rgba(60,140,255,.15);color:#fff;font-size:8px;font-family:inherit;font-weight:bold;touch-action:none}
+#ads{bottom:calc(var(--sb) + 66px);right:104px;width:56px;height:56px;border:2px solid rgba(255,255,255,.6);background:rgba(255,255,255,.12);font-size:10px}
+#ads.on{background:rgba(255,60,60,.45);border-color:#ff6666}
+#rld{bottom:calc(var(--sb) + 148px);right:26px;width:58px;height:58px;border:2px solid rgba(255,190,0,.75);background:rgba(255,160,0,.2);font-size:9px}
+#cov{bottom:calc(var(--sb) + 216px);right:30px;width:50px;height:50px;border:2px solid rgba(120,200,255,.7);background:rgba(60,140,255,.15);font-size:8px}
 #cov.on{background:rgba(60,140,255,.55)}
-#camsw{position:fixed;top:calc(var(--st) + 72px);right:10px;z-index:30;background:var(--bg);border:1px solid var(--bd);color:var(--g);font-family:inherit;font-size:9px;padding:5px 10px;border-radius:4px;display:none !important}
-#gps-bar{position:fixed;bottom:calc(var(--sb) + 8px);left:50%;transform:translateX(-50%);z-index:30;font-size:9px;padding:3px 10px;border-radius:4px;pointer-events:none;white-space:nowrap;background:rgba(0,0,0,.65);border:1px solid rgba(0,255,136,.25);color:rgba(0,255,136,.7)}
-#debug-hud{position:fixed;top:calc(var(--st) + 120px);left:10px;z-index:50;background:rgba(0,0,0,.8);border:1px solid var(--y);padding:5px;font-size:9px;color:var(--y);display:none;pointer-events:none;line-height:1.4}
-#gl{position:fixed;left:0;top:0;width:100%;height:100%;z-index:22;pointer-events:none}
-#flash{position:fixed;inset:0;z-index:40;pointer-events:none;background:radial-gradient(ellipse at center,rgba(255,0,0,.1),rgba(255,0,0,.75) 100%);opacity:0;transition:opacity .25s}
-#vig{position:fixed;inset:0;z-index:39;pointer-events:none;box-shadow:inset 0 0 90px 30px rgba(255,0,0,.55);opacity:0;transition:opacity .3s}
-body.low #vig{animation:hb 1s infinite;opacity:1}
+#camsw{position:fixed;top:calc(var(--st) + 66px);right:10px;z-index:30;background:var(--bg);border:1px solid var(--bd);color:var(--g);font-family:inherit;font-size:9px;padding:5px 10px;border-radius:4px;display:none}
+#gps-bar{position:fixed;bottom:calc(var(--sb) + 8px);left:50%;transform:translateX(-50%);z-index:30;font-size:9px;padding:3px 10px;border-radius:4px;pointer-events:none;white-space:nowrap;background:rgba(0,0,0,.65);border:1px solid rgba(0,255,136,.25);color:rgba(0,255,136,.8)}
+#dbg{position:fixed;bottom:calc(var(--sb) + 230px);left:10px;z-index:50;background:rgba(0,0,0,.8);border:1px solid var(--y);padding:5px;font-size:9px;color:var(--y);display:none;pointer-events:none;line-height:1.5}
+/* fx */
+#flash{position:fixed;inset:0;z-index:40;pointer-events:none;background:radial-gradient(ellipse at center,rgba(255,0,0,.1),rgba(255,0,0,.75) 100%);opacity:0}
+#vig{position:fixed;inset:0;z-index:39;pointer-events:none;box-shadow:inset 0 0 90px 30px rgba(255,0,0,.55);opacity:0}
+body.low #vig{animation:hb 1s infinite}
 @keyframes hb{0%,100%{opacity:.35}45%{opacity:1}}
-#hitdir{position:fixed;left:50%;top:50%;width:0;height:0;z-index:41;opacity:0;pointer-events:none;transition:opacity .25s}
-#hitdir::before{content:'';position:absolute;left:-26px;top:-140px;border-left:26px solid transparent;border-right:26px solid transparent;border-bottom:44px solid rgba(255,40,40,.9);filter:drop-shadow(0 0 8px red)}
-.dmg{position:fixed;z-index:45;pointer-events:none;font-weight:bold;font-size:15px;color:#ffe14d;text-shadow:0 0 4px #000,0 0 4px #000;transform:translate(-50%,-50%);animation:fl .85s forwards}
+#hitdir{position:fixed;left:50%;top:50%;width:0;height:0;z-index:41;opacity:0;pointer-events:none}
+#hitdir::before{content:'';position:absolute;left:-26px;top:-140px;border-left:26px solid transparent;border-right:26px solid transparent;border-bottom:44px solid rgba(255,40,40,.9)}
+.dmg{position:fixed;z-index:45;pointer-events:none;font-weight:bold;font-size:15px;color:#ffe14d;text-shadow:0 0 4px #000;transform:translate(-50%,-50%);animation:fl .85s forwards;white-space:nowrap}
 .dmg.hd{color:#ff4a4a;font-size:19px}.dmg.me{color:#ff5555}
 @keyframes fl{to{opacity:0;margin-top:-46px}}
 #alerts{position:fixed;top:36%;left:50%;transform:translate(-50%,-50%);z-index:50;display:flex;flex-direction:column;align-items:center;gap:6px;pointer-events:none}
 .am{background:rgba(0,0,0,.8);border:1px solid var(--o);color:var(--o);font-size:10px;padding:4px 12px;border-radius:4px;animation:fa 2.4s forwards;white-space:nowrap}
 @keyframes fa{0%{opacity:0}12%{opacity:1}70%{opacity:1}100%{opacity:0}}
 .am.ka{border-color:var(--g);color:var(--g)}.am.ha{border-color:var(--r);color:var(--r)}
+/* AR markers */
 .em,.alm,.obj{position:fixed;left:0;top:0;z-index:25;pointer-events:none;display:flex;flex-direction:column;align-items:center;gap:2px;will-change:transform}
 .edia{width:16px;height:16px;border:2px solid var(--r);transform:rotate(45deg);background:rgba(255,50,50,.15)}
+.arr{display:none;font-size:18px;color:var(--r);text-shadow:0 0 4px #000}
+.em.edge .arr{display:block}.em.edge .edia,.em.edge .hpb{display:none}
 .elbl{font-size:8px;color:var(--r);background:rgba(0,0,0,.7);padding:1px 4px;border-radius:2px;white-space:nowrap}
-.edst{font-size:7px;color:rgba(255,120,120,.85)}
+.edst{font-size:7px;color:rgba(255,120,120,.9)}
 .hpb{width:34px;height:3px;background:rgba(255,255,255,.2)}.hpb i{display:block;height:100%;background:#ff4444;width:100%}
-.obj{font-size:24px;text-shadow:0 0 5px #000;transform:translate(-50%,-50%)}
-.obj.loot{color:var(--y);animation:bob 1.5s infinite}
-.obj.wall{color:#888;font-size:32px}
-@keyframes bob{0%,100%{margin-top:0}50%{margin-top:-10px}}
-#ai-overlay{position:fixed;inset:0;z-index:23;pointer-events:none;opacity:0.35}
+.atri{width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-bottom:11px solid var(--b)}
+.albl{font-size:8px;color:var(--b);background:rgba(0,0,0,.7);padding:1px 4px;border-radius:2px}
+.obj{font-size:24px;text-shadow:0 0 5px #000}
+/* big map */
 #bigmap{position:fixed;inset:0;z-index:90;background:rgba(0,8,16,.96);display:none;flex-direction:column;align-items:center;justify-content:center;gap:10px}
 #bigmap.open{display:flex}
-#bigmap canvas{width:min(88vw,360px);height:min(88vw,360px);border:1px solid var(--bd);border-radius:8px;box-shadow:0 0 20px rgba(0,255,136,.2)}
-.mc{color:var(--g);font-size:10px;letter-spacing:2px;padding:7px 18px;border:1px solid var(--bd);border-radius:4px;cursor:pointer}
+#bigmap canvas{width:min(90vw,380px);height:min(90vw,380px);border:1px solid var(--bd);border-radius:8px}
+.mc{color:var(--g);font-size:10px;letter-spacing:2px;padding:7px 16px;border:1px solid var(--bd);border-radius:4px;cursor:pointer}
+/* screens */
 .screen{position:fixed;inset:0;z-index:100;background:rgba(0,0,0,.94);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:20px;overflow-y:auto;touch-action:pan-y}
 .screen.hidden{display:none}
-/* スキャン画面: 背景透過でカメラが見える */
-#s-scan{background:transparent !important;padding:0 !important;overflow:hidden !important}
-#s-scan.hidden{display:none !important}
-#s-scan > *{position:absolute;pointer-events:none}
-#s-scan > #ready-btn{pointer-events:auto}
 .logo{font-size:24px;font-weight:bold;color:var(--g);letter-spacing:4px;text-shadow:0 0 16px rgba(0,255,136,.5)}
 .sub{font-size:9px;color:rgba(0,255,136,.5);letter-spacing:3px}
 .mode-row{display:flex;gap:10px;width:100%;max-width:300px}
@@ -121,76 +137,81 @@ select#camsel{background:rgba(0,20,10,.9);color:var(--g);border:1px solid var(--
 .sbtn:active{background:rgba(0,255,136,.22)}
 .sbtn:disabled{opacity:.35}
 .sbtn.bot-s{border-color:var(--y);background:rgba(255,220,0,.09);color:var(--y)}
-.sbtn.debug{border-color:var(--o);color:var(--o);background:rgba(255,136,0,.1)}
-.note{font-size:9px;color:rgba(255,255,255,.4);text-align:center;line-height:1.9;max-width:290px}
-#countdown-overlay{position:fixed;inset:0;z-index:80;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;flex-direction:column}
-#countdown-overlay.active{display:flex}
-#countdown-text{font-size:100px;font-weight:bold;color:#fff;text-shadow:0 0 30px var(--g);animation:pop 1s ease-out infinite}
-@keyframes pop{0%{transform:scale(0.5);opacity:0}50%{transform:scale(1.2);opacity:1}100%{transform:scale(1);opacity:1}}
-#ready-btn{width:280px;padding:14px;border:2px solid var(--y);background:rgba(255,220,0,.15);color:var(--y);font-family:inherit;font-size:14px;font-weight:bold;letter-spacing:2px;cursor:pointer;border-radius:8px}
-#ready-btn:active{background:rgba(255,220,0,.35)}
-#ready-btn.ready{border-color:var(--g);color:var(--g);background:rgba(0,255,136,.2)}
-/* スキャンHUD */
-#scan-overlay{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:2}
-.scan-hud{position:absolute;top:calc(var(--st) + 20px);left:50%;transform:translateX(-50%);text-align:center;background:rgba(0,0,0,.78);padding:10px 20px;border-radius:8px;border:1px solid var(--bd);min-width:220px;z-index:3}
-.scan-hud .st1{font-size:14px;font-weight:bold;letter-spacing:2px}
-.scan-hud .st2{font-size:11px;color:rgba(0,255,136,.7);margin-top:4px}
-.scan-bar{width:180px;height:6px;background:rgba(255,255,255,.15);border-radius:3px;margin:6px auto 0;overflow:hidden}
-#scan-bar-fill{height:100%;width:0%;background:linear-gradient(90deg,#00ff88,#00ffcc);transition:width .3s}
-.scan-instr{position:absolute;bottom:130px;left:50%;transform:translateX(-50%);font-size:11px;color:rgba(0,255,136,.9);text-align:center;background:rgba(0,0,0,.75);padding:8px 16px;border-radius:6px;max-width:320px;line-height:1.7;z-index:3}
-.scan-instr small{font-size:9px;color:rgba(255,255,255,.55)}
+.sbtn.ready{border-color:var(--g);color:var(--g);background:rgba(0,255,136,.2)}
+.note{font-size:9px;color:rgba(255,255,255,.5);text-align:center;line-height:1.9;max-width:290px}
+.link{cursor:pointer;text-decoration:underline}
+/* registration */
+#selfie{width:210px;height:210px;object-fit:cover;border-radius:50%;border:3px solid var(--b);transform:scaleX(-1);background:#111}
+/* 360 scan (camera stays visible) */
+#s-scan{background:transparent;justify-content:space-between;padding:calc(var(--st) + 14px) 14px calc(var(--sb) + 18px)}
+#s-scan .pane{background:rgba(0,0,0,.62);border:1px solid var(--bd);border-radius:8px;padding:10px 14px;width:100%;max-width:330px;display:flex;flex-direction:column;align-items:center;gap:6px}
+.pbar{width:100%;height:6px;background:rgba(255,255,255,.12);border-radius:3px;overflow:hidden}
+.pbar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--g),var(--b));transition:width .15s}
+#scan-ov{position:fixed;inset:0;z-index:99;pointer-events:none;display:none}
+#cd{position:fixed;inset:0;z-index:110;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;flex-direction:column}
+#cd.on{display:flex}
+#cd-t{font-size:100px;font-weight:bold;color:#fff;text-shadow:0 0 30px var(--g)}
 </style>
 </head>
 <body>
 <video id="cam" autoplay playsinline muted></video>
-<canvas id="ai-overlay"></canvas>
+<canvas id="ai"></canvas>
+<canvas id="gl"></canvas>
 <div id="xh"><div class="xr"></div><div class="xd"></div></div>
 <div id="vig"></div><div id="hitdir"></div><div id="flash"></div>
-<div id="debug-hud">DEBUG<br>GPS Err: <span id="dbg-err">-</span><br>Vel: <span id="dbg-vel">-</span><br>Src: <span id="dbg-src">-</span><br>Age: <span id="dbg-age">-</span></div>
+<div id="dbg"></div>
 
-<div id="hud-gps"><div class="hl">LOCAL POS</div><div class="hv" id="gps-la">X: 0.0</div><div class="hv" id="gps-lo">Y: 0.0</div><div class="hl" id="gps-acc">...</div></div>
+<div id="hud-gps"><div class="hl">LOCAL POS</div><div class="hv" id="gps-la">X 0.0m</div><div class="hv" id="gps-lo">Y 0.0m</div><div class="hl" id="gps-acc">...</div></div>
 <div id="hud-center"><div id="timer">05:00</div><div id="scores"><div class="sc red" id="sc-r">RED 0</div><div class="sc blu" id="sc-b">BLUE 0</div></div><div id="mode-badge">BOT</div></div>
+<div id="near"></div>
+<div id="aipanel"></div>
 <div id="hud-room"><div class="hl">PLAYERS</div><div class="hv" id="pcnt">1/1</div><div class="hl" id="rid">----</div></div>
 <div id="hud-stats">
-  <div class="sr"><div class="si">❤️</div><div class="sb"><div class="sf sh" id="hpb" style="width:100%"></div></div><div class="sn" id="hpn">100</div></div>
-  <div class="sr"><div class="si">🔫</div><div class="sb"><div class="sf sa" id="amob" style="width:100%"></div></div><div class="sn" id="amon">30/90</div></div>
+  <div class="sr"><div class="si">❤️</div><div class="sbar"><div class="sf sh" id="hpb" style="width:100%"></div></div><div class="sn" id="hpn">100</div></div>
+  <div class="sr"><div class="si">🔫</div><div class="sbar"><div class="sf sa" id="amob" style="width:100%"></div></div><div class="sn" id="amon">30/90</div></div>
 </div>
 <div id="mmap"><canvas id="mc" width="220" height="220"></canvas><div class="ml">[ TAP TO MAP ]</div></div>
-
-<canvas id="gl"></canvas>
-
-<button id="fire">FIRE</button>
-<button id="rld">RELOAD</button>
-<button id="cov">COVER</button>
+<button class="gb" id="fire">FIRE</button>
+<button class="gb" id="ads">ADS</button>
+<button class="gb" id="rld">RELOAD</button>
+<button class="gb" id="cov">COVER</button>
 <button id="camsw">🔄 CAM</button>
-<div id="gps-bar">📍 スキャン待機中</div>
-<div id="bigmap"><div style="font-size:12px;letter-spacing:2px;color:#fff">TACTICAL MAP</div><canvas id="bmc" width="720" height="720"></canvas><div style="display:flex;gap:10px"><div class="mc" id="mz-in">＋ ズームイン</div><div class="mc" id="mz-out">－ ズームアウト</div></div><div class="mc" id="bmc-close">[ CLOSE ]</div></div>
+<div id="gps-bar">📍 GPS待機中</div>
+<div id="bigmap">
+  <div style="font-size:12px;letter-spacing:2px;color:#fff">TACTICAL MAP</div>
+  <canvas id="bmc" width="760" height="760"></canvas>
+  <div style="display:flex;gap:10px"><div class="mc" id="mz-in">＋ アップ</div><div class="mc" id="mz-out">－ ワイド</div><div class="mc" id="bmc-close">CLOSE</div></div>
+</div>
 <div id="alerts"></div>
+<canvas id="scan-ov"></canvas>
 
+<!-- 1 MODE -->
 <div class="screen" id="s-mode">
-  <div class="logo">AR SHOOTER</div><div class="sub">AI TACTICAL BATTLE + SCAN MODULE</div>
+  <div class="logo">AR SHOOTER</div><div class="sub">AI TARGET ID + GPS 100Hz</div>
   <div class="mode-row">
     <div class="mcard bot-sel" id="mc-bot" onclick="selectMode('bot')"><div class="mi">🤖</div><div class="mt">BOT MODE</div><div class="md">1人練習<br>AI対戦</div></div>
-    <div class="mcard" id="mc-on" onclick="selectMode('online')"><div class="mi">🌐</div><div class="mt">ONLINE</div><div class="md">リアル対戦<br>GPSマルチ</div></div>
+    <div class="mcard" id="mc-on" onclick="selectMode('online')"><div class="mi">🌐</div><div class="mt">ONLINE</div><div class="md">リアル対戦<br>持ち主識別</div></div>
   </div>
   <div class="opt-row" id="bot-row"><label>BOT 数</label>
     <div class="bot-btns" data-k="botCount"><div class="bbot sel" data-v="1">1</div><div class="bbot" data-v="3">3</div><div class="bbot" data-v="5">5</div><div class="bbot" data-v="8">8</div></div>
   </div>
   <button class="sbtn bot-s" id="next-btn" onclick="goToSetup()">▶ 次へ（カメラ・GPS設定）</button>
-  <button class="sbtn debug" onclick="runSelfTest()" style="margin-top:5px;font-size:10px;padding:8px">🧪 システムテスト実行</button>
-  <div class="note">スマホ背面カメラ / PCウェブカメラ 両対応<br>PC: 矢印キー 移動/向き / Space 発射 / R リロード / C カバー<br>テストモード: URLに <code>?test=1</code> を付加</div>
+  <div class="note link" onclick="toggleDbg()">🧪 デバッグ表示 ON/OFF</div>
+  <div class="note">PC: ←→ 向き / W S 移動 / Space 発射 / R リロード / C カバー / F ADS</div>
 </div>
 
+<!-- 2 PERMISSIONS -->
 <div class="screen hidden" id="s-perm">
   <div class="logo" style="font-size:17px;letter-spacing:2px">📡 カメラ・GPS設定</div>
-  <div class="perm wt" id="perm-cam"><div class="pi">📷</div><div class="pt"><div class="ptl">CAMERA (REAR FIXED)</div><div class="pv" id="pcam-v">未確認</div></div><button class="pb" id="btn-cam" onclick="doCamPerm()">許可</button></div>
-  <div class="cam-sel" id="cam-sel"><label>カメラを選択（外カメ優先）</label><select id="camsel"></select><button class="cam-apply" onclick="applyCam()">▶ このカメラを使う</button></div>
+  <div class="perm wt" id="perm-cam"><div class="pi">📷</div><div class="pt"><div class="ptl">CAMERA</div><div class="pv" id="pcam-v">未確認</div></div><button class="pb" id="btn-cam" onclick="doCamPerm()">許可</button></div>
+  <div class="cam-sel" id="cam-sel"><label>カメラを選択</label><select id="camsel"></select><button class="cam-apply" onclick="applyCam()">▶ このカメラを使う</button></div>
   <div class="perm wt" id="perm-gps"><div class="pi">📍</div><div class="pt"><div class="ptl">GPS / LOCATION</div><div class="pv" id="pgps-v">未確認</div></div><button class="pb" id="btn-gps" onclick="doGpsPerm()">許可</button></div>
-  <div id="gps-help">位置情報がブロックされています。<br>① アドレスバー左の設定アイコン（🔒）をタップ<br>② 「権限」→「位置情報」→「許可」に変更<br>③ 許可すると自動で再取得します。<br>※屋内ではGPSの誤差が大きくなります。</div>
-  <button class="sbtn" id="start-btn" onclick="proceed()" disabled>⚔ ゲームスタート</button>
-  <div class="note">GPS拒否 → IP位置（概算）で代替 / カメラ拒否 → 背景は黒で続行</div>
+  <div id="gps-help">位置情報がブロックされています。<br>① アドレスバー左の 🔒 をタップ<br>② 「権限」→「位置情報」→「許可」<br>③ 許可すると自動で再取得します。<br>※屋内はGPS誤差が大きくなります（窓際推奨）</div>
+  <button class="sbtn" id="start-btn" onclick="proceed()" disabled>⚔ 次へ</button>
+  <div class="note">GPS拒否 → IP位置（概算）/ カメラ拒否 → 背景黒で続行</div>
 </div>
 
+<!-- 3 ONLINE -->
 <div class="screen hidden" id="s-online">
   <div class="logo" style="font-size:17px">🌐 ONLINE</div>
   <div class="mode-row">
@@ -206,1561 +227,818 @@ select#camsel{background:rgba(0,20,10,.9);color:var(--g);border:1px solid var(--
   <div class="opt-row online" id="p-join" style="display:none"><label>ルームコード（6文字）</label><input id="jcode" maxlength="6" placeholder="XXXXXX" style="text-transform:uppercase;text-align:center;font-size:18px"></div>
   <div class="note" id="net-msg"></div>
   <button class="sbtn" id="net-go" onclick="netGo()">ルームを作成</button>
-  <div class="note" style="cursor:pointer" onclick="backPerm()">← 戻る</div>
+  <div class="note link" onclick="show('s-perm')">← 戻る</div>
 </div>
 
+<!-- 4 LOBBY -->
 <div class="screen hidden" id="s-lobby">
   <div class="logo" style="font-size:17px">ロビー</div>
   <div class="code-big" id="lcode"></div>
   <div class="opt-row online"><label id="lcount"></label><div class="lob" id="lob"></div></div>
-  <button class="sbtn" id="lob-start" onclick="hostStart()">⚔ スキャン開始</button>
+  <button class="sbtn" id="lob-start" onclick="hostBeginReg()">🪪 全員で本人登録へ</button>
   <div class="note" id="lob-wait"></div>
-  <div class="note" style="cursor:pointer" onclick="location.reload()">退出</div>
+  <div class="note link" onclick="location.reload()">退出</div>
 </div>
 
+<!-- 5 REGISTRATION (selfie) -->
+<div class="screen hidden" id="s-reg">
+  <div class="logo" style="font-size:17px">🪪 本人登録</div>
+  <div class="note" style="color:#fff">インカメで<b>顔と上半身</b>を登録します。<br>相手のカメラがこれで「スマホの持ち主＝あなた」を識別します。</div>
+  <video id="selfie" autoplay playsinline muted></video>
+  <div class="note" id="reg-status">AIモデル読込中…</div>
+  <button class="sbtn" id="reg-btn" onclick="doRegister()" disabled>📸 登録する</button>
+  <div class="note link" onclick="skipRegister()">スキップ（識別精度が下がります）</div>
+</div>
+
+<!-- 6 360° SCAN -->
 <div class="screen hidden" id="s-scan">
-  <canvas id="scan-overlay"></canvas>
-  <div class="scan-hud">
-    <div class="st1">📡 ENVIRONMENT SCAN</div>
-    <div class="st2">SCANNED: <span id="scan-count">0/16</span></div>
-    <div class="scan-bar"><div id="scan-bar-fill"></div></div>
+  <div class="pane">
+    <div class="logo" style="font-size:15px;letter-spacing:2px">📡 360° 環境スキャン</div>
+    <div class="note" style="color:#fff">スマホをゆっくり一周させ、白い枠を全部<span style="color:var(--g)">緑</span>にしてください</div>
+    <div class="pbar"><i id="scan-bar"></i></div>
+    <div class="note"><span id="scan-count">0/24</span>　<span id="scan-acc">GPS ---</span>　<span id="scan-tiles">MAP ---</span></div>
   </div>
-  <div class="scan-instr">デバイスを動かして周囲をスキャンしてください<br><small>緑の枠 = スキャン済み / 全16セル完了で START</small></div>
-  <button id="ready-btn" onclick="toggleReady()" style="display:none;bottom:40px;left:50%;transform:translateX(-50%)">▶ SCAN COMPLETE</button>
-  <div id="scan-wait" style="display:none;bottom:40px;left:50%;transform:translateX(-50%);color:var(--y);font-size:12px;background:rgba(0,0,0,.78);padding:8px 16px;border-radius:6px;border:1px solid rgba(255,220,0,.3);z-index:3">他のプレイヤーの準備を待っています...</div>
+  <div class="pane">
+    <button class="sbtn" id="ready-btn" onclick="sendReady()" style="display:none">READY</button>
+    <div class="note" id="scan-wait" style="color:var(--y)"></div>
+    <div class="note link" id="scan-skip" onclick="forceScanDone()">コンパスが無い端末・PCはここでスキップ</div>
+  </div>
 </div>
 
-<div id="countdown-overlay">
-  <div id="countdown-text">3</div>
-  <div style="font-size:20px;color:var(--g);letter-spacing:4px;margin-top:20px">BATTLE START</div>
-</div>
+<div id="cd"><div id="cd-t">3</div><div style="font-size:20px;color:var(--g);letter-spacing:4px;margin-top:20px">BATTLE START</div></div>
 
-<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.11.0/dist/tf.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.3/dist/coco-ssd.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.5/dist/peerjs.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-
-<!-- ============================================================
-     GPS MODULE (カルマン + IMU補間)
-     ============================================================ -->
+<!-- ============ GPS MODULE (100Hz / 2-state Kalman / outlier gate) ============ -->
 <script>
-(function(global){
+(function(g){
 'use strict';
-function makeKalman(R, Q) {
-  let x = 0, y = 0, vx = 0, vy = 0;
-  let Pxx = 1, Pvv = 1, init = false;
-  return {
-    reset() { init = false; Pxx = 1; Pvv = 1; x = 0; y = 0; vx = 0; vy = 0; },
-    update(mLat, mLon, acc, dt) {
-      if (!init) { x = mLat; y = mLon; init = true; return { lat: x, lon: y }; }
-      x += vx * dt; y += vy * dt;
-      Pxx += Pvv * dt * dt + Q * dt; Pvv += Q * dt;
-      const r = Math.max(acc * acc, R);
-      const Kx = Pxx / (Pxx + r), Kv = Pvv / (Pvv + r);
-      vx += Kv * ((mLat - x) / Math.max(dt, 0.05));
-      vy += Kv * ((mLon - y) / Math.max(dt, 0.05));
-      x += Kx * (mLat - x); y += Kx * (mLon - y);
-      Pxx *= (1 - Kx); Pvv *= (1 - Kv);
-      return { lat: x, lon: y };
-    },
-    predict(ax, ay, dt) {
-      if (!init) return null;
-      vx += ax * dt; vy += ay * dt;
-      x += vx * dt + 0.5 * ax * dt * dt;
-      y += vy * dt + 0.5 * ay * dt * dt;
-      Pxx += Pvv * dt * dt + Q * dt; Pvv += Q * dt;
-      return { lat: x, lon: y };
-    },
-    get pos() { return { lat: x, lon: y }; },
-    get vel() { return { vx, vy }; },
-    get ready() { return init; }
-  };
-}
-const DEG2RAD = Math.PI / 180;
-const EARTH_R  = 6371000;
-function toMeters(lat, lon, bLat, bLon) {
-  return { x: (lon - bLon) * DEG2RAD * EARTH_R * Math.cos(bLat * DEG2RAD),
-           y: (lat - bLat) * DEG2RAD * EARTH_R };
-}
-function toDeg(mx, my, bLat, bLon) {
-  return { lat: bLat + my / EARTH_R / DEG2RAD,
-           lon: bLon + mx / (EARTH_R * Math.cos(bLat * DEG2RAD) * DEG2RAD) };
-}
-async function fetchIPLocation() {
-  const apis = [
-    () => fetch('https://ipwho.is/').then(r=>r.json()).then(d => ({ lat: +d.latitude, lon: +d.longitude, city: d.city })),
-    () => fetch('https://ipapi.co/json/').then(r=>r.json()).then(d => ({ lat: +d.latitude, lon: +d.longitude, city: d.city })),
-  ];
-  for (const fn of apis) {
-    try { const d = await fn(); if (d.lat && d.lon && Math.abs(d.lat) < 90) return d; } catch(e) {}
-  }
-  return null;
-}
-const TICK_MS = 10, KF_R = 25, KF_Q = 0.01;
-const gps = {
-  state: { lat: 35.6762, lon: 139.6503, altM: 0, accM: 999, speedMps: 0, headingDeg: 0,
-           vx: 0, vy: 0, source: 'INIT', gpsAge: 9999, tickCount: 0, lastTickAt: 0, fps: 0 },
-  onUpdate: null, onGPSFix: null, onSourceChange: null,
-  _watcher: null, _timer: null, _kf: makeKalman(KF_R, KF_Q),
-  _base: null, _lastGPSAt: 0, _lastTickAt: 0,
-  _imu: { ax: 0, ay: 0, az: 0 }, _imuReady: false,
-  _ipTimer: null, _source: 'INIT', _motionHandler: null,
-  start() { this._setupIMU(); this._startGPS(); this._startTick(); return this; },
-  stop() {
-    if (this._watcher !== null) { navigator.geolocation.clearWatch(this._watcher); this._watcher = null; }
-    if (this._timer !== null) { clearInterval(this._timer); this._timer = null; }
-    if (this._ipTimer !== null) { clearInterval(this._ipTimer); this._ipTimer = null; }
-    if (this._motionHandler) window.removeEventListener('devicemotion', this._motionHandler);
-  },
-  _startGPS() {
-    if (!navigator.geolocation || !isSecureContext) { this._startIPFallback(); return; }
-    navigator.geolocation.getCurrentPosition(p => this._onGPS(p), () => {}, { enableHighAccuracy: false, timeout: 5000, maximumAge: 60000 });
-    this._watcher = navigator.geolocation.watchPosition(p => this._onGPS(p), e => { if (e.code === 1) this._startIPFallback(); }, { enableHighAccuracy: true, timeout: 0, maximumAge: 0 });
-    if (navigator.permissions) {
-      navigator.permissions.query({ name: 'geolocation' })
-        .then(r => { r.onchange = () => { if (r.state === 'granted') this._startGPS(); }; }).catch(() => {});
-    }
-  },
-  _onGPS(pos) {
-    const c = pos.coords, now = performance.now();
-    const dt = this._lastGPSAt ? (now - this._lastGPSAt) / 1000 : 0.1;
-    this._lastGPSAt = now;
-    if (!this._base) { this._base = { lat: c.latitude, lon: c.longitude }; this._kf.reset(); }
-    const m = toMeters(c.latitude, c.longitude, this._base.lat, this._base.lon);
-    const filtered = this._kf.update(m.x, m.y, Math.max(c.accuracy, 1), dt);
-    const deg = toDeg(filtered.lat, filtered.lon, this._base.lat, this._base.lon);
-    this.state.lat = deg.lat; this.state.lon = deg.lon;
-    this.state.altM = c.altitude ?? 0; this.state.accM = c.accuracy;
-    this.state.speedMps = c.speed ?? 0;
-    this.state.headingDeg = c.heading ?? this.state.headingDeg;
-    this.state.gpsAge = 0;
-    const v = this._kf.vel; this.state.vx = v.vx; this.state.vy = v.vy;
-    this._setSource('GPS');
-    this.onGPSFix && this.onGPSFix({ ...this.state });
-  },
-  _setupIMU() {
-    const tryReq = () => {
-      if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
-        DeviceMotionEvent.requestPermission().then(r => { if (r === 'granted') this._listenIMU(); }).catch(() => {});
-      } else { this._listenIMU(); }
-    };
-    tryReq();
-  },
-  _listenIMU() {
-    this._motionHandler = e => {
-      const a = e.acceleration;
-      if (!a || a.x == null) return;
-      this._imu.ax = a.x ?? 0; this._imu.ay = a.y ?? 0; this._imu.az = a.z ?? 0;
-      this._imuReady = true;
-    };
-    window.addEventListener('devicemotion', this._motionHandler, { passive: true });
-  },
-  _startTick() {
-    let lastFPSCheck = performance.now(), frames = 0;
-    this._timer = setInterval(() => {
-      const now = performance.now();
-      const dt = this._lastTickAt ? (now - this._lastTickAt) / 1000 : 0.01;
-      this._lastTickAt = now;
-      this.state.gpsAge = now - (this._lastGPSAt || now);
-      if (this.state.gpsAge > 200 && this._imuReady && this._base && this._kf.ready) {
-        const p = this._kf.predict(this._imu.ax, this._imu.ay, dt);
-        if (p) {
-          const deg = toDeg(p.lat, p.lon, this._base.lat, this._base.lon);
-          this.state.lat = deg.lat; this.state.lon = deg.lon;
-          const v = this._kf.vel; this.state.vx = v.vx; this.state.vy = v.vy;
-          this.state.speedMps = Math.hypot(v.vx, v.vy);
-          this._setSource('GPS+IMU');
-        }
-      }
-      this.state.tickCount++; this.state.lastTickAt = now; frames++;
-      if (now - lastFPSCheck >= 1000) { this.state.fps = frames; frames = 0; lastFPSCheck = now; }
-      this.onUpdate && this.onUpdate(this.state);
-    }, TICK_MS);
-  },
-  async _startIPFallback() {
-    if (this._ipTimer) return;
-    let demoset = false;
-    const update = async () => {
-      if (this._source === 'GPS' || this._source === 'GPS+IMU') return;
-      const d = await fetchIPLocation();
-      if (this._source === 'GPS' || this._source === 'GPS+IMU') return;
-      if (d) {
-        this.state.lat = d.lat; this.state.lon = d.lon; this.state.accM = 5000;
-        this._setSource('IP'); this.onGPSFix && this.onGPSFix({ ...this.state });
-      } else if (!demoset) {
-        demoset = true;
-        this.state.lat = 35.6762; this.state.lon = 139.6503; this.state.accM = 9999;
-        this._setSource('DEMO'); this.onGPSFix && this.onGPSFix({ ...this.state });
-      }
-    };
-    await update();
-    this._ipTimer = setInterval(update, 30000);
-  },
-  _setSource(s) {
-    if (this._source === s) return;
-    this._source = s; this.state.source = s;
-    this.onSourceChange && this.onSourceChange(s);
-  }
+const D=Math.PI/180,ER=6371000,Q=2.25,VMAX=7;
+function kf(){return{x:0,v:0,a:1e4,b:0,c:0,d:4,init:false}}
+function kp(k,dt){if(!k.init)return;k.x+=k.v*dt;const t2=dt*dt;
+  const a=k.a+dt*(k.b+k.c)+t2*k.d+Q*t2*t2/4,b=k.b+dt*k.d+Q*t2*dt/2,c=k.c+dt*k.d+Q*t2*dt/2,d=k.d+Q*t2;
+  k.a=a;k.b=b;k.c=c;k.d=d}
+function ku(k,z,r){if(!k.init){k.x=z;k.v=0;k.a=r;k.b=k.c=0;k.d=4;k.init=true;return}
+  const y=z-k.x,S=k.a+r,K0=k.a/S,K1=k.c/S;k.x+=K0*y;k.v+=K1*y;
+  const a=(1-K0)*k.a,b=(1-K0)*k.b,c=k.c-K1*k.a,d=k.d-K1*k.b;k.a=a;k.b=b;k.c=c;k.d=d}
+async function ipLoc(){
+  const apis=[()=>fetch('https://ipwho.is/').then(r=>r.json()).then(d=>({lat:+d.latitude,lon:+d.longitude,city:d.city})),
+              ()=>fetch('https://ipapi.co/json/').then(r=>r.json()).then(d=>({lat:+d.latitude,lon:+d.longitude,city:d.city}))];
+  for(const f of apis){try{const d=await f();if(d.lat&&d.lon&&Math.abs(d.lat)<90)return d}catch(e){}}return null}
+const GPS={
+  state:{lat:35.6762,lon:139.6503,accM:999,estM:999,speedMps:0,vx:0,vy:0,source:'INIT',gpsAge:99999,tickCount:0,fps:0,fixes:0,city:'',denied:false},
+  onUpdate:null,onGPSFix:null,onSourceChange:null,
+  _w:null,_t:null,_ipT:null,_fbT:null,_kx:kf(),_ky:kf(),_base:null,_lastFix:0,_lastTick:0,_rej:0,_src:'INIT',_pw:false,
+  start(){this.stop();this._kx=kf();this._ky=kf();this._base=null;this._rej=0;this.state.fixes=0;this._startGPS();this._startTick();return this},
+  stop(){if(this._w!==null&&navigator.geolocation)navigator.geolocation.clearWatch(this._w);this._w=null;
+    clearInterval(this._t);clearInterval(this._ipT);clearTimeout(this._fbT);this._t=this._ipT=this._fbT=null},
+  _startGPS(){
+    if(!navigator.geolocation||!window.isSecureContext){this._startIP(false);return}
+    navigator.geolocation.getCurrentPosition(p=>this._fix(p),e=>this._err(e),{enableHighAccuracy:false,maximumAge:30000,timeout:8000});
+    this._w=navigator.geolocation.watchPosition(p=>this._fix(p),e=>this._err(e),{enableHighAccuracy:true,maximumAge:0,timeout:20000});
+    this._fbT=setTimeout(()=>{if(!this.state.fixes)this._startIP(false)},10000);
+    if(!this._pw&&navigator.permissions){this._pw=true;
+      navigator.permissions.query({name:'geolocation'}).then(r=>{r.onchange=()=>{if(r.state==='granted')this.start()}}).catch(()=>{})}},
+  _err(e){if(e.code===1){this.state.denied=true;this._startIP(true)}},
+  _fix(pos){
+    const c=pos.coords,now=performance.now(),acc=Math.max(3,c.accuracy||50);
+    if(this.state.fixes>3&&acc>150&&this.state.accM<50)return;          // 粗い測位は無視
+    if(!this._base)this._base={lat:c.latitude,lon:c.longitude};
+    const mx=(c.longitude-this._base.lon)*D*ER*Math.cos(this._base.lat*D),my=(c.latitude-this._base.lat)*D*ER,r=acc*acc;
+    if(this._kx.init){const gate=3*Math.sqrt(this._kx.a+r)+5;
+      if(Math.hypot(mx-this._kx.x,my-this._ky.x)>gate){if(++this._rej<3)return;this._kx=kf();this._ky=kf()}} // 外れ値除去
+    this._rej=0;ku(this._kx,mx,r);ku(this._ky,my,r);this._clampV();
+    this._lastFix=now;this.state.accM=c.accuracy;this.state.fixes++;this.state.denied=false;
+    if(this._ipT){clearInterval(this._ipT);this._ipT=null}
+    this._out();this._setS('GPS');this.onGPSFix&&this.onGPSFix(this.state)},
+  _clampV(){const s=Math.hypot(this._kx.v,this._ky.v);if(s>VMAX){const f=VMAX/s;this._kx.v*=f;this._ky.v*=f}},
+  _out(){if(!this._base)return;const b=this._base;
+    this.state.lat=b.lat+this._ky.x/ER/D;this.state.lon=b.lon+this._kx.x/(ER*Math.cos(b.lat*D)*D);
+    this.state.vx=this._kx.v;this.state.vy=this._ky.v;this.state.speedMps=Math.hypot(this._kx.v,this._ky.v);
+    this.state.estM=Math.sqrt((this._kx.a+this._ky.a)/2)},
+  _startTick(){let fc=0,fl=performance.now();this._lastTick=fl;
+    this._t=setInterval(()=>{
+      const now=performance.now(),dt=Math.min(.2,(now-this._lastTick)/1000);this._lastTick=now;
+      if(this._kx.init){kp(this._kx,dt);kp(this._ky,dt);
+        if(now-this._lastFix>1500){const k=Math.exp(-dt*1.5);this._kx.v*=k;this._ky.v*=k} // 更新途絶時は減速
+        this._clampV();this._out()}
+      this.state.gpsAge=this._lastFix?now-this._lastFix:99999;this.state.tickCount++;
+      fc++;if(now-fl>=1000){this.state.fps=fc;fc=0;fl=now}
+      this.onUpdate&&this.onUpdate(this.state)},10)},
+  async _startIP(denied){
+    if(this._ipT||this.state.fixes)return;
+    const run=async()=>{if(this.state.fixes)return;const d=await ipLoc();if(this.state.fixes)return;
+      if(d){this.state.lat=d.lat;this.state.lon=d.lon;this.state.accM=3000;this.state.city=d.city||'';this._setS('IP')}
+      else this._setS('DEMO');
+      this.onGPSFix&&this.onGPSFix(this.state)};
+    this._ipT=setInterval(run,30000);await run()},
+  _setS(s){if(this._src===s)return;this._src=s;this.state.source=s;this.onSourceChange&&this.onSourceChange(s)}
 };
-global.GPS = gps;
-})(window);
+g.GPS=GPS})(window);
 </script>
 
+<!-- ============ GAME ============ -->
 <script>
 'use strict';
-/* ============================================================
-   メインゲームスクリプト（完全版）
-   ============================================================ */
-const $ = id => document.getElementById(id);
-const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c]));
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const D2R=Math.PI/180,R2D=180/Math.PI;
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const st={mode:'bot',botCount:1,maxP:4,time:5,health:100,ammo:30,maxAmmo:30,reserve:90,score:{red:0,blue:0},myTeam:'red',
+  myPos:{x:0,y:0},gpsLocal:{x:0,y:0},manual:{x:0,y:0},heading:0,hd:0,pitch:0,roll:0,
+  gpsReady:false,src:'INIT',origin:{lat:35.6762,lon:139.6503},
+  gameActive:false,t0:0,timeLeft:300,kills:0,deaths:0,reloading:false,dead:false,
+  roomCode:null,players:[],objects:[],trail:[],profiles:{},yawV:0,pitV:0,spd:0,walkI:0,shk:0,keyWalk:0,cover:false,ads:false,
+  scanState:'idle',scanSamples:[],bigR:60,phd:null,ppn:null,pp:null};
+const net={peer:null,host:false,conns:{},hostConn:null,myId:'host',name:'Player',joined:false,hostReady:false,guestReady:{}};
+const BOT_NAMES=['Ghost','Viper','Hawk','Snake','Fox','Wolf','Eagle','Raven'];
+const ints=[];
 
-const isTestMode = new URLSearchParams(window.location.search).has('test');
-if (isTestMode) { $('debug-hud').style.display = 'block'; console.log("[TEST MODE]"); }
+/* ── utils ── */
+function loadScript(src){return new Promise((ok,ng)=>{const s=document.createElement('script');s.src=src;s.onload=ok;s.onerror=ng;document.head.appendChild(s)})}
+function toMeters(lat,lon){return{x:(lon-st.origin.lon)*111320*Math.cos(st.origin.lat*D2R),y:-(lat-st.origin.lat)*111320}}
+function toLatLon(x,y){return{lat:st.origin.lat-y/111320,lon:st.origin.lon+x/(111320*Math.cos(st.origin.lat*D2R))}}
+function dist(a,b){return Math.hypot(b.x-a.x,b.y-a.y)}
+function bearingDeg(a,b){return(Math.atan2(b.x-a.x,-(b.y-a.y))*R2D+360)%360}   // 0=北, 時計回り
+function relDeg(b){return((b-st.hd+540)%360)-180}
+function myAcc(){return st.src==='GPS'?Math.max(3,GPS.state.accM):(st.mode==='bot'?3:60)}
+function uncDeg(d,acc){return d<=acc?180:Math.asin(acc/d)*R2D}
+function fov(){return innerHeight>=innerWidth?{h:50,v:66}:{h:66,v:50}}
+function project(p){const f=fov(),d=dist(st.myPos,p),rel=relDeg(bearingDeg(st.myPos,p));
+  return{d,rel,sx:innerWidth/2+rel/(f.h/2)*(innerWidth/2),sy:innerHeight/2+st.pitch/(f.v/2)*(innerHeight/2),on:Math.abs(rel)<f.h/2}}
+function myId(){return net.host||st.mode==='bot'?'host':net.myId}
+function nameOf(id){if(id===myId())return net.name;const p=st.players.find(x=>x.id===id);return p?p.name:(st.profiles[id]&&st.profiles[id].name)||'?'}
+function toggleDbg(){const d=$('dbg');d.style.display=d.style.display==='block'?'none':'block'}
+if(new URLSearchParams(location.search).has('test'))$('dbg').style.display='block';
 
-const MAP_MAX = 80;
+/* ── flow ── */
+document.addEventListener('click',e=>{const b=e.target.closest('.bbot');if(!b)return;const g=b.parentNode;
+  g.querySelectorAll('.bbot').forEach(x=>x.classList.toggle('sel',x===b));st[g.dataset.k]=+b.dataset.v});
+function show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.add('hidden'));if(id)$(id).classList.remove('hidden')}
+function selectMode(m){st.mode=m;$('mc-bot').className='mcard '+(m==='bot'?'bot-sel':'');$('mc-on').className='mcard '+(m==='online'?'sel':'');
+  $('bot-row').style.display=m==='bot'?'flex':'none';$('next-btn').className='sbtn'+(m==='bot'?' bot-s':'')}
+function goToSetup(){
+  try{if(window.DeviceOrientationEvent&&DeviceOrientationEvent.requestPermission)DeviceOrientationEvent.requestPermission().catch(()=>{});
+      if(window.DeviceMotionEvent&&DeviceMotionEvent.requestPermission)DeviceMotionEvent.requestPermission().catch(()=>{})}catch(e){}
+  unlockAudio();
+  show('s-perm');$('start-btn').textContent=st.mode==='bot'?'⚔ スキャンへ':'▶ ルーム設定へ';
+  doCamPerm();doGpsPerm();loadAI();
+  setTimeout(()=>{if($('start-btn').disabled){$('start-btn').disabled=false;st.gpsReady=true}},12000)}
+function proceed(){if(st.mode==='bot'){startScanPhase();return}st.roomCode=genCode();$('hcode').textContent=st.roomCode;tab('host');show('s-online')}
+function genCode(){const c='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';let s='';for(let i=0;i<6;i++)s+=c[Math.floor(Math.random()*c.length)];return s}
+function tab(t){$('t-host').className='mcard '+(t==='host'?'sel':'');$('t-join').className='mcard '+(t==='join'?'sel':'');
+  $('p-host').style.display=t==='host'?'flex':'none';$('p-join').style.display=t==='join'?'flex':'none';
+  $('net-go').textContent=t==='host'?'ルームを作成':'ルームに参加';$('net-go').dataset.t=t;$('net-msg').textContent=''}
+function copyCode(){navigator.clipboard&&navigator.clipboard.writeText(st.roomCode).then(()=>setNet('コードをコピーしました'))}
+function setNet(t){$('net-msg').textContent=t}
+function setPerm(w,s,t){$('perm-'+w).className='perm '+s;$(w==='cam'?'pcam-v':'pgps-v').textContent=t;
+  const b=$(w==='cam'?'btn-cam':'btn-gps');b.textContent=s==='ok'?'✓':s==='ng'?'再試行':'...';b.disabled=s==='wt'}
+function checkReady(){if(!$('perm-cam').classList.contains('wt')&&!$('perm-gps').classList.contains('wt'))$('start-btn').disabled=false}
 
-const st = {
-  mode:'bot', botCount:1, maxP:4, time:5, health:100, ammo:30, maxAmmo:30, reserve:90,
-  score:{red:0,blue:0}, myTeam:'red', myPos:{x:0,y:0}, targetPos:{x:0,y:0},
-  heading:0, baseHeading:0, gpsReady:false, src:'DEMO',
-  gameActive:false, timeLeft:300, kills:0, deaths:0, reloading:false, dead:false,
-  roomCode:null, players:[], objects:[], trail:[], spd:0, shk:0,
-  pitch:0, roll:0, keyWalk:0, cover:false, origin:{lat:35.6762, lon:139.6503},
-  scanState:'idle', ready:false, bigR:120
-};
-const net = { peer:null, host:false, conns:{}, hostConn:null, myId:null, name:'Player', joined:false, hostReady:false, guestReady:{} };
-const BOT_NAMES = ['Ghost','Viper','Hawk','Snake','Fox','Wolf','Eagle','Raven'];
-const BOT_TEAMS = ['blue','blue','red','blue','red','blue','red','blue'];
-const ints = [];
-const enemyEls = {};
+/* ── camera ── */
+let cams=[],curCam=0,curStream=null;
+async function enumCams(){try{const d=await navigator.mediaDevices.enumerateDevices();cams=d.filter(x=>x.kind==='videoinput');
+  const sel=$('camsel');sel.innerHTML='';cams.forEach((c,i)=>{const o=document.createElement('option');o.value=i;o.textContent=c.label||('カメラ '+(i+1));sel.appendChild(o)});
+  const bi=cams.findIndex(c=>/back|rear|env|背面/i.test(c.label));if(bi>=0){sel.value=bi;curCam=bi}
+  if(cams.length)$('cam-sel').style.display='flex'}catch(e){}}
+async function startCam(idx){
+  if(curStream){curStream.getTracks().forEach(t=>t.stop());curStream=null}
+  try{const con=cams.length&&idx!=null&&cams[idx]?{video:{deviceId:{exact:cams[idx].deviceId},width:{ideal:1280},height:{ideal:720}}}:{video:{facingMode:'environment',width:{ideal:1280},height:{ideal:720}}};
+    const s=await navigator.mediaDevices.getUserMedia(con);curStream=s;$('cam').srcObject=s;
+    setPerm('cam','ok',(s.getVideoTracks()[0]?.label||'カメラ').substring(0,28));curCam=idx??0}
+  catch(e){setPerm('cam','ng','拒否 — 背景黒で続行')}
+  checkReady()}
+async function doCamPerm(){setPerm('cam','wt','確認中...');
+  try{const t=await navigator.mediaDevices.getUserMedia({video:true});t.getTracks().forEach(x=>x.stop())}catch(e){}
+  await enumCams();const i=parseInt($('camsel').value||'0',10);await startCam(isNaN(i)?0:i)}
+async function applyCam(){await startCam(parseInt($('camsel').value,10)||0)}
+async function switchCam(){if(cams.length<=1)return;curCam=(curCam+1)%cams.length;await startCam(curCam)}
 
-function toMeters(lat, lon) {
-  const dLat = (lat - st.origin.lat) * 111320;
-  const dLon = (lon - st.origin.lon) * 111320 * Math.cos(st.origin.lat * Math.PI / 180);
-  return { x: dLon, y: -dLat };
-}
-function getDist(p1, p2) { return Math.hypot(p2.x - p1.x, p2.y - p1.y); }
-function normDeg(d) { return (d % 360 + 360) % 360; }
+/* ── GPS hookup ── */
+let hudT=0;
+function doGpsPerm(){
+  setPerm('gps','wt','GPS取得中...');
+  GPS.onSourceChange=s=>{const prev=st.src;st.src=s;
+    if(prev!=='GPS'&&s==='GPS'&&st.gpsReady&&!(st.gameActive&&st.mode==='online')){
+      const k=111320,c=Math.cos(GPS.state.lat*D2R);st.origin={lat:GPS.state.lat+st.myPos.y/k,lon:GPS.state.lon-st.myPos.x/(k*c)};st.manual={x:0,y:0}}
+    updateGpsPerm()};
+  GPS.onGPSFix=s=>{
+    if(!st.gpsReady){st.origin={lat:s.lat,lon:s.lon};st.gpsReady=true}
+    if(st.scanState==='scanning'&&s.source==='GPS')st.scanSamples.push({lat:s.lat,lon:s.lon,acc:s.accM});
+    updateGpsPerm();checkReady()};
+  GPS.onUpdate=onGpsTick;
+  GPS.start()}
+function updateGpsPerm(){const s=GPS.state;
+  if(s.source==='GPS'){setPerm('gps','ok','GPS OK ±'+Math.round(s.accM)+'m');$('gps-help').style.display='none'}
+  else if(s.source==='IP'){setPerm('gps','ng','GPS不可 → IP概算'+(s.city?'('+s.city+')':''));$('gps-help').style.display=s.denied?'block':'none'}
+  else if(s.source==='DEMO'){setPerm('gps','ng','GPS不可 → デモ座標');$('gps-help').style.display=s.denied?'block':'none'}}
+function onGpsTick(s){
+  st.gpsLocal=toMeters(s.lat,s.lon);
+  const now=performance.now();if(now-hudT<150)return;hudT=now;
+  const lab=s.source+(s.source==='GPS'?' ±'+Math.round(s.accM)+'m':'');
+  if(st.scanState==='scanning'){$('scan-acc').textContent='GPS '+lab;$('scan-acc').style.color=s.accM<15?'var(--g)':s.accM<35?'var(--y)':'var(--r)'}
+  $('gps-la').textContent='X '+st.myPos.x.toFixed(1)+'m';$('gps-lo').textContent='Y '+(-st.myPos.y).toFixed(1)+'m';
+  $('gps-acc').textContent=lab;if(st.scanState!=='scanning')$('gps-bar').textContent='📍 '+lab+'  '+s.fps+'Hz';
+  $('gps-bar').style.color=s.source==='GPS'?'rgba(0,255,136,.9)':'rgba(255,220,0,.85)';
+  if($('dbg').style.display==='block')$('dbg').innerHTML='SRC '+s.source+'<br>acc '+Math.round(s.accM)+'m est '+s.estM.toFixed(1)+'m<br>age '+Math.round(s.gpsAge)+'ms '+s.fps+'Hz<br>v '+s.speedMps.toFixed(2)+'m/s<br>hd '+Math.round(st.hd)+'° pitch '+Math.round(st.pitch)+'°<br>AI '+(AI.ok?'ON':'OFF')+' FACE '+(AI.face?'ON':'OFF')+' tracks '+TR.list.length}
 
-document.addEventListener('click', e => {
-  const b = e.target.closest('.bbot'); if (!b) return;
-  const g = b.parentNode;
-  g.querySelectorAll('.bbot').forEach(x => x.classList.toggle('sel', x === b));
-  st[g.dataset.k] = +b.dataset.v;
-});
-function show(id) { document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden')); $(id).classList.remove('hidden'); }
-function selectMode(m) {
-  st.mode = m;
-  $('mc-bot').className = 'mcard ' + (m === 'bot' ? 'bot-sel' : '');
-  $('mc-on').className = 'mcard ' + (m === 'online' ? 'sel' : '');
-  $('bot-row').style.display = m === 'bot' ? 'flex' : 'none';
-  $('next-btn').className = 'sbtn' + (m === 'bot' ? ' bot-s' : '');
-}
-function goToSetup() {
-  try {
-    DeviceOrientationEvent.requestPermission && DeviceOrientationEvent.requestPermission();
-    DeviceMotionEvent.requestPermission && DeviceMotionEvent.requestPermission();
-  } catch (e) {}
-  show('s-perm');
-  $('start-btn').textContent = st.mode === 'bot' ? '⚔ ゲームスタート' : '▶ 次へ（ルーム設定）';
-  doCamPerm(); doGpsPerm();
-  setTimeout(() => {
-    if ($('start-btn').disabled) {
-      $('start-btn').disabled = false;
-      setPerm('cam', 'ng', 'タイムアウト（背景黒で続行）');
-      setPerm('gps', 'ng', 'タイムアウト（デモ座標）');
-      if (!st.gpsReady) { st.origin = { lat: 35.6762, lon: 139.6503 }; st.gpsReady = true; }
-    }
-  }, 12000);
-}
-function proceed() {
-  if (st.mode === 'bot') { startScanPhase(); return; }
-  st.roomCode = genCode(); $('hcode').textContent = st.roomCode; show('s-online');
-}
-function backPerm() { show('s-perm'); }
-function genCode() { const c='ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; let s=''; for (let i=0;i<6;i++) s+=c[Math.floor(Math.random()*c.length)]; return s; }
-function tab(t) {
-  $('t-host').className = 'mcard ' + (t === 'host' ? 'sel' : '');
-  $('t-join').className = 'mcard ' + (t === 'join' ? 'sel' : '');
-  $('p-host').style.display = t === 'host' ? 'flex' : 'none';
-  $('p-join').style.display = t === 'join' ? 'flex' : 'none';
-  $('net-go').textContent = t === 'host' ? 'ルームを作成' : 'ルームに参加';
-  $('net-go').dataset.t = t; $('net-msg').textContent = '';
-}
-function copyCode() { navigator.clipboard && navigator.clipboard.writeText(st.roomCode).then(() => setNet('コードをコピーしました')); }
-function setNet(t) { $('net-msg').textContent = t; }
+/* ── orientation ── */
+function onOri(e){let h=null;
+  if(e.webkitCompassHeading!=null)h=e.webkitCompassHeading;
+  else if(e.alpha!=null&&(e.absolute||e.type==='deviceorientationabsolute'))h=360-e.alpha;
+  const ang=(screen.orientation&&screen.orientation.angle)||window.orientation||0;
+  if(h!=null){st.heading=(h+ang+360)%360;st.hasCompass=true}
+  if(e.beta!=null){if(innerHeight>=innerWidth){st.pitch=clamp(e.beta-90,-60,60);st.roll=clamp(e.gamma||0,-45,45)}else{st.pitch=0;st.roll=0}}}
+addEventListener('deviceorientationabsolute',onOri,true);addEventListener('deviceorientation',onOri,true);
+addEventListener('devicemotion',e=>{const a=e.accelerationIncludingGravity;if(!a||a.x==null)return;st.shk+=(Math.abs(Math.hypot(a.x,a.y,a.z)-9.81)-st.shk)*.12});
 
-/* ============================================================
-   カメラモジュール（リア/外カメ固定版）
-   ============================================================ */
-let cams = [], curCam = 0, curStream = null;
+/* ── audio (synth gunshot) ── */
+let AC=null;
+function unlockAudio(){try{AC=AC||new(window.AudioContext||window.webkitAudioContext)();AC.resume&&AC.resume()}catch(e){}}
+function sfx(kind){if(!AC)return;try{const t=AC.currentTime,len=kind==='hit'?.06:.22,b=AC.createBuffer(1,AC.sampleRate*len|0,AC.sampleRate),d=b.getChannelData(0);
+  for(let i=0;i<d.length;i++)d[i]=kind==='hit'?Math.sin(i/AC.sampleRate*2*Math.PI*1800)*(1-i/d.length):(Math.random()*2-1)*Math.pow(1-i/d.length,3);
+  const s=AC.createBufferSource();s.buffer=b;const f=AC.createBiquadFilter();f.type='lowpass';f.frequency.value=kind==='hit'?4000:1700;
+  const g=AC.createGain();g.gain.setValueAtTime(kind==='hit'?.35:.9,t);g.gain.exponentialRampToValueAtTime(.01,t+len);s.connect(f).connect(g).connect(AC.destination);s.start()}catch(e){}}
 
-const REAR_CAM_PATTERN =
-  /back|rear|environment|外|リア|後|背|usb|external|facing.?back|world/i;
+/* ═════════════════════════════════════════════════════════════
+   AI: 人物/スマホ検出 → IDトラッキング → 持ち主の識別
+   ・coco-ssd   : person / cell phone を検出
+   ・tracker    : IoUで同一人物にID付与（ID 1, ID 2…）
+   ・face-api   : 事前登録した顔と照合（最も強い証拠）
+   ・補助証拠   : 服の色ヒストグラム / スマホ所持 / GPS方位 / 候補が1人
+═════════════════════════════════════════════════════════════ */
+const FACE_CDN='https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.15';
+const AI={model:null,ok:false,face:false,loading:null,busy:false,faceBusy:false,t:0,phones:[]};
+const TR={list:[],next:1};
+function loadAI(){if(AI.loading)return AI.loading;
+  AI.loading=(async()=>{
+    // face-api は tfjs 4.22（完全版）を内蔵 → それを coco-ssd と共有して1つのtfで動かす
+    try{if(!window.faceapi)await loadScript(FACE_CDN+'/dist/face-api.js');if(!window.tf&&window.faceapi)window.tf=faceapi.tf}catch(e){console.warn('face-api load',e)}
+    try{if(!window.tf)await loadScript('https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js');
+      if(!window.cocoSsd)await loadScript('https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.3/dist/coco-ssd.min.js');
+      AI.model=await cocoSsd.load({base:'lite_mobilenet_v2'});AI.ok=true;showAlert('✅ AI人物認識 ON','ka')}
+    catch(e){console.warn(e);showAlert('⚠ AI読込失敗 → GPS照準のみ','ha')}
+    if(window.faceapi&&st.mode==='online'){try{const u=FACE_CDN+'/model/';
+      await faceapi.nets.tinyFaceDetector.loadFromUri(u);await faceapi.nets.faceLandmark68TinyNet.loadFromUri(u);await faceapi.nets.faceRecognitionNet.loadFromUri(u);
+      AI.face=true}catch(e){console.warn('face models',e)}}
+  })();return AI.loading}
+function vidMap(){const v=$('cam'),vw=v.videoWidth,vh=v.videoHeight;if(!vw)return null;
+  const s=Math.max(innerWidth/vw,innerHeight/vh);return{s,ox:(innerWidth-vw*s)/2,oy:(innerHeight-vh*s)/2}}   // object-fit:cover 補正
+function iou(a,b){const x1=Math.max(a.x,b.x),y1=Math.max(a.y,b.y),x2=Math.min(a.x+a.w,b.x+b.w),y2=Math.min(a.y+a.h,b.y+b.h);
+  const i=Math.max(0,x2-x1)*Math.max(0,y2-y1);return i/(a.w*a.h+b.w*b.h-i||1)}
+async function aiTick(){
+  if(!AI.ok||AI.busy||!st.gameActive)return;const v=$('cam');if(v.readyState<2||!v.videoWidth)return;
+  AI.busy=true;
+  try{const p=await AI.model.detect(v,12,.3),m=vidMap(),now=performance.now();
+    const mp=d=>{const[x,y,w,h]=d.bbox;return{x:x*m.s+m.ox,y:y*m.s+m.oy,w:w*m.s,h:h*m.s,vx:x,vy:y,vw:w,vh:h,score:d.score}};
+    const persons=p.filter(d=>d.class==='person'&&d.score>.45).map(mp),phones=p.filter(d=>d.class==='cell phone').map(mp);
+    updateTracks(persons,phones,now);AI.phones=phones;AI.t=now;
+    if(st.mode==='online'){TR.list.forEach(identifyTrack);dedupeIdents()}}catch(e){}
+  AI.busy=false;drawAI();updateAIPanel()}
+function updateTracks(persons,phones,now){
+  const used=new Set();
+  persons.sort((a,b)=>b.score-a.score).forEach(d=>{
+    let best=null,bi=.2;TR.list.forEach(t=>{if(used.has(t))return;const i=iou(t,d);if(i>bi){bi=i;best=t}});
+    if(!best){best={id:TR.next++,born:now,x:d.x,y:d.y,w:d.w,h:d.h,ident:null,face:null,hist:null,phoneT:0,lastFace:0};TR.list.push(best)}
+    used.add(best);const k=.6;['x','y','w','h'].forEach(q=>best[q]+=(d[q]-best[q])*k);
+    Object.assign(best,{vx:d.vx,vy:d.vy,vw:d.vw,vh:d.vh,score:d.score,seen:now})});
+  phones.forEach(ph=>{const cx=ph.x+ph.w/2,cy=ph.y+ph.h/2;let best=null,bd=1e9;
+    TR.list.forEach(t=>{if(now-t.seen>400)return;if(cx>t.x-t.w*.2&&cx<t.x+t.w*1.2&&cy>t.y&&cy<t.y+t.h*1.05){const d=Math.abs(cx-(t.x+t.w/2));if(d<bd){bd=d;best=t}}});
+    if(best){best.phoneT=now;best.phoneBox=ph}});
+  TR.list=TR.list.filter(t=>now-t.seen<1500)}
+/* 顔照合: 1人ずつ順番に顔を切り出して登録データと比較 */
+const fcv=document.createElement('canvas'),fctx=fcv.getContext('2d',{willReadFrequently:true});
+async function faceTick(){
+  if(!AI.face||AI.faceBusy||!st.gameActive||st.mode!=='online')return;
+  const now=performance.now(),v=$('cam');if(!v.videoWidth)return;
+  const t=TR.list.filter(x=>now-x.seen<400&&x.vw>28).sort((a,b)=>(a.lastFace||0)-(b.lastFace||0))[0];if(!t)return;
+  AI.faceBusy=true;t.lastFace=now;
+  try{const sx=clamp(t.vx-t.vw*.1,0,v.videoWidth-2),sy=clamp(t.vy-t.vh*.05,0,v.videoHeight-2);
+    const sw=Math.min(v.videoWidth-sx,t.vw*1.2),sh=Math.min(v.videoHeight-sy,t.vh*.6),sc=Math.min(2.5,320/Math.max(sw,1));
+    fcv.width=Math.max(8,sw*sc|0);fcv.height=Math.max(8,sh*sc|0);fctx.drawImage(v,sx,sy,sw,sh,0,0,fcv.width,fcv.height);
+    const r=await faceapi.detectSingleFace(fcv,new faceapi.TinyFaceDetectorOptions({inputSize:224,scoreThreshold:.4})).withFaceLandmarks(true).withFaceDescriptor();
+    if(r){const m=matchFace(r.descriptor);t.face=m?{pid:m.pid,dist:m.dist,t:now}:{pid:null,dist:1,t:now}}
+    t.hist=histFromVideo(v,t.vx+t.vw*.2,t.vy+t.vh*.3,t.vw*.6,t.vh*.35)}catch(e){}
+  AI.faceBusy=false}
+function euclid(a,b){let s=0;for(let i=0;i<a.length;i++){const d=a[i]-b[i];s+=d*d}return Math.sqrt(s)}
+function matchFace(desc){let best=null;const me=myId();
+  for(const id in st.profiles){if(id===me)continue;const pf=st.profiles[id];if(!pf||!pf.face)continue;const d=euclid(desc,pf.face);if(!best||d<best.dist)best={pid:id,dist:d}}
+  return best&&best.dist<.6?best:null}
+/* 服の色ヒストグラム (8色相×2彩度 + 4明度) */
+const hcv=document.createElement('canvas'),hctx=hcv.getContext('2d',{willReadFrequently:true});hcv.width=hcv.height=24;
+function histFromVideo(v,x,y,w,h){const vw=v.videoWidth,vh=v.videoHeight;if(!vw)return null;
+  x=clamp(x,0,vw-2);y=clamp(y,0,vh-2);w=clamp(w,2,vw-x);h=clamp(h,2,vh-y);hctx.drawImage(v,x,y,w,h,0,0,24,24);
+  const d=hctx.getImageData(0,0,24,24).data,H=new Array(20).fill(0);let n=0;
+  for(let i=0;i<d.length;i+=4){const r=d[i]/255,g=d[i+1]/255,b=d[i+2]/255,mx=Math.max(r,g,b),mn=Math.min(r,g,b),s=mx?(mx-mn)/mx:0;
+    if(s<.2||mx<.15)H[16+Math.min(3,mx*4|0)]++;
+    else{const dd=mx-mn;let hu=mx===r?((g-b)/dd+6)%6:mx===g?(b-r)/dd+2:(r-g)/dd+4;H[((hu/6*8)|0)%8*2+(s>.55?1:0)]++}n++}
+  return H.map(q=>+(q/(n||1)).toFixed(3))}
+function histSim(a,b){let s=0;for(let i=0;i<20;i++)s+=Math.min(a[i],b[i]);return s}
+/* 証拠を合算して「この人物は誰のスマホの持ち主か」を決める */
+function identifyTrack(t){
+  const now=performance.now(),cands=st.players.filter(p=>p.hp>0&&!p.isBot);
+  t.phone=now-(t.phoneT||0)<2500;
+  if(!cands.length){t.ident=null;return}
+  const f=fov(),trRel=((t.x+t.w/2)-innerWidth/2)/(innerWidth/2)*(f.h/2),ma=myAcc(),faceFresh=t.face&&now-t.face.t<15000;
+  if(faceFresh&&t.face.pid===null&&!t.phone){t.ident=null;t.civ=true;return}   // 登録外の顔＋スマホなし＝一般人
+  t.civ=false;let best=null,bs=-9,sec=-9;
+  cands.forEach(p=>{let s=0;const src=[],pf=st.profiles[p.id];
+    if(faceFresh){if(t.face.pid===p.id){s+=t.face.dist<.45?.9:.7;src.push('FACE')}else s-=.6}
+    if(pf&&pf.hist&&t.hist){const hs=histSim(pf.hist,t.hist);s+=(hs-.55)*.6;if(hs>.7)src.push('CLOTH')}
+    const pr=p.pr||project(p),unc=uncDeg(pr.d,ma+(p.a||ma));
+    if(unc<35){if(Math.abs(pr.rel-trRel)<unc+6){s+=.3;src.push('GPS')}else s-=.3}
+    if(t.phone){s+=.15;src.push('PHONE')}
+    if(cands.length===1){s+=.35;src.push('ONLY')}
+    if(s>bs){sec=bs;bs=s;best={p,src}}else if(s>sec)sec=s});
+  const conf=clamp(bs-Math.max(0,sec)*.5,0,1);
+  t.ident=conf>=.5?{pid:best.p.id,conf,src:best.src.join('+')}:{pid:null,conf,cand:best.p.id}}
+function dedupeIdents(){const by={};TR.list.forEach(t=>{const i=t.ident;if(!i||!i.pid)return;const o=by[i.pid];
+  if(!o||o.ident.conf<i.conf){if(o)o.ident={pid:null,conf:o.ident.conf,cand:i.pid};by[i.pid]=t}else t.ident={pid:null,conf:i.conf,cand:i.pid}})}
+function trackAtCenter(){if(!AI.ok||performance.now()-AI.t>900)return null;const cx=innerWidth/2,cy=innerHeight/2,now=performance.now();let best=null;
+  TR.list.forEach(t=>{if(now-t.seen>500)return;const mx=t.w*.08;if(cx>=t.x-mx&&cx<=t.x+t.w+mx&&cy>=t.y&&cy<=t.y+t.h){if(!best||t.w*t.h<best.w*best.h)best=t}});return best}
+function trackInfo(t){
+  if(st.mode==='bot')return{col:'#34c759',txt:'CIVILIAN'};
+  const i=t.ident;
+  if(i&&i.pid){const p=st.players.find(x=>x.id===i.pid),en=p&&p.team!==st.myTeam,nm=p?p.name:'?';
+    return{col:en?'#ff3b30':'#33aaff',txt:(en?'ENEMY: ':'ALLY: ')+nm+' '+Math.round(i.conf*100)+'%',pid:i.pid}}
+  if(t.civ)return{col:'#34c759',txt:'CIVILIAN'};
+  return{col:'#ff9500',txt:t.phone?'PLAYER? 識別中':'SCANNING'}}
+function drawAI(){
+  const cv=$('ai'),ctx=cv.getContext('2d');
+  if(cv.width!==innerWidth||cv.height!==innerHeight){cv.width=innerWidth;cv.height=innerHeight}
+  ctx.clearRect(0,0,cv.width,cv.height);if(!st.gameActive)return;
+  const now=performance.now(),center=trackAtCenter();
+  $('xh').classList.toggle('lock',!!(center&&center.ident&&center.ident.pid));
+  ctx.font='bold 11px Arial,Helvetica,sans-serif';ctx.textBaseline='middle';
+  TR.list.forEach(t=>{if(now-t.seen>500)return;const inf=trackInfo(t),hot=center===t;
+    ctx.globalAlpha=.13;ctx.fillStyle=inf.col;ctx.fillRect(t.x,t.y,t.w,t.h);ctx.globalAlpha=1;
+    ctx.strokeStyle=inf.col;ctx.lineWidth=hot?3:2;ctx.strokeRect(t.x,t.y,t.w,t.h);
+    if(hot){ctx.setLineDash([4,4]);ctx.lineWidth=1;ctx.strokeRect(t.x,t.y,t.w,t.h*.2);ctx.setLineDash([])}
+    const lab='ID '+t.id+' - '+inf.txt,tw=ctx.measureText(lab).width+10,ly=Math.max(t.y-18,2);
+    ctx.fillStyle=inf.col;ctx.fillRect(t.x,ly,tw,17);ctx.fillStyle='#fff';ctx.fillText(lab,t.x+5,ly+9)});
+  AI.phones.forEach(ph=>{ctx.strokeStyle='#ffd60a';ctx.lineWidth=2;ctx.strokeRect(ph.x,ph.y,ph.w,ph.h);ctx.fillStyle='#ffd60a';ctx.font='bold 10px Arial';ctx.fillText('phone',ph.x,ph.y+ph.h+8)})}
+let panelHTML='';
+function updateAIPanel(){
+  const pn=$('aipanel');if(!AI.ok||!st.gameActive){pn.style.display='none';return}pn.style.display='block';
+  const now=performance.now(),vis=TR.list.filter(t=>now-t.seen<500);let en=0;
+  const rows=vis.slice(0,6).map(t=>{const i=trackInfo(t);if(i.col==='#ff3b30')en++;return`<div class="r" style="color:${i.col}"><b style="background:${i.col}"></b>ID ${t.id} - ${esc(i.txt)}</div>`}).join('');
+  const h=`<div class="t">AI TARGET TRACKING</div><div class="s">t = ${((now-st.t0)/1000).toFixed(1).padStart(5,'0')}s${AI.face?' · FACE-ID':''}</div>${rows||'<div class="r" style="color:#888">— 人物なし —</div>'}<div class="f">In view: ${vis.length}　Enemies: ${en}</div>`;
+  if(h!==panelHTML){panelHTML=h;pn.innerHTML=h}}
 
-async function enumCams() {
-  try {
-    const d = await navigator.mediaDevices.enumerateDevices();
-    cams = d.filter(x => x.kind === 'videoinput');
-    const sel = $('camsel'); sel.innerHTML = '';
+/* ── online (PeerJS) ── */
+function send(c,m){try{c&&c.open&&c.send(m)}catch(e){}}
+function bcast(m){Object.values(net.conns).forEach(c=>send(c,m))}
+async function netGo(){
+  net.name=esc(($('pname').value.trim()||'Player').slice(0,10));
+  const host=($('net-go').dataset.t||'host')==='host';
+  if(!host){const c=$('jcode').value.trim().toUpperCase();if(c.length!==6){setNet('6文字のコードを入力してください');return}st.roomCode=c}
+  setNet('接続中...');$('net-go').disabled=true;
+  try{if(!window.Peer)await loadScript('https://cdn.jsdelivr.net/npm/peerjs@1.5.5/dist/peerjs.min.js')}catch(e){setNet('通信ライブラリを読み込めません');$('net-go').disabled=false;return}
+  host?hostRoom():joinRoom()}
+function hostRoom(){
+  const p=net.peer=new Peer('arsh-'+st.roomCode);net.host=true;net.myId='host';st.myTeam='red';st.players=[];
+  p.on('error',e=>{setNet(e.type==='unavailable-id'?'コードが使用中です。戻ってやり直してください':'エラー: '+e.type);$('net-go').disabled=false});
+  p.on('open',()=>openLobby());
+  p.on('connection',c=>{c.on('data',m=>hostRecv(c,m));
+    c.on('close',()=>{delete net.conns[c.peer];delete net.guestReady[c.peer];st.players=st.players.filter(x=>x.id!==c.peer);lobbyPush();checkHostStart()})})}
+function hostRecv(c,m){
+  const now=performance.now(),p=st.players.find(x=>x.id===c.peer);
+  if(m.t==='join'){
+    if(st.players.length+1>=st.maxP||st.scanState!=='idle'){send(c,{t:'full'});setTimeout(()=>c.close(),300);return}
+    const r=st.players.filter(x=>x.team==='red').length+1,team=r<=st.players.length+1-r?'red':'blue';
+    st.players.push({id:c.peer,name:esc(String(m.name||'Player').slice(0,10)),team,hp:100,x:0,y:0,tx:0,ty:0,a:60});
+    net.conns[c.peer]=c;net.guestReady[c.peer]=false;send(c,{t:'welcome',team,time:st.time,max:st.maxP});lobbyPush();return}
+  if(!p)return;
+  if(m.t==='profile'){st.profiles[c.peer]=sanitizeProfile(m.p,p.name);bcast({t:'profiles',list:st.profiles})}
+  else if(m.t==='ready'){net.guestReady[c.peer]=true;checkHostStart()}
+  else if(m.t==='pos'){p.tx=m.x;p.ty=m.y;p.a=m.a;if(!p.lock||now>p.lock)p.hp=m.hp}
+  else if(m.t==='hit')hostHit(m,c.peer);
+  else if(m.t==='kill')scoreKill(m.by)}
+function sanitizeProfile(pf,name){pf=pf||{};const f=Array.isArray(pf.face)&&pf.face.length===128?pf.face.map(Number):null,h=Array.isArray(pf.hist)&&pf.hist.length===20?pf.hist.map(Number):null;return{name:esc(String(name||pf.name||'?').slice(0,10)),face:f,hist:h}}
+function hostHit(m,from){if(m.to==='host')takeDamage(m.d,{x:m.fx,y:m.fy,id:from,head:m.h});else send(net.conns[m.to],{t:'dmg',d:m.d,fx:m.fx,fy:m.fy,from,h:m.h})}
+function scoreKill(id){const k=id==='host'?{team:st.myTeam}:st.players.find(p=>p.id===id);st.score[k?k.team:(st.myTeam==='red'?'blue':'red')]++;updateScore()}
+function joinRoom(){
+  net.joined=false;const p=net.peer=new Peer();
+  p.on('error',e=>{setNet(e.type==='peer-unavailable'?'ルームが見つかりません':'エラー: '+e.type);$('net-go').disabled=false});
+  p.on('open',id=>{net.myId=id;const c=net.hostConn=p.connect('arsh-'+st.roomCode,{serialization:'json',reliable:true});
+    c.on('open',()=>send(c,{t:'join',name:net.name}));c.on('data',clientRecv);
+    c.on('close',()=>{if(st.gameActive){endGame();showAlert('ホストが切断しました','ha')}else if(net.joined)location.reload()});
+    setTimeout(()=>{if(!net.joined){setNet('ルームが見つかりません');$('net-go').disabled=false}},9000)})}
+function clientRecv(m){const now=performance.now();
+  if(m.t==='welcome'){net.joined=true;st.myTeam=m.team;st.time=m.time;st.maxP=m.max;openLobby()}
+  else if(m.t==='full'){setNet('満員、または開始済みです');$('net-go').disabled=false}
+  else if(m.t==='lobby'){st.maxP=m.max;lobbyShow(m.l);st.lobby=m.l}
+  else if(m.t==='reg')startRegPhase();
+  else if(m.t==='profiles'){for(const id in m.list)if(id!==net.myId)st.profiles[id]=sanitizeProfile(m.list[id])}
+  else if(m.t==='start'){st.origin=m.origin;st.objects=m.objects||[];st.time=m.time;if(m.profiles)clientRecv({t:'profiles',list:m.profiles});
+    if(st.lobby)st.lobby.forEach(q=>{if(q.id!==net.myId&&!st.players.find(x=>x.id===q.id))st.players.push({id:q.id,name:q.name,team:q.team,hp:100,x:0,y:0,a:60})});
+    startCountdown()}
+  else if(m.t==='dmg')takeDamage(m.d,{x:m.fx,y:m.fy,id:m.from,head:m.h});
+  else if(m.t==='s'){const ids={};
+    m.p.forEach(q=>{if(q.id===net.myId)return;ids[q.id]=1;let p=st.players.find(x=>x.id===q.id);
+      if(!p){p={id:q.id,hp:100,x:q.x,y:q.y};st.players.push(p)}
+      p.name=q.n;p.team=q.tm;p.tx=q.x;p.ty=q.y;p.a=q.a;if(!p.lock||now>p.lock)p.hp=q.hp});
+    st.players=st.players.filter(p=>ids[p.id]);st.score=m.sc;updateScore();if(Math.abs(st.timeLeft-m.tl)>1)st.timeLeft=m.tl}}
+function lobbyData(){return[{id:'host',name:net.name,team:'red'}].concat(st.players.map(p=>({id:p.id,name:p.name,team:p.team})))}
+function lobbyShow(l){$('lob').innerHTML=l.map(x=>`<div class="${x.team}">${x.id==='host'?'👑 ':'● '}${esc(x.name)}</div>`).join('');$('lcount').textContent='参加者 '+l.length+'/'+st.maxP}
+function lobbyPush(){const l=lobbyData();lobbyShow(l);bcast({t:'lobby',l,max:st.maxP})}
+function openLobby(){show('s-lobby');$('lcode').textContent=st.roomCode;$('rid').textContent=st.roomCode;
+  $('lob-start').style.display=net.host?'block':'none';
+  $('lob-wait').textContent=net.host?'コードを友達に伝えて、揃ったら開始':'ホストの開始を待っています...';if(net.host)lobbyPush()}
+function hostBeginReg(){bcast({t:'reg'});startRegPhase()}
+function checkHostStart(){
+  if(!net.host||!net.hostReady||st.gameActive||st.scanState==='counting')return;
+  const ids=Object.keys(net.guestReady),ok=ids.filter(i=>net.guestReady[i]).length;
+  $('scan-wait').textContent='準備完了: '+(ok+1)+'/'+(ids.length+1);
+  if(ok<ids.length)return;
+  generateWorld();bcast({t:'start',origin:st.origin,objects:st.objects,time:st.time,profiles:st.profiles});startCountdown()}
 
-    let rearIdx = -1;
-    cams.forEach((c, i) => {
-      const label = c.label || ('カメラ ' + (i + 1));
-      const o = document.createElement('option');
-      o.value = i;
-      o.textContent = label;
-      sel.appendChild(o);
-      if (rearIdx < 0 && REAR_CAM_PATTERN.test(label)) rearIdx = i;
-    });
+/* ── 本人登録（インカメ） ── */
+let selfStream=null;
+async function startRegPhase(){
+  st.scanState='reg';show('s-reg');$('reg-btn').disabled=true;$('reg-status').textContent='AIモデル読込中…';
+  if(curStream){curStream.getTracks().forEach(t=>t.stop());curStream=null}
+  try{selfStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user',width:{ideal:640},height:{ideal:640}}});$('selfie').srcObject=selfStream}
+  catch(e){$('reg-status').textContent='インカメ使用不可 → スキップしてください'}
+  await loadAI();
+  if(selfStream){$('reg-status').textContent=AI.face?'顔と胸元が映るように持って「登録する」':'顔認識モデル読込失敗（服の色のみ登録）';$('reg-btn').disabled=false}}
+async function doRegister(){
+  $('reg-btn').disabled=true;const v=$('selfie'),descs=[];let hist=null;
+  for(let i=0;i<3;i++){$('reg-status').textContent='撮影中… '+(i+1)+'/3';await sleep(450);
+    if(AI.face){try{const r=await faceapi.detectSingleFace(v,new faceapi.TinyFaceDetectorOptions({inputSize:320,scoreThreshold:.4})).withFaceLandmarks(true).withFaceDescriptor();
+      if(r){descs.push(Array.from(r.descriptor));const b=r.detection.box;hist=histFromVideo(v,b.x-b.width*.6,b.y+b.height*1.25,b.width*2.2,b.height*1.6)}}catch(e){}}}
+  if(!hist)hist=histFromVideo(v,v.videoWidth*.2,v.videoHeight*.65,v.videoWidth*.6,v.videoHeight*.33);
+  let face=null;if(descs.length){face=new Array(128).fill(0);descs.forEach(d=>d.forEach((x,i)=>face[i]+=x/descs.length));face=face.map(x=>+x.toFixed(4))}
+  $('reg-status').textContent=face?'✅ 顔を登録しました（'+descs.length+'枚）':'⚠ 顔を検出できず（服の色のみ登録）';
+  await sleep(600);finishReg({face,hist})}
+function skipRegister(){finishReg({face:null,hist:null})}
+async function finishReg(pf){
+  if(selfStream){selfStream.getTracks().forEach(t=>t.stop());selfStream=null}
+  pf.name=net.name;st.profiles[myId()]=pf;
+  if(net.host)bcast({t:'profiles',list:st.profiles});else send(net.hostConn,{t:'profile',p:pf});
+  await sleep(300);await startCam(curCam);startScanPhase()}
 
-    // 優先順位: リア/外付け → 最後のカメラ(外付けの可能性) → 0
-    if (rearIdx >= 0)          curCam = rearIdx;
-    else if (cams.length > 1)  curCam = cams.length - 1;
-    else                       curCam = 0;
-
-    if (sel.options.length) sel.value = curCam;
-    if (cams.length) $('cam-sel').style.display = 'flex';
-
-    // 切替ボタンは常に非表示（外カメ固定）
-    $('camsw').style.display = 'none';
-  } catch (e) {}
-}
-
-async function startCam(idx) {
-  if (curStream) { curStream.getTracks().forEach(t => t.stop()); curStream = null; }
-  try {
-    let s = null;
-
-    // ① モバイル: exact environment でリア強制（最優先・最も確実）
-    try {
-      s = await navigator.mediaDevices.getUserMedia({
-        video: {
-          facingMode: { exact: 'environment' },
-          width: { ideal: 1920 }, height: { ideal: 1080 }
-        }
-      });
-    } catch (e1) {
-      // ② デスクトップ等: ラベルからリア/外付けを探して deviceId 指定
-      if (cams.length === 0) await enumCams();
-      const rearIdx = cams.findIndex(c => REAR_CAM_PATTERN.test(c.label || ''));
-      const pickIdx = rearIdx >= 0
-        ? rearIdx
-        : ((typeof idx === 'number' && idx >= 0 && idx < cams.length) ? idx : curCam);
-
-      if (cams[pickIdx]) {
-        try {
-          s = await navigator.mediaDevices.getUserMedia({
-            video: {
-              deviceId: { exact: cams[pickIdx].deviceId },
-              width: { ideal: 1920 }, height: { ideal: 1080 }
-            }
-          });
-          curCam = pickIdx;
-        } catch (e2) { s = null; }
-      }
-
-      // ③ ideal environment（exact が効かない環境の保険）
-      if (!s) {
-        try {
-          s = await navigator.mediaDevices.getUserMedia({
-            video: {
-              facingMode: { ideal: 'environment' },
-              width: { ideal: 1920 }, height: { ideal: 1080 }
-            }
-          });
-        } catch (e3) { s = null; }
-      }
-
-      // ④ 最後の手段（カメラ1台のみの環境など）
-      if (!s) {
-        s = await navigator.mediaDevices.getUserMedia({ video: true });
-      }
-    }
-
-    curStream = s;
-    $('cam').srcObject = s;
-    setPerm('cam', 'ok', (s.getVideoTracks()[0]?.label || 'カメラ').substring(0, 28));
-  } catch (e) {
-    setPerm('cam', 'ng', '拒否 — 背景は黒で続行');
-  }
-  checkReady();
-}
-
-async function doCamPerm() {
-  setPerm('cam', 'wt', '確認中...');
-
-  // 権限を取得（ラベル付きで enumerateDevices するため）
-  try {
-    const t = await navigator.mediaDevices.getUserMedia({ video: true });
-    t.getTracks().forEach(x => x.stop());
-  } catch (e) {
-    setPerm('cam', 'ng', '拒否 — 背景は黒で続行');
-    checkReady();
-    return;
-  }
-
-  await enumCams();          // curCam がリア/外付けに設定される
-  await startCam(curCam);    // リア固定で起動
-}
-
-async function applyCam() {
-  const i = parseInt($('camsel').value, 10);
-  if (!isNaN(i)) curCam = i;
-  await startCam(curCam);
-}
-
-// 手動切替は残すが UI ボタンは非表示なので実質未使用
-async function switchCam() {
-  if (cams.length <= 1) return;
-  curCam = (curCam + 1) % cams.length;
-  await startCam(curCam);
-}
-
-/* ============================================================
-   GPS UI
-   ============================================================ */
-function doGpsPerm() {
-  setPerm('gps', 'wt', 'GPS取得中...');
-  GPS.onSourceChange = (src) => {
-    if (src === 'GPS' || src === 'GPS+IMU') {
-      st.src = 'GPS'; setPerm('gps', 'ok', 'GPS OK ±' + Math.round(GPS.state.accM) + 'm');
-      $('gps-help').style.display = 'none';
-    } else if (src === 'IP') {
-      st.src = 'IP'; setPerm('gps', 'ng', 'GPS拒否 → IP位置(概算)');
-      $('gps-help').style.display = 'block';
-    } else if (src === 'DEMO') {
-      st.src = 'DEMO'; setPerm('gps', 'ng', 'GPS利用不可 → デモ座標');
-      $('gps-help').style.display = 'block';
-    }
-    if (isTestMode) $('dbg-src').textContent = src;
-    checkReady();
-  };
-  GPS.onGPSFix = (s) => {
-    if (!st.gpsReady) { st.origin = { lat: s.lat, lon: s.lon }; st.gpsReady = true; }
-    $('gps-acc').textContent = s.source + (s.accM ? ' ±' + Math.round(s.accM) + 'm' : '');
-    if (isTestMode) $('dbg-err').textContent = Math.round(s.accM) + 'm';
-    checkReady();
-  };
-  GPS.onUpdate = (s) => {
-    if (!isTestMode) return;
-    $('dbg-age').textContent = Math.round(s.gpsAge) + 'ms';
-    $('dbg-vel').textContent = (s.vx || 0).toFixed(2) + ',' + (s.vy || 0).toFixed(2);
-  };
-  if (!window._gpsStarted) { window._gpsStarted = true; GPS.start(); }
-  setTimeout(() => {
-    if (!st.gpsReady) {
-      st.origin = { lat: 35.6762, lon: 139.6503 }; st.gpsReady = true;
-      setPerm('gps', 'ng', 'タイムアウト（デモ座標）'); checkReady();
-    }
-  }, 12000);
-}
-function onOri(e) {
-  let h = e.webkitCompassHeading;
-  if (h == null && e.alpha != null && (e.absolute || e.type === 'deviceorientationabsolute')) h = 360 - e.alpha;
-  if (h != null) st.heading = h;
-  if (e.beta != null) { st.pitch = e.beta - 90; st.roll = Math.max(-45, Math.min(45, e.gamma || 0)); }
-}
-addEventListener('deviceorientationabsolute', onOri, true);
-addEventListener('deviceorientation', onOri, true);
-addEventListener('devicemotion', e => {
-  const a = e.accelerationIncludingGravity;
-  if (!a || a.x == null) return;
-  st.shk += (Math.abs(Math.hypot(a.x, a.y, a.z) - 9.81) - st.shk) * .12;
-});
-function setPerm(w, s, t) {
-  $('perm-' + w).className = 'perm ' + s;
-  $(w === 'cam' ? 'pcam-v' : 'pgps-v').textContent = t;
-  const b = $(w === 'cam' ? 'btn-cam' : 'btn-gps');
-  b.textContent = s === 'ok' ? '✓' : s === 'ng' ? '再試行' : '...';
-  b.disabled = s === 'wt';
-}
-function checkReady() {
-  const c = !$('perm-cam').classList.contains('wt');
-  const g = !$('perm-gps').classList.contains('wt');
-  if (c && g) $('start-btn').disabled = false;
-}
-
-/* ============================================================
-   AI MODEL
-   ============================================================ */
-let model = null;
-let detections = [];
-let lastDetectTime = 0;
-let lastAIDamageTime = 0;
-async function loadAIModel() {
-  if (model) return;
-  try {
-    model = await cocoSsd.load();
-    console.log("[AI] Model loaded");
-    showAlert("✅ AIモデル ロード完了", "ka");
-  } catch (e) {
-    console.error("[AI] Load failed", e);
-    showAlert("⚠ AIモデル ロード失敗", "ha");
-  }
-}
-async function detectLoop(timestamp) {
-  if (!st.gameActive || !model) { requestAnimationFrame(detectLoop); return; }
-  if (timestamp - lastDetectTime > 300) {
-    lastDetectTime = timestamp;
-    const video = $('cam');
-    if (video.readyState === 4) {
-      try {
-        const predictions = await model.detect(video);
-        detections = predictions.filter(p => p.class === 'person' && p.score > 0.4);
-        drawAIDebug(detections);
-        processPersonDetection(detections);
-      } catch (e) {}
-    }
-  }
-  requestAnimationFrame(detectLoop);
-}
-function drawAIDebug(dets) {
-  const cv = $('ai-overlay');
-  if (cv.width !== window.innerWidth || cv.height !== window.innerHeight) {
-    cv.width = window.innerWidth; cv.height = window.innerHeight;
-  }
-  const ctx = cv.getContext('2d');
-  ctx.clearRect(0, 0, cv.width, cv.height);
-  ctx.lineWidth = 2;
-  ctx.strokeStyle = 'rgba(255, 220, 0, 0.85)';
-  ctx.fillStyle = 'rgba(255, 220, 0, 0.9)';
-  ctx.font = 'bold 12px Courier New';
-  const video = $('cam');
-  const sx = cv.width / (video.videoWidth || cv.width);
-  const sy = cv.height / (video.videoHeight || cv.height);
-  dets.forEach(d => {
-    const [x, y, w, h] = d.bbox;
-    ctx.strokeRect(x * sx, y * sy, w * sx, h * sy);
-    ctx.fillText(`TARGET ${Math.round(d.score * 100)}%`, x * sx, y * sy - 6);
-  });
-}
-
-/* AI人物検知 → 誰かに自動ダメージ */
-function processPersonDetection(dets) {
-  if (!st.gameActive || dets.length === 0 || st.dead) return;
-  const now = performance.now();
-  if (now - lastAIDamageTime < 400) return;
-  lastAIDamageTime = now;
-
-  const enemies = st.players.filter(p => p.hp > 0 && p.team !== st.myTeam);
-  if (enemies.length === 0) return;
-
-  const target = enemies[Math.floor(Math.random() * enemies.length)];
-  const dmg = 6 + Math.floor(Math.random() * 8);
-  applyAIDamage(target, dmg);
-}
-function applyAIDamage(target, dmg) {
-  const fx = target.x, fy = target.y;
-  const sx = window.innerWidth / 2 + (Math.random() - 0.5) * 200;
-  const sy = window.innerHeight / 2 + (Math.random() - 0.5) * 100;
-  spawnDamage(sx, sy, dmg, false);
-
-  if (st.mode === 'bot') {
-    target.hp -= dmg;
-  } else if (net.host) {
-    target.hp -= dmg;
-    if (net.conns[target.id]) net.conns[target.id].send({ t: 'dmg', d: dmg, fx, fy, from: 'host' });
-  } else if (net.hostConn) {
-    net.hostConn.send({ t: 'hit', to: target.id, d: dmg, fx, fy });
-    target.hp -= dmg;
-  }
-
-  if (target.hp <= 0) {
-    st.kills++;
-    st.score[target.team === 'red' ? 'blue' : 'red']++;
-    updateScore();
-    showAlert('💥 DETECT-KILL: ' + (target.name || target.id), 'ka');
-    if (st.mode === 'online' && !net.host && net.hostConn) net.hostConn.send({ t: 'kill', by: net.myId });
-    if (target.isBot) {
-      setTimeout(() => {
-        if (st.gameActive) {
-          const a = Math.random() * Math.PI * 2;
-          target.x = Math.cos(a) * 30; target.y = Math.sin(a) * 30; target.hp = 100;
-        }
-      }, 3000);
-    }
-  }
-}
-
-/* ============================================================
-   NETWORKING
-   ============================================================ */
-function loadPeerLib() {
-  return new Promise((ok, ng) => {
-    if (window.Peer) return ok();
-    const s = document.createElement('script');
-    s.src = 'https://cdn.jsdelivr.net/npm/peerjs@1.5.5/dist/peerjs.min.js';
-    s.onload = ok; s.onerror = ng; document.head.appendChild(s);
-  });
-}
-async function netGo() {
-  net.name = ($('pname').value.trim() || 'Player').slice(0, 10);
-  const host = ($('net-go').dataset.t || 'host') === 'host';
-  if (!host) {
-    const c = $('jcode').value.trim().toUpperCase();
-    if (c.length !== 6) { setNet('6文字のコードを入力してください'); return; }
-    st.roomCode = c;
-  }
-  setNet('接続中...'); $('net-go').disabled = true;
-  try { await loadPeerLib(); } catch (e) { setNet('通信ライブラリ読込失敗'); $('net-go').disabled = false; return; }
-  host ? hostRoom() : joinRoom();
-}
-function hostRoom() {
-  const peerOpts = { host: '0.peerjs.com', port: 443, path: '/', secure: true, debug: 2 };
-  const p = net.peer = new Peer('arsh-' + st.roomCode, peerOpts);
-  net.host = true; net.myId = 'host'; st.myTeam = 'red';
-  st.players = []; net.hostReady = false; net.guestReady = {};
-  p.on('error', e => {
-    setNet(e.type === 'unavailable-id' ? 'コードが使用中です' : 'エラー: ' + e.type);
-    $('net-go').disabled = false;
-  });
-  p.on('open', () => openLobby());
-  p.on('connection', c => {
-    c.on('data', m => hostRecv(c, m));
-    c.on('close', () => {
-      delete net.conns[c.peer]; delete net.guestReady[c.peer];
-      st.players = st.players.filter(x => x.id !== c.peer);
-      lobbyPush();
-    });
-  });
-}
-function hostRecv(c, m) {
-  const now = performance.now();
-  let p = st.players.find(x => x.id === c.peer);
-  if (m.t === 'join') {
-    if (st.players.length + 1 >= st.maxP || st.gameActive || st.scanState === 'scanning') {
-      c.send({ t: 'full' }); setTimeout(() => c.close(), 300); return;
-    }
-    const r = st.players.filter(x => x.team === 'red').length + 1;
-    const b = st.players.length + 1 - r;
-    const team = r <= b ? 'red' : 'blue';
-    st.players.push({ id: c.peer, name: esc(String(m.name || 'Player').slice(0, 10)), team, hp: 100, x: 0, y: 0 });
-    net.conns[c.peer] = c; net.guestReady[c.peer] = false;
-    c.send({ t: 'welcome', team, time: st.time, max: st.maxP, origin: st.origin });
-    lobbyPush();
-  } else if (!p) return;
-  else if (m.t === 'ready') {
-    net.guestReady[c.peer] = true;
-    $('lob-wait').textContent = `準備完了: ${Object.values(net.guestReady).filter(v => v).length} / ${st.players.length}`;
-    checkHostStart();
-  }
-  else if (m.t === 'pos') { p.tx = m.x; p.ty = m.y; if (!p.lock || now > p.lock) p.hp = m.hp; }
-  else if (m.t === 'hit') hostHit(m, c.peer);
-  else if (m.t === 'kill') {
-    const s = m.by === 'host' ? { team: st.myTeam } : st.players.find(x => x.id === m.by);
-    if (s) { st.score[s.team]++; updateScore(); }
-  }
-}
-function checkHostStart() {
-  if (!net.hostReady) return;
-  const guests = Object.keys(net.guestReady);
-  const allReady = guests.every(id => net.guestReady[id]);
-  if (allReady && st.players.length > 0) {
-    Object.values(net.conns).forEach(c => c.send({ t: 'start_countdown', origin: st.origin }));
-    startCountdown();
-  }
-}
-function hostHit(m, from) {
-  if (m.to === 'host') { takeDamage(m.d, { x: m.fx, y: m.fy, id: from }); return; }
-  if (!net.conns[m.to]) return;
-  net.conns[m.to].send({ t: 'dmg', d: m.d, fx: m.fx, fy: m.fy, from });
-  const target = st.players.find(p => p.id === m.to);
-  if (target) {
-    target.hp -= m.d;
-    if (target.hp <= 0) {
-      const s = st.players.find(p => p.id === from);
-      if (s) { st.score[s.team]++; updateScore(); }
-      showAlert('💥 ' + (s?.name || '?') + ' → ' + (target.name || target.id), 'ka');
-    }
-  }
-}
-function joinRoom() {
-  net.joined = false;
-  const p = net.peer = new Peer();
-  p.on('error', e => {
-    setNet(e.type === 'peer-unavailable' ? 'ルームが見つかりません' : 'エラー: ' + e.type);
-    $('net-go').disabled = false;
-  });
-  p.on('open', id => {
-    net.myId = id;
-    const c = net.hostConn = p.connect('arsh-' + st.roomCode, { serialization: 'json', reliable: true });
-    c.on('open', () => c.send({ t: 'join', name: net.name }));
-    c.on('data', clientRecv);
-    c.on('close', () => {
-      if (st.gameActive) { endGame(); showAlert('ホストが切断しました', 'ha'); }
-      else if (!net.joined) return; else location.reload();
-    });
-    setTimeout(() => { if (!net.joined) { setNet('ルームが見つかりません'); $('net-go').disabled = false; } }, 9000);
-  });
-}
-function clientRecv(m) {
-  const now = performance.now();
-  if (m.t === 'welcome') {
-    net.joined = true; st.myTeam = m.team; st.time = m.time; st.maxP = m.max;
-    if (m.origin) st.origin = m.origin;
-    openLobby();
-  }
-  else if (m.t === 'full') { setNet('満員、または開始済みです'); $('net-go').disabled = false; }
-  else if (m.t === 'lobby') { st.maxP = m.max; lobbyShow(m.l); }
-  else if (m.t === 'start_scan') { startScanPhase(); }
-  else if (m.t === 'start_countdown') {
-    if (m.origin) st.origin = m.origin;
-    startCountdown();
-  }
-  else if (m.t === 'start_game') { beginOnline(); }
-  else if (m.t === 'dmg') { takeDamage(m.d, { x: m.fx, y: m.fy, id: m.from }); }
-  else if (m.t === 's') {
-    const ids = {};
-    m.p.forEach(q => {
-      if (q.id === net.myId) return;
-      ids[q.id] = 1;
-      let p = st.players.find(x => x.id === q.id);
-      if (!p) { p = { id: q.id, hp: 100, x: q.x, y: q.y, tx: q.x, ty: q.y }; st.players.push(p); }
-      p.name = q.n; p.team = q.tm; p.tx = q.x; p.ty = q.y;
-      if (!p.lock || now > p.lock) p.hp = q.hp;
-    });
-    st.players = st.players.filter(p => ids[p.id]);
-    st.score = m.sc; updateScore();
-    if (Math.abs(st.timeLeft - m.tl) > 1) st.timeLeft = m.tl;
-  }
-}
-function lobbyData() { return [{ id: 'host', name: net.name, team: 'red' }].concat(st.players.map(p => ({ id: p.id, name: p.name, team: p.team }))); }
-function lobbyShow(l) {
-  $('lob').innerHTML = l.map(x => `<div class="${x.team}">${x.id === 'host' ? '👑 ' : '● '}${esc(x.name)}</div>`).join('');
-  $('lcount').textContent = '参加者 ' + l.length + '/' + st.maxP;
-}
-function lobbyPush() {
-  const l = lobbyData(); lobbyShow(l);
-  Object.values(net.conns).forEach(c => c.send({ t: 'lobby', l, max: st.maxP }));
-}
-function openLobby() {
-  show('s-lobby');
-  $('lcode').textContent = st.roomCode;
-  $('rid').textContent = st.roomCode;
-  $('lob-start').style.display = net.host ? 'block' : 'none';
-  $('lob-wait').textContent = net.host ? 'スキャン開始を待っています...' : 'ホストの開始を待っています...';
-  if (net.host) lobbyPush();
-}
-function hostStart() {
-  net.hostReady = false;
-  Object.values(net.conns).forEach(c => c.send({ t: 'start_scan' }));
-  startScanPhase();
-}
-
-/* ============================================================
-   スキャンシステム (8方位 × 2仰角 = 16セル)
-   ============================================================ */
-const SCAN_AZ_SECTORS = 8;
-const SCAN_EL_BANDS = 2;
-const SCAN_AZ_STEP = 360 / SCAN_AZ_SECTORS;
-const SCAN_EL_MIN = -60, SCAN_EL_MAX = 60;
-const SCAN_EL_STEP = (SCAN_EL_MAX - SCAN_EL_MIN) / SCAN_EL_BANDS;
-
-let scanCells = [];
-let scanComplete = false;
-let scanStartTime = 0;
-let lastScanProgress = 0;
-let lastProgressTime = 0;
-let lastAutoScan = 0;
-
-function initScanCells() {
-  scanCells = [];
-  for (let i = 0; i < SCAN_AZ_SECTORS; i++) {
-    for (let j = 0; j < SCAN_EL_BANDS; j++) {
-      scanCells.push({
-        i, j,
-        azMin: i * SCAN_AZ_STEP, azMax: (i + 1) * SCAN_AZ_STEP,
-        elMin: SCAN_EL_MIN + j * SCAN_EL_STEP,
-        elMax: SCAN_EL_MIN + (j + 1) * SCAN_EL_STEP,
-        scanned: false, heldSince: 0
-      });
-    }
-  }
-  scanComplete = false;
-  lastScanProgress = 0;
-}
-
-function updateScanCells(now) {
-  const heading = normDeg(st.heading);
-  const pitch = st.pitch;
-  let scannedCount = 0;
-
-  for (const cell of scanCells) {
-    if (cell.scanned) { scannedCount++; continue; }
-    const inAz = heading >= cell.azMin && heading < cell.azMax;
-    const inEl = pitch >= cell.elMin && pitch < cell.elMax;
-    if (inAz && inEl) {
-      if (!cell.heldSince) cell.heldSince = now;
-      if (now - cell.heldSince > 180) { cell.scanned = true; scannedCount++; }
-    } else {
-      cell.heldSince = 0;
-    }
-  }
-
-  if (scannedCount > lastScanProgress) {
-    lastScanProgress = scannedCount;
-    lastProgressTime = now;
-  }
-
-  const noProgress = now - lastProgressTime;
-  const totalElapsed = now - scanStartTime;
-  if (noProgress > 8000 || totalElapsed > 30000) {
-    if (now - lastAutoScan > 600) {
-      const remaining = scanCells.filter(c => !c.scanned);
-      if (remaining.length > 0) {
-        remaining[Math.floor(Math.random() * remaining.length)].scanned = true;
-        scannedCount++;
-        lastProgressTime = now;
-      }
-      lastAutoScan = now;
-    }
-  }
-
-  if (scannedCount >= scanCells.length && !scanComplete) {
-    scanComplete = true;
-    onScanComplete();
-  }
-  return { scanned: scannedCount, total: scanCells.length };
-}
-
-function projectDirection(azDeg, elDeg) {
-  const d2r = Math.PI / 180;
-  const az = azDeg * d2r, el = elDeg * d2r;
-  const h = normDeg(st.heading) * d2r;
-  const p = st.pitch * d2r;
-
-  const wx = Math.sin(az) * Math.cos(el);
-  const wy = Math.sin(el);
-  const wz = -Math.cos(az) * Math.cos(el);
-
-  const x1 = wx * Math.cos(h) + wz * Math.sin(h);
-  const y1 = wy;
-  const z1 = -wx * Math.sin(h) + wz * Math.cos(h);
-
-  const cx = x1;
-  const cy = y1 * Math.cos(p) + z1 * Math.sin(p);
-  const cz = -y1 * Math.sin(p) + z1 * Math.cos(p);
-
-  if (cz >= -0.01) return null;
-
-  const W = window.innerWidth, H = window.innerHeight;
-  const fov = 50 * d2r;
-  const tanHalf = Math.tan(fov / 2);
-  const aspect = W / H;
-
-  const ndcX = (cx / -cz) / (tanHalf * aspect);
-  const ndcY = (cy / -cz) / tanHalf;
-
-  return { x: (ndcX + 1) * W / 2, y: (1 - ndcY) * H / 2 };
-}
-
-function renderScanOverlay() {
-  const cv = $('scan-overlay');
-  if (!cv) return;
-  if (cv.width !== window.innerWidth || cv.height !== window.innerHeight) {
-    cv.width = window.innerWidth;
-    cv.height = window.innerHeight;
-  }
-  const ctx = cv.getContext('2d');
-  const W = cv.width, H = cv.height;
-  ctx.clearRect(0, 0, W, H);
-
-  const curHeading = normDeg(st.heading);
-  const curPitch = st.pitch;
-
-  for (const cell of scanCells) {
-    const cxAz = (cell.azMin + cell.azMax) / 2;
-    const cxEl = (cell.elMin + cell.elMax) / 2;
-    let dAz = Math.abs(cxAz - curHeading);
-    if (dAz > 180) dAz = 360 - dAz;
-    const dEl = Math.abs(cxEl - curPitch);
-    if (dAz > 60 || dEl > 55) continue;
-
-    const c4 = [
-      projectDirection(cell.azMin, cell.elMin),
-      projectDirection(cell.azMax, cell.elMin),
-      projectDirection(cell.azMax, cell.elMax),
-      projectDirection(cell.azMin, cell.elMax)
-    ];
-
-    if (c4.every(p => p !== null)) {
-      const allRight = c4.every(p => p.x > W + 50);
-      const allLeft = c4.every(p => p.x < -50);
-      const allUp = c4.every(p => p.y > H + 50);
-      const allDown = c4.every(p => p.y < -50);
-      if (allRight || allLeft || allUp || allDown) continue;
-
-      ctx.beginPath();
-      ctx.moveTo(c4[0].x, c4[0].y);
-      for (let k = 1; k < 4; k++) ctx.lineTo(c4[k].x, c4[k].y);
-      ctx.closePath();
-
-      if (cell.scanned) {
-        ctx.fillStyle = 'rgba(0, 255, 136, 0.12)';
-        ctx.fill();
-        ctx.strokeStyle = 'rgba(0, 255, 136, 0.9)';
-        ctx.lineWidth = 3;
-        ctx.stroke();
-      } else {
-        const isCurrent = curHeading >= cell.azMin && curHeading < cell.azMax
-                       && curPitch >= cell.elMin && curPitch < cell.elMax;
-        ctx.strokeStyle = isCurrent ? 'rgba(255, 220, 0, 0.9)' : 'rgba(255, 255, 255, 0.35)';
-        ctx.lineWidth = isCurrent ? 2.5 : 1.5;
-        ctx.setLineDash(isCurrent ? [] : [6, 4]);
-        ctx.stroke();
-        ctx.setLineDash([]);
-      }
-    } else {
-      const edges = [[0,1],[1,2],[2,3],[3,0]];
-      for (const [a, b] of edges) {
-        const pa = c4[a], pb = c4[b];
-        if (!pa || !pb) continue;
-        if ((pa.x < -50 && pb.x < -50) || (pa.x > W + 50 && pb.x > W + 50)) continue;
-        if ((pa.y < -50 && pb.y < -50) || (pa.y > H + 50 && pb.y > H + 50)) continue;
-        ctx.beginPath();
-        ctx.moveTo(pa.x, pa.y); ctx.lineTo(pb.x, pb.y);
-        ctx.strokeStyle = cell.scanned ? 'rgba(0, 255, 136, 0.8)' : 'rgba(255, 255, 255, 0.3)';
-        ctx.lineWidth = cell.scanned ? 2.5 : 1.2;
-        ctx.stroke();
-      }
-    }
-  }
-
-  ctx.strokeStyle = 'rgba(0, 255, 136, 0.5)';
-  ctx.lineWidth = 1;
-  ctx.beginPath(); ctx.arc(W/2, H/2, 22, 0, Math.PI * 2); ctx.stroke();
-  ctx.beginPath(); ctx.arc(W/2, H/2, 3, 0, Math.PI * 2); ctx.fillStyle = '#00ff88'; ctx.fill();
-}
-
-function updateScanUI(result) {
-  $('scan-count').textContent = result.scanned + '/' + result.total;
-  $('scan-bar-fill').style.width = (result.scanned / result.total * 100) + '%';
-  $('gps-bar').textContent = `📍 スキャン中 ${result.scanned}/${result.total}`;
-}
-
-function scanLoop() {
-  if (st.scanState !== 'scanning') return;
-  const now = performance.now();
-  const result = updateScanCells(now);
+/* ── 360° 環境スキャン（参考版の方式）+ GPS平均化 + 衛星マップ先読み ── */
+const SC={cells:[],start:0,lastProg:0,lastProgT:0,lastAuto:0,count:0};
+function startScanPhase(){
+  show('s-scan');$('scan-ov').style.display='block';st.scanState='scanning';st.scanSamples=[];
+  SC.cells=[];for(let i=0;i<12;i++)for(let j=0;j<2;j++)SC.cells.push({azMin:i*30,azMax:i*30+30,elMin:-60+j*60,elMax:j*60,ok:false,hold:0});
+  SC.start=SC.lastProgT=performance.now();SC.lastProg=0;SC.lastAuto=0;
+  $('ready-btn').style.display='none';$('ready-btn').disabled=false;$('ready-btn').classList.remove('ready');$('ready-btn').textContent='READY';
+  $('scan-wait').textContent='';$('scan-skip').style.display='';
+  loadAI();prefetchTiles(GPS.state.lat,GPS.state.lon,150,(d,n)=>{$('scan-tiles').textContent='MAP '+d+'/'+n});
+  requestAnimationFrame(scanLoop)}
+function scanLoop(){if(st.scanState!=='scanning')return;
+  const now=performance.now(),h=st.heading,p=st.pitch;let c=0;
+  SC.cells.forEach(cl=>{if(cl.ok){c++;return}
+    if(h>=cl.azMin&&h<cl.azMax&&p>=cl.elMin&&p<cl.elMax){if(!cl.hold)cl.hold=now;if(now-cl.hold>200){cl.ok=true;c++}}else cl.hold=0});
+  if(c>SC.lastProg){SC.lastProg=c;SC.lastProgT=now}
+  if((now-SC.lastProgT>8000||now-SC.start>30000)&&now-SC.lastAuto>500){const rem=SC.cells.filter(x=>!x.ok);if(rem.length){rem[Math.random()*rem.length|0].ok=true;c++;SC.lastProgT=now}SC.lastAuto=now}
+  SC.count=c;$('scan-count').textContent=c+'/'+SC.cells.length;$('scan-bar').style.width=c/SC.cells.length*100+'%';$('gps-bar').textContent='📡 スキャン中 '+c+'/'+SC.cells.length;
   renderScanOverlay();
-  updateScanUI(result);
-  if (st.scanState === 'scanning' && !scanComplete) {
-    requestAnimationFrame(scanLoop);
-  }
-}
+  if(c>=SC.cells.length)scanDone();else requestAnimationFrame(scanLoop)}
+function forceScanDone(){SC.cells.forEach(c=>c.ok=true);if(st.scanState==='scanning')scanDone()}
+function projDir(az,el){const h=st.heading*D2R,p=st.pitch*D2R,a=az*D2R,e=el*D2R;
+  const wx=Math.sin(a)*Math.cos(e),wy=Math.sin(e),wz=-Math.cos(a)*Math.cos(e);
+  const x1=wx*Math.cos(h)+wz*Math.sin(h),z1=-wx*Math.sin(h)+wz*Math.cos(h);
+  const cy=wy*Math.cos(p)+z1*Math.sin(p),cz=-wy*Math.sin(p)+z1*Math.cos(p);if(cz>=-.01)return null;
+  const W=innerWidth,H=innerHeight,t=Math.tan(fov().v/2*D2R);
+  return{x:(x1/-cz/(t*W/H)+1)*W/2,y:(1-cy/-cz/t)*H/2}}
+function renderScanOverlay(){const cv=$('scan-ov');if(cv.width!==innerWidth||cv.height!==innerHeight){cv.width=innerWidth;cv.height=innerHeight}
+  const ctx=cv.getContext('2d'),W=cv.width,H=cv.height;ctx.clearRect(0,0,W,H);
+  SC.cells.forEach(cl=>{let dA=Math.abs((cl.azMin+15)-st.heading);if(dA>180)dA=360-dA;if(dA>70)return;
+    const pts=[projDir(cl.azMin+.5,cl.elMin+.5),projDir(cl.azMax-.5,cl.elMin+.5),projDir(cl.azMax-.5,cl.elMax-.5),projDir(cl.azMin+.5,cl.elMax-.5)];
+    if(pts.some(q=>!q))return;
+    const cur=!cl.ok&&cl.hold;ctx.beginPath();pts.forEach((q,i)=>i?ctx.lineTo(q.x,q.y):ctx.moveTo(q.x,q.y));ctx.closePath();
+    if(cl.ok){ctx.fillStyle='rgba(0,255,136,.13)';ctx.fill();ctx.strokeStyle='rgba(0,255,136,.9)';ctx.lineWidth=3;ctx.setLineDash([])}
+    else{ctx.strokeStyle=cur?'rgba(255,220,0,.95)':'rgba(255,255,255,.45)';ctx.lineWidth=cur?3:1.5;ctx.setLineDash(cur?[]:[7,5])}
+    ctx.stroke();ctx.setLineDash([])});
+  ctx.strokeStyle='rgba(0,255,136,.7)';ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(W/2,H/2,22,0,6.283);ctx.stroke();
+  ctx.fillStyle='#00ff88';ctx.beginPath();ctx.arc(W/2,H/2,3,0,6.283);ctx.fill()}
+function scanDone(){
+  st.scanState='done';$('scan-ov').style.display='none';$('scan-skip').style.display='none';
+  if(st.mode==='bot'||net.host){
+    const good=st.scanSamples.filter(s=>s.acc<60);
+    if(good.length){let w=0,la=0,lo=0;good.forEach(s=>{const k=1/(s.acc*s.acc);w+=k;la+=s.lat*k;lo+=s.lon*k});st.origin={lat:la/w,lon:lo/w}}
+    else st.origin={lat:GPS.state.lat,lon:GPS.state.lon}}
+  st.manual={x:0,y:0};const lp=toMeters(GPS.state.lat,GPS.state.lon);st.myPos={x:lp.x,y:lp.y};
+  showAlert('✅ スキャン完了','ka');
+  if(st.mode==='bot'){generateWorld();startCountdown();return}
+  $('ready-btn').style.display='block'}
+function sendReady(){
+  $('ready-btn').classList.add('ready');$('ready-btn').textContent='READY ✓';$('ready-btn').disabled=true;
+  if(net.host){net.hostReady=true;checkHostStart()}
+  else{send(net.hostConn,{t:'ready'});$('scan-wait').textContent='ホストの開始を待っています...'}}
+function generateWorld(){st.objects=[];
+  for(let i=0;i<14;i++){const a=Math.random()*Math.PI*2,d=8+Math.random()*40;
+    st.objects.push({id:'o'+i,type:Math.random()>.55?'wall':'loot',x:st.myPos.x+Math.sin(a)*d,y:st.myPos.y-Math.cos(a)*d,active:true})}}
+function startCountdown(){
+  st.scanState='counting';show(null);$('scan-ov').style.display='none';const ov=$('cd');ov.classList.add('on');let n=3;$('cd-t').textContent=n;
+  const t=setInterval(()=>{n--;if(n>0)$('cd-t').textContent=n;else if(n===0)$('cd-t').textContent='GO!';
+    else{clearInterval(t);ov.classList.remove('on');st.mode==='bot'?beginBot():beginOnline()}},1000)}
 
-function startScanPhase() {
-  show('s-scan');
-  ['fire', 'rld', 'cov', 'mmap', 'camsw'].forEach(id => { const e = $(id); if (e) e.style.display = 'none'; });
+/* ── game start / end ── */
+let last=0;
+function beginBot(){spawnBots();$('mode-badge').textContent='🤖 BOT ×'+st.botCount;$('rid').textContent='BOT';ints.push(setInterval(tickBots,500));runGame()}
+function beginOnline(){$('mode-badge').textContent='🌐 ONLINE';
+  ints.push(setInterval(()=>{if(!st.gameActive)return;
+    if(net.host){const p=[{id:'host',n:net.name,tm:st.myTeam,x:st.myPos.x,y:st.myPos.y,hp:st.health,a:myAcc()}]
+        .concat(st.players.map(x=>({id:x.id,n:x.name,tm:x.team,x:x.tx,y:x.ty,hp:x.hp,a:x.a})));
+      bcast({t:'s',p,sc:st.score,tl:st.timeLeft})}
+    else send(net.hostConn,{t:'pos',x:st.myPos.x,y:st.myPos.y,hp:st.health,a:myAcc()})},120));
+  ints.push(setInterval(faceTick,500));
+  runGame()}
+function runGame(){
+  show(null);st.gameActive=true;st.t0=performance.now();st.timeLeft=st.mode==='bot'?300:st.time*60;st.trail=[{...st.myPos}];
+  if(cams.length>1)$('camsw').style.display='block';
+  ints.push(setInterval(()=>{if(!st.gameActive)return;st.timeLeft--;
+    $('timer').textContent=String(Math.floor(Math.max(0,st.timeLeft)/60)).padStart(2,'0')+':'+String(Math.max(0,st.timeLeft)%60).padStart(2,'0');
+    if(st.timeLeft<=30)$('timer').style.color='#ff4444';if(st.timeLeft<=0)endGame()},1000));
+  ints.push(setInterval(()=>{drawMap($('mc'),60);if($('bigmap').classList.contains('open'))drawMap($('bmc'),st.bigR);
+    $('pcnt').textContent=(st.players.length+1)+'/'+(st.mode==='bot'?st.botCount+1:st.maxP)},200));
+  ints.push(setInterval(aiTick,220));
+  last=performance.now();requestAnimationFrame(frame);
+  showAlert('⚔ START — TEAM '+st.myTeam.toUpperCase())}
+function endGame(){
+  if(!st.gameActive)return;st.gameActive=false;ints.forEach(clearInterval);ints.length=0;$('timer').textContent='終了';drawAI();updateAIPanel();
+  const w=st.score.red>st.score.blue?'🔴 RED WIN':st.score.blue>st.score.red?'🔵 BLUE WIN':'⚖ DRAW';
+  const s=document.createElement('div');s.className='screen';
+  s.innerHTML=`<div class="logo">${w}</div><div class="note" style="font-size:13px;color:#fff">RED ${st.score.red} - ${st.score.blue} BLUE<br>KILL ${st.kills} / DEATH ${st.deaths}</div><button class="sbtn" onclick="location.reload()">🔄 もう一度</button>`;
+  document.body.appendChild(s)}
 
-  st.scanState = 'scanning';
-  initScanCells();
-  scanStartTime = performance.now();
-  lastProgressTime = scanStartTime;
-  lastAutoScan = 0;
+/* ── bots ── */
+function spawnBots(){st.players=[];
+  for(let i=0;i<st.botCount;i++){const a=Math.random()*Math.PI*2,d=12+Math.random()*20,x=st.myPos.x+Math.sin(a)*d,y=st.myPos.y-Math.cos(a)*d;
+    const team=(st.botCount>=3&&i%3===2)?'red':'blue';
+    st.players.push({id:'bot'+i,name:BOT_NAMES[i%8],team,x,y,tx:x,ty:y,hp:100,isBot:true,ang:Math.random()*6.28,atk:2+Math.random()*3})}}
+function tickBots(){if(!st.gameActive)return;
+  st.players.forEach(p=>{if(!p.isBot||p.hp<=0)return;
+    const me={x:st.myPos.x,y:st.myPos.y},d=dist(p,me),enemy=p.team!==st.myTeam;
+    if(enemy&&d<45&&!st.dead){const b=bearingDeg(p,me)*D2R,step=d>7?1.1:0,side=(Math.random()-.5)*1.2;
+      p.tx+=Math.sin(b)*step+Math.cos(b)*side;p.ty+=-Math.cos(b)*step+Math.sin(b)*side}
+    else{p.ang+=(Math.random()-.5)*.9;if(d>60)p.ang=bearingDeg(p,me)*D2R;p.tx+=Math.sin(p.ang)*.8;p.ty-=Math.cos(p.ang)*.8}
+    p.atk-=.5;
+    if(enemy&&p.atk<=0&&!st.dead&&d<40){if(!wallBetween(p,me)&&Math.random()<.55)takeDamage(Math.round((6+Math.random()*6)*Math.max(.4,1-d/50)),p);p.atk=2.5+Math.random()*3}})}
 
-  $('ready-btn').style.display = 'none';
-  $('ready-btn').textContent = '▶ SCAN COMPLETE';
-  $('ready-btn').classList.remove('ready');
-  $('ready-btn').disabled = false;
-  $('scan-wait').style.display = 'none';
-  $('scan-count').textContent = '0/' + scanCells.length;
-  $('scan-bar-fill').style.width = '0%';
+/* ── 3D weapon: ak-47.glb + ホロサイト（ADSで照準が窓の中心に来る） ── */
+const G={aimUntil:0,reloadStart:-9e9,aim(){G.aimUntil=performance.now()+1400},kick(){},hit(){},update(){}};
+function initGun(){
+  const T=THREE,r=new T.WebGLRenderer({canvas:$('gl'),alpha:true,antialias:true}),TH=Math.tan(25*D2R);
+  r.setPixelRatio(Math.min(2,devicePixelRatio||1));r.outputEncoding=T.sRGBEncoding;r.toneMapping=T.ACESFilmicToneMapping;r.toneMappingExposure=1.05;
+  const sc=new T.Scene(),cam=new T.PerspectiveCamera(50,1,.01,10),gun=new T.Group();gun.rotation.order='YXZ';sc.add(gun);
+  sc.add(new T.HemisphereLight(0xcfe3ff,0x303030,1.3));const dl=new T.DirectionalLight(0xffffff,1.1);dl.position.set(1,2,1.5);sc.add(dl);
+  const fl=new T.PointLight(0xffa030,0,2);fl.position.set(0,0,-.9);gun.add(fl);
+  const M=(c,m,q,o)=>new T.MeshStandardMaterial(Object.assign({color:c,metalness:m,roughness:q},o||{}));
+  const steel=M(0x2c323a,.85,.35),dark=M(0x121417,.6,.5),poly=M(0x1e2125,.1,.75),tan=M(0x5b5741,.1,.8);
+  const fb=new T.Group();gun.add(fb);
+  const B=(w,h,d,x,y,z,m,rx,par)=>{const o=new T.Mesh(new T.BoxGeometry(w,h,d),m);o.position.set(x,y,z);if(rx)o.rotation.x=rx;(par||fb).add(o);return o};
+  const C=(rr,l,x,y,z,m)=>{const o=new T.Mesh(new T.CylinderGeometry(rr,rr,l,14),m);o.rotation.x=Math.PI/2;o.position.set(x,y,z);fb.add(o)};
+  B(.062,.09,.3,0,0,0,steel);B(.05,.016,.3,0,.052,0,dark);B(.03,.012,.55,0,.066,-.1,dark);
+  B(.07,.075,.3,0,-.004,-.3,poly);B(.074,.01,.3,0,.04,-.3,dark);C(.011,.34,0,.002,-.62,steel);
+  B(.025,.03,.04,0,.025,-.5,dark);C(.017,.07,0,.002,-.8,dark);B(.006,.04,.006,0,.085,-.74,dark);
+  B(.03,.03,.01,0,.08,.12,dark);B(.05,.085,.22,0,-.012,.26,poly);B(.052,.095,.02,0,-.012,.375,dark);
+  B(.04,.11,.055,0,-.095,.09,tan,.4);B(.01,.03,.1,0,-.058,-.02,dark);
+  const mag=B(.04,.16,.065,0,-.12,-.075,steel,-.18);
+  // holographic sight (FDE / tan) — window + red dot
+  const sight=new T.Group();gun.add(sight);const fde=M(0x8a6a44,.15,.6),SW=.05,SH=.04,FT=.008,SD=.07;let sightCY=.11;
+  B(.05,.012,.09,0,.006,0,fde,0,sight);B(.06,.026,.07,0,.025,.005,fde,0,sight);
+  B(FT,SH+FT*2,SD,-(SW/2+FT/2),.038+SH/2+FT,0,fde,0,sight);B(FT,SH+FT*2,SD,(SW/2+FT/2),.038+SH/2+FT,0,fde,0,sight);
+  B(SW+FT*2,FT,SD,0,.038+SH+FT*1.5,0,fde,0,sight);
+  const glass=new T.Mesh(new T.PlaneGeometry(SW,SH),new T.MeshBasicMaterial({color:0x88bbff,transparent:true,opacity:.12,depthWrite:false}));glass.position.set(0,.038+SH/2+FT,-SD/2+.002);sight.add(glass);
+  const dot=new T.Mesh(new T.SphereGeometry(.0018,10,10),new T.MeshBasicMaterial({color:0xff2020}));dot.position.set(0,.038+SH/2+FT,-SD/2);sight.add(dot);
+  const ring=new T.Mesh(new T.RingGeometry(.0085,.0095,32),new T.MeshBasicMaterial({color:0xff2020,transparent:true,opacity:.85}));ring.position.copy(dot.position);sight.add(ring);
+  const placeSight=top=>{sight.position.set(0,top,-.04);sightCY=top+.038+SH/2+FT};placeSight(.072);
+  const cv=document.createElement('canvas');cv.width=cv.height=64;const g=cv.getContext('2d'),gr=g.createRadialGradient(32,32,0,32,32,32);
+  gr.addColorStop(0,'#fff');gr.addColorStop(.3,'#ffd36a');gr.addColorStop(.6,'rgba(255,120,0,.5)');gr.addColorStop(1,'rgba(255,100,0,0)');g.fillStyle=gr;g.fillRect(0,0,64,64);
+  const fs=new T.Sprite(new T.SpriteMaterial({map:new T.CanvasTexture(cv),blending:T.AdditiveBlending,transparent:true,depthWrite:false,opacity:0}));fs.position.set(0,0,-.86);fs.scale.setScalar(.3);gun.add(fs);
+  const LEN=1.1,fit=()=>gun.scale.setScalar(Math.max(.15,Math.min(1,.85*TH*cam.aspect/(.75*LEN))));
+  const rs=()=>{r.setSize(innerWidth,innerHeight,false);cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix();fit()};rs();
+  addEventListener('resize',rs);addEventListener('orientationchange',()=>setTimeout(rs,300));
+  {const pm=new T.PMREMGenerator(r),es=new T.Scene();es.add(new T.Mesh(new T.SphereGeometry(5,16,8),new T.MeshBasicMaterial({color:0x7d8a99,side:T.BackSide})));
+   const lamp=(x,y,z,c,i)=>{const m=new T.Mesh(new T.PlaneGeometry(3,3),new T.MeshBasicMaterial({color:new T.Color(c).multiplyScalar(i),side:T.DoubleSide}));m.position.set(x,y,z);m.lookAt(0,0,0);es.add(m)};
+   lamp(0,4,0,0xffffff,5);lamp(3,1,2,0xffeedd,2.5);lamp(-3,0,-2,0x99bbff,1.5);sc.environment=pm.fromScene(es).texture}
+  if(T.GLTFLoader)new T.GLTFLoader().load('ak-47.glb',gl=>{
+    const m=gl.scene,b=new T.Box3().setFromObject(m),sz=b.getSize(new T.Vector3()),ct=b.getCenter(new T.Vector3()),k=LEN/Math.max(sz.x,sz.y,sz.z);
+    m.scale.setScalar(k);m.position.set(-ct.x*k,-(b.min.y+.81*sz.y)*k,-(b.min.z+.674*sz.z)*k);m.traverse(o=>{if(o.isMesh)o.frustumCulled=false});
+    gun.add(m);fb.visible=false;fs.position.set(0,0,-.8);placeSight(b.max.y*k+m.position.y-.004);showAlert('🔫 AK-47 + HOLO SIGHT','ka')},
+    null,e=>console.warn('ak-47.glb not found',e));
+  const PO={aim:{nx:0,ny:-.3,z:-.3,rx:0,ry:0,rz:0},low:{nx:.38,ny:-.5,z:-.5,rx:-.1,ry:.85,rz:.12},cover:{nx:.12,ny:-.42,z:-.4,rx:1.05,ry:.12,rz:.08},
+    reload:{nx:.25,ny:-.82,z:-.45,rx:-.45,ry:.55,rz:.65},dead:{nx:.5,ny:-1.7,z:-.5,rx:-.5,ry:.9,rz:.3}};
+  const P=Object.assign({},PO.low),V={nx:0,ny:0,z:0,rx:0,ry:0,rz:0},AX=['nx','ny','z','rx','ry','rz'];let ph=0,fv=0;
+  G.kick=()=>{V.z+=.8;V.rx+=st.ads?1.2:2.4;V.ry+=(Math.random()-.5)*(st.ads?.5:1.4);V.ny+=st.ads?.25:.6;fv=1};
+  G.hit=()=>{V.nx+=(Math.random()<.5?-1:1)*2;V.ny-=1.5;V.rz+=(Math.random()-.5)*5};
+  G.update=(dt,t)=>{
+    PO.aim.ny=-(sightCY*gun.scale.y)/((-PO.aim.z)*TH);    // ホロサイトの窓が画面中央に来る高さ
+    const n=performance.now(),pn=st.reloading?'reload':st.dead?'dead':(st.ads||n<G.aimUntil)?'aim':st.cover?'cover':'low';
+    $('xh').classList.toggle('ads',pn==='aim');
+    const a=pn==='aim'?.25:1,w=st.walkI,run=pn==='low'&&w>.7?1:0,tg=Object.assign({},PO[pn]);
+    if(w>.03)ph+=dt*(6+w*5);const pc=Math.cos(ph),p2=Math.sin(ph*2),br=Math.sin(t*1.6),sk=Math.min(3,st.shk);
+    const n1=Math.sin(t*17)+Math.sin(t*9.3+2),n2=Math.sin(t*13+1)+Math.sin(t*6.1);
+    tg.ny+=p2*.03*w*a+br*.004*a-st.pitV*.0025*a;tg.nx+=pc*.035*w*a-st.yawV*.0012*a+st.roll*(pn==='cover'?.012:.006)*a+n1*.004*sk*a;
+    tg.rx+=p2*.04*w*a+br*.006*a-st.pitV*.004*a-run*.15;tg.ry+=st.yawV*.0035*a+pc*.05*w*a+n2*.01*sk*a+run*.1;tg.rz+=(-st.roll*.0085+pc*.05*w)*a;
+    const kk=pn==='aim'?170:75,dd=pn==='aim'?16:11;
+    AX.forEach(i=>{V[i]+=(tg[i]-P[i])*kk*dt;V[i]*=Math.exp(-dd*dt);P[i]+=V[i]*dt});
+    gun.position.set(P.nx*(-P.z)*TH*cam.aspect,P.ny*(-P.z)*TH,P.z);gun.rotation.set(P.rx,P.ry,P.rz);
+    const rt=(n-G.reloadStart)/1800;mag.visible=!(st.reloading&&rt>.3&&rt<.55);mag.position.y=-.12-(st.reloading&&rt>=.55?Math.max(0,.8-rt)*.8:0);
+    fv=Math.max(0,fv-dt*14);fs.material.opacity=fv;fs.scale.setScalar(.2+Math.random()*.15);fl.intensity=fv*2;r.render(sc,cam)}}
 
-  console.log("[Scan] Started. Cells:", scanCells.length);
-  loadAIModel();
-  requestAnimationFrame(scanLoop);
-}
+/* ── frame loop ── */
+function frame(t){
+  if(!st.gameActive)return;
+  const dt=Math.min(.1,(t-last)/1000);last=t;
+  const tx=st.gpsLocal.x+st.manual.x,ty=st.gpsLocal.y+st.manual.y,k=Math.min(1,dt*6);
+  if(Math.hypot(tx-st.myPos.x,ty-st.myPos.y)>80){st.myPos.x=tx;st.myPos.y=ty}else{st.myPos.x+=(tx-st.myPos.x)*k;st.myPos.y+=(ty-st.myPos.y)*k}
+  const lt=st.trail[st.trail.length-1];if(!lt||dist(lt,st.myPos)>1.5){st.trail.push({...st.myPos});if(st.trail.length>80)st.trail.shift()}
+  st.hd=(st.hd+(((st.heading-st.hd+540)%360)-180)*Math.min(1,dt*10)+360)%360;
+  st.players.forEach(p=>{if(p.tx!=null){const kk=Math.min(1,dt*(p.isBot?2.5:8));p.x+=(p.tx-p.x)*kk;p.y+=(p.ty-p.y)*kk}});
+  const d2=Math.max(dt,.004),dh=((st.hd-(st.phd??st.hd)+540)%360)-180;st.phd=st.hd;
+  st.yawV+=(clamp(dh/d2,-400,400)-st.yawV)*Math.min(1,dt*12);
+  st.pitV+=(clamp((st.pitch-(st.ppn??st.pitch))/d2,-300,300)-st.pitV)*Math.min(1,dt*12);st.ppn=st.pitch;
+  const pp=st.pp||st.myPos;st.spd+=(Math.min(5,dist(pp,st.myPos)/d2)-st.spd)*Math.min(1,dt*3);st.pp={...st.myPos};
+  const w=Math.max(Math.min(1,Math.max(0,(st.shk-.7)/2.2)),Math.min(1,st.spd/1.2),performance.now()-st.keyWalk<350?1:0);
+  st.walkI+=(w-st.walkI)*Math.min(1,dt*6);
+  const ma=myAcc();
+  st.objects.forEach(o=>{if(o.type!=='loot'||!o.active)return;if(dist(st.myPos,o)<3.5&&(st.mode==='bot'||ma<12)){o.active=false;
+    if(st.health<70){st.health=Math.min(100,st.health+30);updateHealthUI();showAlert('❤️ HP +30','ka')}else{st.reserve+=30;updateAmmoUI();showAlert('🔫 弾薬 +30','ka')}}});
+  G.update(d2,t/1000);renderMarkers();requestAnimationFrame(frame)}
 
-function onScanComplete() {
-  st.scanState = 'ready';
-  $('ready-btn').style.display = 'block';
-  $('gps-bar').textContent = '📍 スキャン完了';
-  showAlert('✅ スキャン完了！', 'ka');
-  console.log("[Scan] Complete");
-}
+/* ── AR markers (GPS) ── */
+const mk={};let nearHTML='';
+function marker(id,cls,html){let e=mk[id];if(!e){const el=document.createElement('div');el.className=cls;el.innerHTML=html;document.body.appendChild(el);
+  e=mk[id]={el,lbl:el.querySelector('.lbl'),hp:el.querySelector('.hpb i'),d:el.querySelector('.edst'),arr:el.querySelector('.arr')}}return e}
+function renderMarkers(){
+  const W=innerWidth,H=innerHeight,ma=myAcc(),shown={},near=[];
+  st.players.forEach(p=>{
+    const pr=p.pr=project(p);if(p.hp<=0)return;
+    const en=p.team!==st.myTeam,acc2=st.mode==='bot'?0:ma+(p.a||ma);
+    p.near=st.mode!=='bot'&&(pr.d<acc2||uncDeg(pr.d,acc2)>35);
+    if(p.near){if(en)near.push(p);return}
+    if(pr.d>250)return;
+    const e=marker(p.id,en?'em':'alm',en?'<div class="arr"></div><div class="edia"></div><div class="lbl elbl"></div><div class="hpb"><i></i></div><div class="edst"></div>':'<div class="atri"></div><div class="lbl albl"></div>');
+    shown[p.id]=1;let sx=pr.sx,sy=pr.sy;const edge=!pr.on;
+    if(edge){sx=pr.rel<0?26:W-26;sy=H*.45}
+    sy=clamp(sy,110,H-230);
+    e.el.classList.toggle('edge',edge);if(e.arr)e.arr.textContent=pr.rel<0?'◀':'▶';
+    e.el.style.display='';e.el.style.transform=`translate3d(${sx}px,${sy}px,0) translate(-50%,-50%) scale(${clamp(6/Math.max(pr.d,1)+.55,.6,1.5)})`;
+    e.lbl.textContent=(p.isBot?'🤖':'')+(p.name||'?');if(e.hp)e.hp.style.width=p.hp+'%';if(e.d)e.d.textContent=Math.round(pr.d)+'m'});
+  st.objects.forEach(o=>{if(!o.active)return;const pr=project(o);if(!pr.on||pr.d>60)return;
+    const e=marker(o.id,'obj',o.type==='loot'?'📦':'🧱');shown[o.id]=1;e.el.style.display='';
+    e.el.style.transform=`translate3d(${pr.sx}px,${clamp(pr.sy+40,110,H-200)}px,0) translate(-50%,-50%) scale(${clamp(8/Math.max(pr.d,1),.5,1.8)})`});
+  for(const id in mk)if(!shown[id])mk[id].el.style.display='none';
+  const h=near.map(p=>{const seen=TR.list.some(t=>t.ident&&t.ident.pid===p.id&&performance.now()-t.seen<600);
+    return`<div>${seen?'🎯':'📡'} ${esc(p.name||'敵')} 近く 約${Math.round(p.pr.d)}m ${seen?'— AI捕捉中':'— カメラで探せ'}</div>`}).join('');
+  if(h!==nearHTML){nearHTML=h;$('near').innerHTML=h}}
 
-function toggleReady() {
-  if (st.scanState !== 'ready') return;
+/* ── satellite map ── */
+const tiles=new Map();
+function loadTile(z,tx,ty){const n=2**z;tx=((tx%n)+n)%n;if(ty<0||ty>=n)return null;const key=z+'/'+tx+'/'+ty;let t=tiles.get(key);
+  if(!t){t=new Image();t.crossOrigin='anonymous';t.onerror=()=>setTimeout(()=>tiles.delete(key),8000);
+    t.src='https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/'+z+'/'+ty+'/'+tx;tiles.set(key,t);
+    if(tiles.size>700)tiles.delete(tiles.keys().next().value)}return t}
+function tileImg(z,tx,ty){const t=loadTile(z,tx,ty);return t&&t.complete&&t.naturalWidth?t:null}
+function worldPx(lat,lon,z){const n=2**z*256,s=Math.sin(lat*D2R);return{wx:(lon+180)/360*n,wy:(.5-Math.log((1+s)/(1-s))/(4*Math.PI))*n}}
+function prefetchTiles(lat,lon,R,onp){
+  const list=[];[17,18,19].forEach(z=>{const mpp=156543.03392*Math.cos(lat*D2R)/2**z,c=Math.ceil(R/(mpp*256))+1,w=worldPx(lat,lon,z),x0=Math.floor(w.wx/256),y0=Math.floor(w.wy/256);
+    for(let dy=-c;dy<=c;dy++)for(let dx=-c;dx<=c;dx++)list.push([z,x0+dx,y0+dy])});
+  let done=0;const tick=()=>{done++;onp(done,list.length)};
+  list.forEach(([z,x,y])=>{const im=loadTile(z,x,y);if(!im){tick();return}if(im.complete)tick();else{im.addEventListener('load',tick,{once:true});im.addEventListener('error',tick,{once:true})}});
+  onp(done,list.length)}
+function drawMap(cv,R){
+  const ctx=cv.getContext('2d'),W=cv.width,c=W/2,k=c/R,mini=cv.id==='mc',u=W/(mini?110:380),h=st.hd*D2R,ch=Math.cos(h),sh=Math.sin(h);
+  ctx.clearRect(0,0,W,W);ctx.save();if(mini){ctx.beginPath();ctx.arc(c,c,c,0,6.283);ctx.clip()}
+  ctx.fillStyle='#0d1319';ctx.fillRect(0,0,W,W);
+  const me=toLatLon(st.myPos.x,st.myPos.y),mpp0=156543.03392*Math.cos(me.lat*D2R);
+  const z=clamp(Math.ceil(Math.log2(k*mpp0)),3,19),n=2**z,w=worldPx(me.lat,me.lon,z),s=k*mpp0/n,e=c*1.5/s;
+  ctx.save();ctx.translate(c,c);ctx.rotate(-h);ctx.scale(s,s);
+  for(let ty=Math.floor((w.wy-e)/256);ty<=Math.floor((w.wy+e)/256);ty++)for(let tx=Math.floor((w.wx-e)/256);tx<=Math.floor((w.wx+e)/256);tx++){
+    const im=tileImg(z,tx,ty);
+    if(im)ctx.drawImage(im,tx*256-w.wx,ty*256-w.wy,256.6,256.6);
+    else{const p=tileImg(z-1,tx>>1,ty>>1);if(p)ctx.drawImage(p,(tx&1)*128,(ty&1)*128,128,128,tx*256-w.wx,ty*256-w.wy,256.6,256.6)}}
+  ctx.restore();
+  const ms=p=>{const dx=p.x-st.myPos.x,dy=p.y-st.myPos.y,rt=dx*ch+dy*sh,fw=dx*sh-dy*ch;return{X:c+rt*k,Y:c-fw*k,d:Math.hypot(dx,dy)}};
+  ctx.strokeStyle='rgba(255,255,255,.35)';ctx.lineWidth=u;[.5,1].forEach(f=>{ctx.beginPath();ctx.arc(c,c,c*f*.97,0,6.283);ctx.stroke()});
+  const f=fov().h/2*D2R;ctx.fillStyle='rgba(255,255,255,.12)';ctx.beginPath();ctx.moveTo(c,c);ctx.arc(c,c,c,-Math.PI/2-f,-Math.PI/2+f);ctx.closePath();ctx.fill();
+  const o=ms({x:0,y:0});if(o.d<R){ctx.strokeStyle='#ffdd00';ctx.lineWidth=1.5*u;ctx.beginPath();ctx.arc(o.X,o.Y,4*u,0,6.283);ctx.stroke()}
+  if(st.trail.length>1){ctx.beginPath();st.trail.forEach((p,i)=>{const q=ms(p);i?ctx.lineTo(q.X,q.Y):ctx.moveTo(q.X,q.Y)});ctx.strokeStyle='rgba(0,255,136,.55)';ctx.lineWidth=2.5*u;ctx.stroke()}
+  const ma=myAcc();if(st.src==='GPS'){ctx.beginPath();ctx.arc(c,c,Math.min(ma*k,c),0,6.283);ctx.fillStyle='rgba(60,140,255,.15)';ctx.fill();ctx.strokeStyle='rgba(60,140,255,.6)';ctx.lineWidth=u;ctx.stroke()}
+  ctx.textAlign='center';ctx.textBaseline='middle';
+  st.objects.forEach(ob=>{if(!ob.active)return;const q=ms(ob);if(q.d>R)return;ctx.font=(mini?7:12)*u+'px Arial';ctx.fillText(ob.type==='loot'?'📦':'🧱',q.X,q.Y)});
+  const lab=(t,X,Y,col)=>{ctx.font='bold '+7*u+'px Courier New';ctx.lineWidth=2.5*u;ctx.strokeStyle='rgba(0,0,0,.8)';ctx.strokeText(t,X,Y);ctx.fillStyle=col;ctx.fillText(t,X,Y)};
+  st.players.forEach(p=>{if(p.hp<=0)return;const q=ms(p);let X=q.X,Y=q.Y,edge=q.d>R*.92;
+    if(edge){const r=R*.92/q.d;X=c+(X-c)*r;Y=c+(Y-c)*r}
+    const col=p.team==='red'?'#ff4444':'#33aaff';
+    if(!mini&&st.mode==='online'&&p.a){ctx.beginPath();ctx.arc(X,Y,Math.min(p.a*k,c),0,6.283);ctx.fillStyle=p.team===st.myTeam?'rgba(50,170,255,.08)':'rgba(255,60,60,.08)';ctx.fill()}
+    ctx.globalAlpha=edge?.55:1;ctx.beginPath();ctx.arc(X,Y,(mini?3.8:5.5)*u,0,6.283);ctx.fillStyle=col;ctx.fill();ctx.strokeStyle='#fff';ctx.lineWidth=1.3*u;ctx.stroke();
+    if(!mini)lab((p.name||'?')+' '+Math.round(q.d)+'m',X,Y-10*u,col);ctx.globalAlpha=1});
+  lab('N',c-sh*(c-9*u),c-ch*(c-9*u),'#ff7755');
+  ctx.save();ctx.translate(c,c);ctx.beginPath();ctx.moveTo(0,-13*u);ctx.lineTo(5*u,-5*u);ctx.lineTo(-5*u,-5*u);ctx.closePath();ctx.fillStyle='#00ff88';ctx.fill();
+  ctx.beginPath();ctx.arc(0,0,5.5*u,0,6.283);ctx.fillStyle='#2f7dff';ctx.fill();ctx.strokeStyle='#fff';ctx.lineWidth=2*u;ctx.stroke();ctx.restore();
+  lab(Math.round(R/2)+'m',c,c-c*.485-3*u,'#fff');
+  ctx.font=(mini?5:7)*u+'px Arial';ctx.fillStyle='#ddd';ctx.fillText('© Esri',c,W-(mini?8:6)*u);
+  if(!mini){ctx.textAlign='left';lab('RANGE '+R+'m',8*u,14*u,'#fff')}
+  ctx.restore()}
 
-  const s = GPS.state;
-  if (s && Math.abs(s.lat) < 90) {
-    st.origin = { lat: s.lat, lon: s.lon };
-  }
-  st.myPos = { x: 0, y: 0 };
-  st.trail = [{ x: 0, y: 0 }];
-  generateWorld();
+/* ── combat ── */
+const dmgScale=(d,head)=>Math.round(34*Math.max(.35,1-d/500)*(head?2:1));
+let lastShot=0,lastMsg=0;
+function wallBetween(a,b){if(!(st.mode==='bot'||myAcc()<10))return false;
+  const abx=b.x-a.x,aby=b.y-a.y,L=abx*abx+aby*aby;if(!L)return false;
+  return st.objects.some(w=>{if(w.type!=='wall'||!w.active)return false;const t=((w.x-a.x)*abx+(w.y-a.y)*aby)/L;if(t<=.05||t>=.95)return false;
+    return Math.hypot(w.x-(a.x+abx*t),w.y-(a.y+aby*t))<1.6})}
+function msg(t,x,y,c){const n=performance.now();if(n-lastMsg<400)return;lastMsg=n;pop(t,x,y,c)}
+function recoil(){G.aim();G.kick();sfx('shot');$('xh').animate([{transform:'translate(-50%,-50%) scale(1.4)'},{transform:'translate(-50%,-50%) scale(1)'}],{duration:150})}
+function fire(){
+  if(!st.gameActive||st.dead||st.reloading)return;
+  const now=performance.now();if(now-lastShot<140)return;
+  if(st.ammo<=0){reload();return}
+  lastShot=now;st.ammo--;updateAmmoUI();recoil();
+  const cx=innerWidth/2,cy=innerHeight/2;let target=null,head=false,pos=null;
+  if(st.mode==='bot'){
+    let bs=1e9;st.players.forEach(p=>{if(p.team===st.myTeam||p.hp<=0||!p.pr||!p.pr.on)return;
+      const tol=Math.max(2.5,Math.atan2(.45,Math.max(p.pr.d,.5))*R2D)+1.5,ad=Math.abs(p.pr.rel);
+      if(ad<tol&&Math.abs(p.pr.sy-cy)<Math.max(50,innerHeight*.09)&&ad<bs){bs=ad;target=p;head=ad<tol*.3}});
+    if(!target){const tr=trackAtCenter();msg(tr?'CIVILIAN — 非プレイヤー':'MISS',cx,cy-60,'')}
+  }else{
+    // ONLINE: 照準の人物ボックス → その人物の「識別結果（＝スマホの持ち主）」にだけダメージ
+    const tr=trackAtCenter();
+    if(tr){head=cy<tr.y+tr.h*.2;pos={x:tr.x+tr.w/2,y:tr.y+(head?tr.h*.1:tr.h*.35)};
+      const i=tr.ident;
+      if(i&&i.pid){const p=st.players.find(x=>x.id===i.pid);
+        if(!p||p.hp<=0)msg('DOWN',cx,cy-60,'');
+        else if(p.team===st.myTeam)msg('FRIENDLY — '+p.name,cx,cy-60,'');
+        else target=p}
+      else msg(tr.civ?'CIVILIAN — 非プレイヤー':'識別中… 顔かスマホを映せ',cx,cy-60,tr.civ?'':'me')}
+    else if(!AI.ok){ // AIが使えない端末: GPS方位のみで判定
+      const ma=myAcc();let bs=1e9;
+      st.players.forEach(p=>{if(p.team===st.myTeam||p.hp<=0)return;const pr=p.pr||project(p),unc=uncDeg(pr.d,ma+(p.a||ma)),ad=Math.abs(pr.rel),tol=Math.max(3,Math.atan2(.5,Math.max(pr.d,.5))*R2D)+2;
+        if(unc<=tol*2&&ad<=tol&&ad<bs){bs=ad;target=p}});
+      if(!target)msg('MISS',cx,cy-60,'')}
+    else msg('MISS',cx,cy-60,'')}
+  if(target&&wallBetween(st.myPos,target)){msg('BLOCKED',cx,cy-60,'');target=null}
+  if(target)applyHit(target,head,pos);
+  if(st.ammo<=0)setTimeout(reload,300)}
+function applyHit(p,head,pos){
+  const d=p.pr?p.pr.d:dist(st.myPos,p),dmg=dmgScale(Math.min(d,30),head);p.hp=Math.max(0,p.hp-dmg);p.lock=performance.now()+600;
+  const x=pos?pos.x:(p.pr&&p.pr.on&&!p.near?p.pr.sx:innerWidth/2),y=pos?pos.y:innerHeight/2-40;
+  pop((head?'HEAD ':'')+'-'+dmg+'  '+(p.name||''),x,y,head?'hd':'');sfx('hit');$('xh').classList.add('hit');setTimeout(()=>$('xh').classList.remove('hit'),110);
+  if(!p.isBot){const m={t:'hit',to:p.id,d:dmg,fx:st.myPos.x,fy:st.myPos.y,h:head};net.host?hostHit(m,'host'):send(net.hostConn,m)}
+  if(p.hp<=0){st.kills++;showAlert('撃破！ '+(p.name||'')+'  KD:'+st.kills+'/'+st.deaths,'ka');
+    if(p.isBot){st.score[st.myTeam]++;updateScore();setTimeout(()=>{const a=Math.random()*Math.PI*2,r=20+Math.random()*20;
+      p.x=p.tx=st.myPos.x+Math.sin(a)*r;p.y=p.ty=st.myPos.y-Math.cos(a)*r;p.hp=100},4000)}}}
+function reload(){if(st.reloading||st.reserve<=0||st.ammo>=st.maxAmmo){if(!st.reserve)showAlert('弾切れ！');return}
+  st.reloading=true;$('fire').classList.add('rl');showAlert('リロード中...');G.reloadStart=performance.now();
+  setTimeout(()=>{const g=Math.min(st.maxAmmo-st.ammo,st.reserve);st.ammo+=g;st.reserve-=g;st.reloading=false;$('fire').classList.remove('rl');updateAmmoUI()},1800)}
+let lastLow=0;
+function takeDamage(d,src){
+  if(st.dead||!st.gameActive)return;
+  st.health=Math.max(0,st.health-d);updateHealthUI();
+  const f=$('flash');f.style.transition='none';f.style.opacity=Math.min(1,.4+d/30);requestAnimationFrame(()=>requestAnimationFrame(()=>{f.style.transition='opacity .6s';f.style.opacity=0}));
+  G.hit();navigator.vibrate&&navigator.vibrate(Math.min(220,d*6));
+  const who=src&&src.id&&!String(src.id).startsWith('bot')?nameOf(src.id):(src&&src.name)||'';
+  pop((src&&src.head?'HEADSHOT ':'')+'-'+d+(who?'  by '+who:''),innerWidth/2,innerHeight*.6,'me');
+  if(src&&src.x!=null){const sp=st.players.find(p=>p.id===src.id);if(!sp||!sp.near){$('hitdir').style.transform='rotate('+relDeg(bearingDeg(st.myPos,src))+'deg)';$('hitdir').animate([{opacity:1},{opacity:0}],{duration:900,fill:'forwards'})}}
+  document.body.classList.toggle('low',st.health>0&&st.health<30);
+  const n=performance.now();if(st.health>0&&st.health<30&&n-lastLow>4000){lastLow=n;showAlert('⚠ 危険！ HP:'+st.health,'ha')}
+  if(st.health<=0){st.dead=true;st.deaths++;showAlert('やられた！'+(who?' ('+who+')':'')+' リスポーン中...','ha');
+    if(st.mode==='bot'){st.score[st.myTeam==='red'?'blue':'red']++;updateScore()}
+    else if(net.host)scoreKill(src&&src.id);else send(net.hostConn,{t:'kill',by:src&&src.id});
+    setTimeout(()=>{st.health=100;st.dead=false;updateHealthUI();document.body.classList.remove('low');showAlert('リスポーン！')},3000)}}
 
-  st.scanState = 'done';
-  $('s-scan').classList.add('hidden');
-  $('ready-btn').style.display = 'none';
+/* ── ui ── */
+function pop(t,x,y,c){const e=document.createElement('div');e.className='dmg '+(c||'');e.textContent=t;e.style.left=x+'px';e.style.top=y+'px';document.body.appendChild(e);setTimeout(()=>e.remove(),900)}
+function updateAmmoUI(){$('amob').style.width=st.ammo/st.maxAmmo*100+'%';$('amon').textContent=st.ammo+'/'+st.reserve}
+function updateHealthUI(){$('hpb').style.width=st.health+'%';$('hpn').textContent=st.health}
+function updateScore(){$('sc-r').textContent='RED '+st.score.red;$('sc-b').textContent='BLUE '+st.score.blue}
+function showAlert(m,c){const e=document.createElement('div');e.className='am '+(c||'');e.textContent=m;$('alerts').appendChild(e);setTimeout(()=>e.remove(),2500)}
 
-  if (st.mode === 'bot') {
-    startCountdown();
-    return;
-  }
+/* ── events ── */
+let af=null;const fbtn=$('fire');
+fbtn.addEventListener('pointerdown',e=>{e.preventDefault();unlockAudio();fire();clearInterval(af);af=setInterval(fire,145)});
+['pointerup','pointercancel','pointerleave'].forEach(n=>fbtn.addEventListener(n,()=>clearInterval(af)));
+$('ads').addEventListener('pointerdown',e=>{e.preventDefault();st.ads=!st.ads;$('ads').classList.toggle('on',st.ads)});
+$('rld').addEventListener('pointerdown',e=>{e.preventDefault();reload()});
+$('cov').addEventListener('pointerdown',e=>{e.preventDefault();st.cover=!st.cover;$('cov').classList.toggle('on',st.cover)});
+$('camsw').addEventListener('click',switchCam);
+$('mmap').addEventListener('click',()=>{$('bigmap').classList.add('open');drawMap($('bmc'),st.bigR)});
+$('bmc-close').addEventListener('click',()=>$('bigmap').classList.remove('open'));
+const ZS=[15,30,60,100,200];
+$('mz-in').addEventListener('click',()=>{st.bigR=ZS[Math.max(0,ZS.indexOf(st.bigR)-1)];drawMap($('bmc'),st.bigR)});
+$('mz-out').addEventListener('click',()=>{st.bigR=ZS[Math.min(ZS.length-1,ZS.indexOf(st.bigR)+1)];drawMap($('bmc'),st.bigR)});
+document.addEventListener('keydown',e=>{
+  if(st.scanState==='scanning'&&!st.hasCompass){if(e.code==='ArrowLeft')st.heading=(st.heading+350)%360;if(e.code==='ArrowRight')st.heading=(st.heading+10)%360;if(e.code==='ArrowUp')st.pitch=clamp(st.pitch+10,-59,59);if(e.code==='ArrowDown')st.pitch=clamp(st.pitch-10,-59,59)}
+  if(!st.gameActive)return;
+  if(e.code==='KeyR')reload();if(e.code==='KeyC')$('cov').dispatchEvent(new Event('pointerdown'));if(e.code==='KeyF')$('ads').dispatchEvent(new Event('pointerdown'));
+  if(e.code==='Space'||e.code==='Enter'){e.preventDefault();unlockAudio();fire()}
+  if(e.code==='ArrowLeft'||e.code==='KeyA')st.heading=(st.heading+356)%360;
+  if(e.code==='ArrowRight'||e.code==='KeyD')st.heading=(st.heading+4)%360;
+  if(['KeyW','KeyS','ArrowUp','ArrowDown'].includes(e.code)){e.preventDefault();st.keyWalk=performance.now();
+    const s=(e.code==='KeyW'||e.code==='ArrowUp')?1:-1,a=st.heading*D2R;st.manual.x+=Math.sin(a)*s;st.manual.y-=Math.cos(a)*s}});
 
-  if (net.host) {
-    net.hostReady = true;
-    $('scan-wait').style.display = 'block';
-    $('scan-wait').textContent = 'ゲストの準備を待っています...';
-    $('s-scan').classList.remove('hidden');
-    checkHostStart();
-  } else {
-    if (net.hostConn) net.hostConn.send({ t: 'ready' });
-    $('s-scan').classList.remove('hidden');
-    $('scan-wait').style.display = 'block';
-    $('scan-wait').textContent = 'ホストの開始を待っています...';
-  }
-}
-
-function generateWorld() {
-  st.objects = [];
-  for (let i = 0; i < 15; i++) {
-    const ang = Math.random() * Math.PI * 2;
-    const dist = 10 + Math.random() * 50;
-    const type = Math.random() > 0.6 ? 'wall' : 'loot';
-    st.objects.push({ id: 'obj_' + i, type, x: Math.cos(ang) * dist, y: Math.sin(ang) * dist, active: true });
-  }
-}
-
-function startCountdown() {
-  $('s-scan').classList.add('hidden');
-  const overlay = $('countdown-overlay');
-  overlay.classList.add('active');
-  let count = 3;
-  $('countdown-text').textContent = count;
-  const timer = setInterval(() => {
-    count--;
-    if (count > 0) $('countdown-text').textContent = count;
-    else if (count === 0) $('countdown-text').textContent = 'GO!';
-    else {
-      clearInterval(timer);
-      overlay.classList.remove('active');
-      if (st.mode === 'bot') beginBot();
-      else {
-        if (net.host) Object.values(net.conns).forEach(c => c.send({ t: 'start_game' }));
-        beginOnline();
-      }
-    }
-  }, 1000);
-}
-
-/* ============================================================
-   GAME CORE
-   ============================================================ */
-let last = 0;
-let gunInitialized = false;
-function ensureGun() { if (gunInitialized) return; gunInitialized = true; try { initGun(); } catch (e) { console.error('[Gun]', e); } }
-
-function beginBot() {
-  st.mode = 'bot';
-  spawnBots();
-  setBadge('🤖 BOT ×' + st.botCount);
-  $('rid').textContent = 'BOT';
-  ints.push(setInterval(tickBots, 500));
-  runGame();
-}
-function beginOnline() {
-  setBadge('🌐 ONLINE');
-  ints.push(setInterval(() => {
-    if (!st.gameActive) return;
-    if (net.host) {
-      const p = [{ id: 'host', n: net.name, tm: st.myTeam, x: st.myPos.x, y: st.myPos.y, hp: st.health }]
-        .concat(st.players.map(x => ({ id: x.id, n: x.name, tm: x.team, x: x.tx, y: x.ty, hp: x.hp })));
-      const m = { t: 's', p, sc: st.score, tl: st.timeLeft };
-      Object.values(net.conns).forEach(c => c.send(m));
-    } else if (net.hostConn) {
-      net.hostConn.send({ t: 'pos', x: st.myPos.x, y: st.myPos.y, hp: st.health });
-    }
-  }, 150));
-  runGame();
-}
-function setBadge(t) { $('mode-badge').textContent = t; }
-
-function runGame() {
-  document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
-  $('countdown-overlay').classList.remove('active');
-  ['fire', 'rld', 'cov', 'mmap'].forEach(id => { const e = $(id); if (e) e.style.display = 'block'; });
-  // 外カメ固定のため CAM 切替ボタンは常に非表示
-  $('camsw').style.display = 'none';
-
-  st.gameActive = true;
-  st.dead = false; st.health = 100; st.ammo = st.maxAmmo;
-  st.timeLeft = st.mode === 'bot' ? 300 : st.time * 60;
-
-  ensureGun();
-  updateHUD(); updateScore();
-
-  ints.push(setInterval(() => {
-    if (!st.gameActive) return;
-    st.timeLeft--;
-    $('timer').textContent = String(Math.floor(Math.max(0, st.timeLeft) / 60)).padStart(2, '0') + ':'
-                            + String(Math.max(0, st.timeLeft) % 60).padStart(2, '0');
-    if (st.timeLeft <= 30) $('timer').style.color = '#ff4444';
-    if (st.timeLeft <= 0) endGame();
-  }, 1000));
-
-  ints.push(setInterval(() => {
-    drawMap($('mc'), MAP_MAX);
-    if ($('bigmap').classList.contains('open')) drawMap($('bmc'), st.bigR);
-    $('pcnt').textContent = (st.players.length + 1) + '/' + (st.mode === 'bot' ? st.botCount + 1 : st.maxP);
-  }, 250));
-
-  last = performance.now();
-  requestAnimationFrame(frame);
-  requestAnimationFrame(detectLoop);
-  showAlert('⚔ START — TEAM ' + st.myTeam.toUpperCase(), 'ka');
-  console.log("[Game] Started");
-}
-function endGame() {
-  st.gameActive = false;
-  ints.forEach(clearInterval); ints.length = 0;
-  $('timer').textContent = '終了';
-  Object.keys(enemyEls).forEach(id => { enemyEls[id].remove(); delete enemyEls[id]; });
-  const w = st.score.red > st.score.blue ? '🔴 RED WIN'
-          : st.score.blue > st.score.red ? '🔵 BLUE WIN' : '⚖ DRAW';
-  showAlert(w + ' KD:' + st.kills + '/' + st.deaths, 'ka');
-}
-
-function spawnBots() {
-  st.players = [];
-  for (let i = 0; i < st.botCount; i++) {
-    const a = i / st.botCount * Math.PI * 2;
-    const d = 15 + Math.random() * 20;
-    st.players.push({
-      id: 'bot' + i, name: BOT_NAMES[i % 8], team: BOT_TEAMS[i % 8],
-      x: Math.cos(a) * d, y: Math.sin(a) * d, hp: 100,
-      isBot: true, angle: Math.random() * 6.28, atk: 3 + Math.random() * 4
-    });
-  }
-}
-function tickBots() {
-  if (!st.gameActive) return;
-  st.players.forEach(p => {
-    if (!p.isBot || p.hp <= 0) return;
-    p.angle += (Math.random() - .5) * .9;
-    p.atk -= .5;
-    p.x += Math.cos(p.angle) * 0.8;
-    p.y += Math.sin(p.angle) * 0.8;
-    if (p.atk <= 0 && p.team !== st.myTeam && !st.dead) {
-      const d = getDist(st.myPos, p);
-      if (d < 100) {
-        takeDamage(Math.max(3, Math.round((8 + Math.random() * 8) * Math.max(.4, 1 - d / 150))), p);
-        p.atk = 3 + Math.random() * 5;
-      }
-    }
-  });
-}
-
-/* ============================================================
-   HUD
-   ============================================================ */
-function updateHUD() {
-  $('hpb').style.width = Math.max(0, st.health) + '%';
-  $('hpn').textContent = Math.max(0, Math.round(st.health));
-  $('amob').style.width = (st.ammo / st.maxAmmo * 100) + '%';
-  $('amon').textContent = st.ammo + '/' + st.reserve;
-  if (st.gpsReady) {
-    $('gps-la').textContent = 'X: ' + st.myPos.x.toFixed(1);
-    $('gps-lo').textContent = 'Y: ' + st.myPos.y.toFixed(1);
-  }
-}
-function updateScore() {
-  $('sc-r').textContent = 'RED ' + st.score.red;
-  $('sc-b').textContent = 'BLUE ' + st.score.blue;
-}
-function showAlert(text, cls) {
-  const el = document.createElement('div');
-  el.className = 'am ' + (cls || '');
-  el.textContent = text;
-  $('alerts').appendChild(el);
-  setTimeout(() => el.remove(), 2500);
-}
-function spawnDamage(x, y, dmg, isMe) {
-  const el = document.createElement('div');
-  el.className = 'dmg' + (isMe ? ' me' : '');
-  el.textContent = isMe ? '-' + dmg : dmg;
-  el.style.left = x + 'px';
-  el.style.top = y + 'px';
-  document.body.appendChild(el);
-  setTimeout(() => el.remove(), 900);
-}
-
-/* ============================================================
-   COMBAT
-   ============================================================ */
-function takeDamage(dmg, from) {
-  if (st.dead || !st.gameActive) return;
-  st.health -= dmg;
-  spawnDamage(window.innerWidth / 2, window.innerHeight / 2, dmg, true);
-  const flash = $('flash');
-  flash.style.opacity = '0.9';
-  setTimeout(() => { flash.style.opacity = '0'; }, 100);
-
-  if (from && st.gpsReady) {
-    const dx = from.x - st.myPos.x;
-    const dy = from.y - st.myPos.y;
-    const bearing = Math.atan2(dx, -dy) * 180 / Math.PI;
-    const rel = ((bearing - st.heading + 540) % 360) - 180;
-    const hd = $('hitdir');
-    hd.style.opacity = '1';
-    hd.style.transform = `translate(-50%, -50%) rotate(${rel}deg)`;
-    setTimeout(() => { hd.style.opacity = '0'; }, 500);
-  }
-
-  if (st.health <= 0) {
-    st.health = 0; st.dead = true; st.deaths++;
-    showAlert('💀 DOWN', 'ha');
-    updateHUD();
-    setTimeout(() => {
-      st.dead = false; st.health = 100; st.ammo = st.maxAmmo;
-      updateHUD();
-      document.body.classList.remove('low');
-    }, 3000);
-  } else {
-    if (st.health < 30) document.body.classList.add('low');
-    updateHUD();
-  }
-}
-function fire() {
-  if (!st.gameActive || st.dead || st.reloading || st.cover) return;
-  if (st.ammo <= 0) {
-    if (st.reserve > 0) reload();
-    else showAlert('残弾なし', 'ha');
-    return;
-  }
-  st.ammo--; G.kick(); updateHUD();
-
-  const fov = 60, aimTol = 15;
-  let best = null, bestScore = Infinity;
-  st.players.forEach(p => {
-    if (p.hp <= 0 || p.team === st.myTeam) return;
-    const dx = p.x - st.myPos.x, dy = p.y - st.myPos.y;
-    const dist = Math.hypot(dx, dy);
-    if (dist > 90) return;
-    const bearing = Math.atan2(dx, -dy) * 180 / Math.PI;
-    const rel = ((bearing - st.heading + 540) % 360) - 180;
-    if (Math.abs(rel) > aimTol) return;
-    const score = Math.abs(rel) + dist * 0.1;
-    if (score < bestScore) { bestScore = score; best = { p, dist, rel }; }
-  });
-
-  if (best) {
-    const dmg = Math.max(5, Math.round(18 + Math.random() * 12 - best.dist * 0.1));
-    best.p.hp -= dmg;
-    const sx = window.innerWidth / 2 + (best.rel / (fov / 2)) * (window.innerWidth / 2);
-    const sy = window.innerHeight / 2;
-    spawnDamage(sx, sy, dmg, false);
-
-    if (st.mode === 'online') {
-      if (net.host) {
-        if (net.conns[best.p.id]) net.conns[best.p.id].send({ t: 'dmg', d: dmg, fx: best.p.x, fy: best.p.y, from: 'host' });
-      } else if (net.hostConn) {
-        net.hostConn.send({ t: 'hit', to: best.p.id, d: dmg, fx: best.p.x, fy: best.p.y });
-      }
-    }
-    if (best.p.hp <= 0) {
-      st.score[best.p.team === 'red' ? 'blue' : 'red']++;
-      st.kills++; updateScore();
-      showAlert('💥 KILL: ' + (best.p.name || best.p.id), 'ka');
-      if (st.mode === 'online' && !net.host && net.hostConn) net.hostConn.send({ t: 'kill', by: net.myId });
-      if (best.p.isBot) {
-        setTimeout(() => {
-          if (st.gameActive) {
-            const a = Math.random() * Math.PI * 2;
-            best.p.x = Math.cos(a) * 30; best.p.y = Math.sin(a) * 30; best.p.hp = 100;
-          }
-        }, 3000);
-      }
-    }
-  }
-  st.heading = normDeg(st.heading + (Math.random() - 0.5) * 0.4);
-}
-function reload() {
-  if (st.reloading || st.reserve <= 0 || st.ammo >= st.maxAmmo) return;
-  st.reloading = true;
-  const fb = $('fire');
-  fb.classList.add('rl'); fb.textContent = '...';
-  setTimeout(() => {
-    const need = st.maxAmmo - st.ammo;
-    const take = Math.min(need, st.reserve);
-    st.ammo += take; st.reserve -= take;
-    st.reloading = false;
-    fb.classList.remove('rl'); fb.textContent = 'FIRE';
-    updateHUD();
-  }, 1500);
-}
-function toggleCover() {
-  st.cover = !st.cover;
-  $('cov').classList.toggle('on', st.cover);
-  showAlert(st.cover ? '🛡 COVER ON' : 'COVER OFF');
-}
-
-/* ============================================================
-   3D GUN (視野内に収まるよう調整済み)
-   ============================================================ */
-const G = {
-  aimUntil: 0, kickK: 0, baseX: 0.1, baseY: -0.15, baseZ: -0.65,
-  flash: null, group: null, gunCam: null, gunRenderer: null, gunScene: null,
-  kick() { G.kickK = 1; }
-};
-function initGun() {
-  if (typeof THREE === 'undefined') { console.warn('[Gun] THREE not loaded'); return; }
-  const T = THREE;
-  const canvas = $('gl');
-  const W = window.innerWidth, H = window.innerHeight;
-  const aspect = W / H;
-
-  const renderer = new T.WebGLRenderer({ canvas, alpha: true, antialias: true });
-  renderer.setPixelRatio(Math.min(2, devicePixelRatio || 1));
-  renderer.setSize(W, H, false);
-  canvas.width = W; canvas.height = H;
-  canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
-
-  const scene = new T.Scene();
-  const cam = new T.PerspectiveCamera(50, aspect, 0.02, 10);
-  const group = new T.Group();
-  group.rotation.order = 'YXZ';
-  scene.add(group);
-  scene.add(cam);
-
-  scene.add(new T.HemisphereLight(0xcfe3ff, 0x303030, 1.3));
-  const dl = new T.DirectionalLight(0xffffff, 1.1);
-  dl.position.set(1, 2, 1.5); scene.add(dl);
-
-  const flash = new T.PointLight(0xffa030, 0, 2);
-  flash.position.set(0, 0, -0.9); group.add(flash);
-
-  const M = (c, m, q, o) => new T.MeshStandardMaterial(Object.assign({ color: c, metalness: m, roughness: q }, o || {}));
-  const steel = M(0x2c323a, .85, .35);
-  const dark = M(0x121417, .6, .5);
-  const poly = M(0x1e2125, .1, .75);
-  const tan = M(0x5b5741, .1, .8);
-
-  const B = (w, h, d, x, y, z, m, rx) => {
-    const o = new T.Mesh(new T.BoxGeometry(w, h, d), m);
-    o.position.set(x, y, z);
-    if (rx) o.rotation.x = rx;
-    group.add(o); return o;
-  };
-  const C = (rr, l, x, y, z, m) => {
-    const o = new T.Mesh(new T.CylinderGeometry(rr, rr, l, 14), m);
-    o.rotation.x = Math.PI / 2; o.position.set(x, y, z); group.add(o);
-  };
-
-  B(.062, .09, .30, 0, 0, 0, steel);
-  B(.050, .016, .30, 0, .052, 0, dark);
-  B(.030, .012, .55, 0, .066, -.10, dark);
-  B(.070, .075, .30, 0, -.004, -.30, poly);
-  B(.074, .010, .30, 0, .040, -.30, dark);
-  C(.011, .34, 0, .002, -.62, steel);
-  B(.025, .030, .04, 0, .025, -.50, dark);
-  C(.017, .07, 0, .002, -.80, dark);
-  B(.045, .050, .09, 0, .095, -.04, dark);
-  B(.030, .030, .01, 0, .080, .12, dark);
-  B(.050, .085, .22, 0, -.012, .26, poly);
-  B(.052, .095, .02, 0, -.012, .375, dark);
-  B(.040, .110, .055, 0, -.095, .09, tan, .4);
-  B(.060, .140, .040, 0, -.115, -.15, dark);
-  B(.010, .060, .010, 0, .020, -.75, dark);
-
-  G.baseX = aspect < 0.7 ? 0.09 : 0.15;
-  G.baseY = -0.15;
-  G.baseZ = -0.65;
-  group.scale.setScalar(0.5);
-  group.position.set(G.baseX, G.baseY, G.baseZ);
-
-  G.flash = flash; G.group = group; G.gunCam = cam;
-  G.gunRenderer = renderer; G.gunScene = scene;
-
-  window.addEventListener('resize', () => {
-    if (!G.gunRenderer) return;
-    const W2 = window.innerWidth, H2 = window.innerHeight;
-    G.gunRenderer.setSize(W2, H2, false);
-    canvas.width = W2; canvas.height = H2;
-    canvas.style.width = W2 + 'px'; canvas.style.height = H2 + 'px';
-    G.gunCam.aspect = W2 / H2;
-    G.gunCam.updateProjectionMatrix();
-    G.baseX = (W2 / H2) < 0.7 ? 0.09 : 0.15;
-  });
-}
-function animateGun(dt, ts) {
-  if (!G.group) return;
-  G.kickK *= 0.82;
-  G.group.position.y += (G.baseY - G.group.position.y) * 0.12;
-  G.group.position.z += (G.baseZ - G.group.position.z) * 0.12;
-  G.group.rotation.x = G.kickK * 0.15;
-  const walk = Math.min(1, (st.spd || 0) * 0.02);
-  G.group.position.x = G.baseX + Math.sin(ts * 0.006) * walk * 0.012;
-  G.group.rotation.z = Math.sin(ts * 0.004) * walk * 0.02;
-  if (G.flash) G.flash.intensity = G.kickK * 2;
-  if (G.gunRenderer) G.gunRenderer.render(G.gunScene, G.gunCam);
-}
-
-/* ============================================================
-   AR ENEMY
-   ============================================================ */
-function renderEnemies() {
-  const w = window.innerWidth, h = window.innerHeight;
-  const fov = 60;
-  const active = {};
-  st.players.forEach(p => {
-    if (p.hp <= 0 || p.team === st.myTeam) return;
-    active[p.id] = 1;
-    let el = enemyEls[p.id];
-    if (!el) {
-      el = document.createElement('div');
-      el.className = 'em';
-      el.innerHTML = '<div class="edia"></div><div class="elbl"></div><div class="edst"></div><div class="hpb"><i></i></div>';
-      document.body.appendChild(el); enemyEls[p.id] = el;
-    }
-    const dx = p.x - st.myPos.x, dy = p.y - st.myPos.y;
-    const dist = Math.hypot(dx, dy);
-    const bearing = Math.atan2(dx, -dy) * 180 / Math.PI;
-    const rel = ((bearing - st.heading + 540) % 360) - 180;
-    if (Math.abs(rel) > fov / 2 || dist > 120) { el.style.display = 'none'; return; }
-    const sx = w / 2 + (rel / (fov / 2)) * (w / 2);
-    const sy = h / 2;
-    const scale = Math.max(0.35, Math.min(1.2, 22 / Math.max(6, dist)));
-    el.style.display = 'flex';
-    el.style.transform = `translate(${sx - 30}px, ${sy - 50}px) scale(${scale})`;
-    el.querySelector('.elbl').textContent = p.name || p.id;
-    el.querySelector('.edst').textContent = Math.round(dist) + 'm';
-    el.querySelector('.hpb i').style.width = Math.max(0, p.hp) + '%';
-  });
-  Object.keys(enemyEls).forEach(id => { if (!active[id]) { enemyEls[id].remove(); delete enemyEls[id]; } });
-}
-
-/* ============================================================
-   MINIMAP
-   ============================================================ */
-function drawMap(canvas, maxR) {
-  const ctx = canvas.getContext('2d');
-  const w = canvas.width, h = canvas.height;
-  const cx = w / 2, cy = h / 2;
-  const radius = Math.min(w, h) / 2 - 2;
-  const scale = radius / maxR;
-  ctx.clearRect(0, 0, w, h);
-  ctx.fillStyle = 'rgba(0, 8, 20, 0.85)';
-  ctx.beginPath(); ctx.arc(cx, cy, radius, 0, Math.PI * 2); ctx.fill();
-  ctx.strokeStyle = 'rgba(0, 255, 136, 0.3)'; ctx.lineWidth = 1;
-  [0.33, 0.66, 1].forEach(r => { ctx.beginPath(); ctx.arc(cx, cy, radius * r, 0, Math.PI * 2); ctx.stroke(); });
-  ctx.beginPath(); ctx.moveTo(cx - radius, cy); ctx.lineTo(cx + radius, cy);
-  ctx.moveTo(cx, cy - radius); ctx.lineTo(cx, cy + radius); ctx.stroke();
-
-  if (st.trail.length > 1) {
-    ctx.strokeStyle = 'rgba(0, 255, 136, 0.55)'; ctx.lineWidth = 2;
-    ctx.beginPath();
-    st.trail.forEach((t, i) => {
-      const x = cx + (t.x - st.myPos.x) * scale;
-      const y = cy + (t.y - st.myPos.y) * scale;
-      if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
-    });
-    ctx.stroke();
-  }
-  st.objects.forEach(o => {
-    if (!o.active) return;
-    const ox = cx + (o.x - st.myPos.x) * scale;
-    const oy = cy + (o.y - st.myPos.y) * scale;
-    if (Math.hypot(ox - cx, oy - cy) > radius - 3) return;
-    ctx.fillStyle = o.type === 'loot' ? '#ffdd00' : '#888';
-    ctx.beginPath(); ctx.arc(ox, oy, 2.5, 0, Math.PI * 2); ctx.fill();
-  });
-  st.players.forEach(p => {
-    if (p.hp <= 0) return;
-    const px = cx + (p.x - st.myPos.x) * scale;
-    const py = cy + (p.y - st.myPos.y) * scale;
-    if (Math.hypot(px - cx, py - cy) > radius - 4) return;
-    ctx.fillStyle = p.team === 'red' ? '#ff3333' : '#33aaff';
-    ctx.beginPath(); ctx.arc(px, py, 4, 0, Math.PI * 2); ctx.fill();
-    ctx.strokeStyle = '#fff'; ctx.lineWidth = 1; ctx.stroke();
-  });
-  ctx.fillStyle = '#00ff88'; ctx.beginPath(); ctx.arc(cx, cy, 4, 0, Math.PI * 2); ctx.fill();
-  const hr = st.heading * Math.PI / 180;
-  ctx.strokeStyle = '#00ff88'; ctx.lineWidth = 2;
-  ctx.beginPath(); ctx.moveTo(cx, cy);
-  ctx.lineTo(cx + Math.sin(hr) * 20, cy - Math.cos(hr) * 20); ctx.stroke();
-}
-
-/* ============================================================
-   MAIN LOOP
-   ============================================================ */
-function frame(ts) {
-  if (!st.gameActive) return;
-  const dt = Math.min(0.1, (ts - last) / 1000);
-  last = ts;
-  if (st.gpsReady && GPS.state.source !== 'INIT') {
-    const m = toMeters(GPS.state.lat, GPS.state.lon);
-    st.myPos.x = m.x; st.myPos.y = m.y;
-    st.spd = Math.hypot(GPS.state.vx || 0, GPS.state.vy || 0) * 100;
-    if (st.trail.length === 0 ||
-        Math.hypot(st.trail[st.trail.length-1].x - st.myPos.x,
-                   st.trail[st.trail.length-1].y - st.myPos.y) > 0.5) {
-      st.trail.push({ x: st.myPos.x, y: st.myPos.y });
-      if (st.trail.length > 500) st.trail.shift();
-    }
-  }
-  if (st.keyWalk) {
-    const spd = 2.0 * dt;
-    st.myPos.x += Math.sin(st.heading * Math.PI / 180) * spd * st.keyWalk;
-    st.myPos.y -= Math.cos(st.heading * Math.PI / 180) * spd * st.keyWalk;
-  }
-  renderEnemies();
-  animateGun(dt, ts);
-  updateHUD();
-  requestAnimationFrame(frame);
-}
-
-/* ============================================================
-   EVENTS
-   ============================================================ */
-$('fire').addEventListener('click', fire);
-$('rld').addEventListener('click', reload);
-$('cov').addEventListener('click', toggleCover);
-$('camsw').addEventListener('click', switchCam);
-$('mmap').addEventListener('click', () => {
-  $('bigmap').classList.add('open');
-  drawMap($('bmc'), st.bigR);
-});
-$('bmc-close').addEventListener('click', () => $('bigmap').classList.remove('open'));
-$('mz-in').addEventListener('click', () => { st.bigR = Math.max(20, st.bigR - 20); drawMap($('bmc'), st.bigR); });
-$('mz-out').addEventListener('click', () => { st.bigR = Math.min(500, st.bigR + 20); drawMap($('bmc'), st.bigR); });
-
-document.addEventListener('keydown', e => {
-  if (!st.gameActive) return;
-  if (e.code === 'Space') { e.preventDefault(); fire(); }
-  if (e.code === 'KeyR') reload();
-  if (e.code === 'KeyC') toggleCover();
-  if (e.code === 'ArrowUp') st.keyWalk = 1;
-  if (e.code === 'ArrowDown') st.keyWalk = -1;
-  if (e.code === 'ArrowLeft') st.heading = normDeg(st.heading - 5);
-  if (e.code === 'ArrowRight') st.heading = normDeg(st.heading + 5);
-});
-document.addEventListener('keyup', e => {
-  if (e.code === 'ArrowUp' || e.code === 'ArrowDown') st.keyWalk = 0;
-});
-
-window.addEventListener('load', () => { setTimeout(loadAIModel, 1200); });
-
-/* ============================================================
-   SELF TEST
-   ============================================================ */
-async function runSelfTest() {
-  showAlert('🧪 テスト実行中...');
-  const r = [];
-  r.push('📷 ' + (curStream ? 'OK' : 'NG'));
-  r.push('📍 ' + (st.gpsReady ? st.src : 'NG'));
-  r.push('🤖 ' + (model ? 'OK' : '...'));
-  r.push('🎮 ' + (typeof THREE !== 'undefined' ? 'OK' : 'NG'));
-  r.push('📡 ' + (typeof Peer !== 'undefined' ? 'OK' : 'NG'));
-  if (typeof GPS !== 'undefined' && GPS.state) {
-    r.push('📊 ' + GPS.state.fps + 'Hz');
-    r.push('±' + Math.round(GPS.state.accM) + 'm');
-  }
-  setTimeout(() => showAlert(r.join(' / '), 'ka'), 400);
-}
+/* ── init ── */
+const dpr=Math.min(2,devicePixelRatio||1);$('mc').width=$('mc').height=Math.round(110*dpr*1.5);$('bmc').width=$('bmc').height=Math.round(380*dpr);
+selectMode('bot');tab('host');
+loadScript('https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js')
+  .then(()=>loadScript('https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js').catch(()=>{}))
+  .then(()=>{try{initGun()}catch(e){console.error(e)}}).catch(e=>console.warn('three.js load failed',e));
 </script>
 </body>
 </html>
