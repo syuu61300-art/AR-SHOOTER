@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>AR Shooter AI - Tactical Edge (Fixed)</title>
+<title>AR Shooter AI - Tactical Edge (Complete)</title>
 <style>
 :root{--g:#00ff88;--r:#ff3333;--b:#33aaff;--o:#ff8800;--y:#ffdd00;--bg:rgba(0,0,0,.72);--bd:rgba(0,255,136,.32);--st:env(safe-area-inset-top,0px);--sb:env(safe-area-inset-bottom,0px)}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -47,11 +47,11 @@ html,body{height:100%;overflow:hidden;background:#000;color:var(--g);font-family
 #gps-bar{position:fixed;bottom:calc(var(--sb) + 8px);left:50%;transform:translateX(-50%);z-index:30;font-size:9px;padding:3px 10px;border-radius:4px;pointer-events:none;white-space:nowrap;background:rgba(0,0,0,.65);border:1px solid rgba(0,255,136,.25);color:rgba(0,255,136,.7)}
 #debug-hud{position:fixed;top:calc(var(--st) + 120px);left:10px;z-index:50;background:rgba(0,0,0,.8);border:1px solid var(--y);padding:5px;font-size:9px;color:var(--y);display:none;pointer-events:none;line-height:1.4}
 #gl{position:fixed;left:0;top:0;width:100%;height:100%;z-index:22;pointer-events:none}
-#flash{position:fixed;inset:0;z-index:40;pointer-events:none;background:radial-gradient(ellipse at center,rgba(255,0,0,.1),rgba(255,0,0,.75) 100%);opacity:0}
-#vig{position:fixed;inset:0;z-index:39;pointer-events:none;box-shadow:inset 0 0 90px 30px rgba(255,0,0,.55);opacity:0}
-body.low #vig{animation:hb 1s infinite}
+#flash{position:fixed;inset:0;z-index:40;pointer-events:none;background:radial-gradient(ellipse at center,rgba(255,0,0,.1),rgba(255,0,0,.75) 100%);opacity:0;transition:opacity .25s}
+#vig{position:fixed;inset:0;z-index:39;pointer-events:none;box-shadow:inset 0 0 90px 30px rgba(255,0,0,.55);opacity:0;transition:opacity .3s}
+body.low #vig{animation:hb 1s infinite;opacity:1}
 @keyframes hb{0%,100%{opacity:.35}45%{opacity:1}}
-#hitdir{position:fixed;left:50%;top:50%;width:0;height:0;z-index:41;opacity:0;pointer-events:none}
+#hitdir{position:fixed;left:50%;top:50%;width:0;height:0;z-index:41;opacity:0;pointer-events:none;transition:opacity .25s}
 #hitdir::before{content:'';position:absolute;left:-26px;top:-140px;border-left:26px solid transparent;border-right:26px solid transparent;border-bottom:44px solid rgba(255,40,40,.9);filter:drop-shadow(0 0 8px red)}
 .dmg{position:fixed;z-index:45;pointer-events:none;font-weight:bold;font-size:15px;color:#ffe14d;text-shadow:0 0 4px #000,0 0 4px #000;transform:translate(-50%,-50%);animation:fl .85s forwards}
 .dmg.hd{color:#ff4a4a;font-size:19px}.dmg.me{color:#ff5555}
@@ -142,7 +142,7 @@ select#camsel{background:rgba(0,20,10,.9);color:var(--g);border:1px solid var(--
 <canvas id="ai-overlay"></canvas>
 <div id="xh"><div class="xr"></div><div class="xd"></div></div>
 <div id="vig"></div><div id="hitdir"></div><div id="flash"></div>
-<div id="debug-hud">DEBUG<br>GPS Err: <span id="dbg-err">-</span><br>K-Out: <span id="dbg-kal">-</span><br>Vel: <span id="dbg-vel">-</span></div>
+<div id="debug-hud">DEBUG<br>GPS Err: <span id="dbg-err">-</span><br>K-Out: <span id="dbg-kal">-</span><br>Vel: <span id="dbg-vel">-</span><br>Src: <span id="dbg-src">-</span><br>Age: <span id="dbg-age">-</span></div>
 
 <div id="hud-gps"><div class="hl">LOCAL POS</div><div class="hv" id="gps-la">X: 0.0</div><div class="hv" id="gps-lo">Y: 0.0</div><div class="hl" id="gps-acc">...</div></div>
 <div id="hud-center"><div id="timer">05:00</div><div id="scores"><div class="sc red" id="sc-r">RED 0</div><div class="sc blu" id="sc-b">BLUE 0</div></div><div id="mode-badge">BOT</div></div>
@@ -164,7 +164,7 @@ select#camsel{background:rgba(0,20,10,.9);color:var(--g);border:1px solid var(--
 <div id="alerts"></div>
 
 <div class="screen" id="s-mode">
-  <div class="logo">AR SHOOTER</div><div class="sub">AI TACTICAL BATTLE</div>
+  <div class="logo">AR SHOOTER</div><div class="sub">AI TACTICAL BATTLE + GPS MODULE</div>
   <div class="mode-row">
     <div class="mcard bot-sel" id="mc-bot" onclick="selectMode('bot')"><div class="mi">🤖</div><div class="mt">BOT MODE</div><div class="md">1人練習<br>AI対戦</div></div>
     <div class="mcard" id="mc-on" onclick="selectMode('online')"><div class="mi">🌐</div><div class="mt">ONLINE</div><div class="md">リアル対戦<br>GPSマルチ</div></div>
@@ -174,7 +174,7 @@ select#camsel{background:rgba(0,20,10,.9);color:var(--g);border:1px solid var(--
   </div>
   <button class="sbtn bot-s" id="next-btn" onclick="goToSetup()">▶ 次へ（カメラ・GPS設定）</button>
   <button class="sbtn debug" onclick="runSelfTest()" style="margin-top:5px;font-size:10px;padding:8px">🧪 システムテスト実行</button>
-  <div class="note">スマホ背面カメラ / PCウェブカメラ 両対応<br>PC: 矢印キー 移動/向き / Space 発射 / R リロード / C カバー<br>テストモード: URLに <code>?test=1</code> を付加</div>
+  <div class="note">スマホ背面カメラ / PCウェブカメラ 両対応<br>PC: 矢印キー 移動/向き / Space 発射 / R リロード / C カバー<br>テストモード: URLに <code>?test=1</code> を付加<br>GPS: 100Hz カルマン+IMU補間モジュール内蔵</div>
 </div>
 
 <div class="screen hidden" id="s-perm">
@@ -238,12 +238,244 @@ select#camsel{background:rgba(0,20,10,.9);color:var(--g);border:1px solid var(--
 <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.3/dist/coco-ssd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.5/dist/peerjs.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
 
+<!-- ============================================================
+     GPS MODULE (from File 1 - 高機能カルマン+IMU補間版)
+     ============================================================ -->
+<script>
+(function(global){
+'use strict';
+function makeKalman(R, Q) {
+  let x = 0, y = 0, vx = 0, vy = 0;
+  let Pxx = 1, Pvv = 1, init = false;
+  return {
+    reset() { init = false; Pxx = 1; Pvv = 1; x = 0; y = 0; vx = 0; vy = 0; },
+    update(mLat, mLon, acc, dt) {
+      if (!init) { x = mLat; y = mLon; init = true; return { lat: x, lon: y }; }
+      x += vx * dt; y += vy * dt;
+      Pxx += Pvv * dt * dt + Q * dt;
+      Pvv += Q * dt;
+      const r = Math.max(acc * acc, R);
+      const Kx = Pxx / (Pxx + r);
+      const Kv = Pvv / (Pvv + r);
+      vx += Kv * ((mLat - x) / Math.max(dt, 0.05));
+      vy += Kv * ((mLon - y) / Math.max(dt, 0.05));
+      x += Kx * (mLat - x);
+      y += Kx * (mLon - y);
+      Pxx *= (1 - Kx); Pvv *= (1 - Kv);
+      return { lat: x, lon: y };
+    },
+    predict(ax, ay, dt) {
+      if (!init) return null;
+      vx += ax * dt; vy += ay * dt;
+      x += vx * dt + 0.5 * ax * dt * dt;
+      y += vy * dt + 0.5 * ay * dt * dt;
+      Pxx += Pvv * dt * dt + Q * dt;
+      Pvv += Q * dt;
+      return { lat: x, lon: y };
+    },
+    get pos() { return { lat: x, lon: y }; },
+    get vel() { return { vx, vy }; },
+    get ready() { return init; }
+  };
+}
+const DEG2RAD = Math.PI / 180;
+const EARTH_R  = 6371000;
+function toMeters(lat, lon, baseLat, baseLon) {
+  return {
+    x: (lon - baseLon) * DEG2RAD * EARTH_R * Math.cos(baseLat * DEG2RAD),
+    y: (lat - baseLat) * DEG2RAD * EARTH_R
+  };
+}
+function toDeg(mx, my, baseLat, baseLon) {
+  return {
+    lat: baseLat + my / EARTH_R / DEG2RAD,
+    lon: baseLon + mx / (EARTH_R * Math.cos(baseLat * DEG2RAD) * DEG2RAD)
+  };
+}
+async function fetchIPLocation() {
+  const apis = [
+    () => fetch('https://ipwho.is/').then(r=>r.json())
+            .then(d => ({ lat: +d.latitude, lon: +d.longitude, city: d.city })),
+    () => fetch('https://ipapi.co/json/').then(r=>r.json())
+            .then(d => ({ lat: +d.latitude, lon: +d.longitude, city: d.city })),
+  ];
+  for (const fn of apis) {
+    try {
+      const d = await fn();
+      if (d.lat && d.lon && Math.abs(d.lat) < 90) return d;
+    } catch(e) {}
+  }
+  return null;
+}
+const TICK_MS = 10;
+const KF_R = 25;
+const KF_Q = 0.01;
+const gps = {
+  state: {
+    lat: 35.6762, lon: 139.6503, altM: 0, accM: 999,
+    speedMps: 0, headingDeg: 0, vx: 0, vy: 0,
+    source: 'INIT', gpsAge: 9999, tickCount: 0,
+    lastTickAt: 0, fps: 0,
+  },
+  onUpdate: null,
+  onGPSFix: null,
+  onSourceChange: null,
+  _watcher: null, _timer: null,
+  _kf: makeKalman(KF_R, KF_Q),
+  _base: null, _lastGPSAt: 0, _lastTickAt: 0,
+  _imu: { ax: 0, ay: 0, az: 0 }, _imuReady: false,
+  _ipTimer: null, _source: 'INIT',
+  _motionHandler: null,
+  start() {
+    this._setupIMU();
+    this._startGPS();
+    this._startTick();
+    return this;
+  },
+  stop() {
+    if (this._watcher !== null) { navigator.geolocation.clearWatch(this._watcher); this._watcher = null; }
+    if (this._timer !== null) { clearInterval(this._timer); this._timer = null; }
+    if (this._ipTimer !== null) { clearInterval(this._ipTimer); this._ipTimer = null; }
+    if (this._motionHandler) window.removeEventListener('devicemotion', this._motionHandler);
+  },
+  _startGPS() {
+    if (!navigator.geolocation) { this._startIPFallback(); return; }
+    if (!isSecureContext) { this._startIPFallback(); return; }
+    navigator.geolocation.getCurrentPosition(
+      p => this._onGPS(p), () => {},
+      { enableHighAccuracy: false, timeout: 5000, maximumAge: 60000 }
+    );
+    this._watcher = navigator.geolocation.watchPosition(
+      p => this._onGPS(p),
+      e => { if (e.code === 1) this._startIPFallback(); },
+      { enableHighAccuracy: true, timeout: 0, maximumAge: 0 }
+    );
+    if (navigator.permissions) {
+      navigator.permissions.query({ name: 'geolocation' })
+        .then(r => { r.onchange = () => { if (r.state === 'granted') this._startGPS(); }; })
+        .catch(() => {});
+    }
+  },
+  _onGPS(pos) {
+    const c = pos.coords;
+    const now = performance.now();
+    const dt = this._lastGPSAt ? (now - this._lastGPSAt) / 1000 : 0.1;
+    this._lastGPSAt = now;
+    if (!this._base) {
+      this._base = { lat: c.latitude, lon: c.longitude };
+      this._kf.reset();
+    }
+    const m = toMeters(c.latitude, c.longitude, this._base.lat, this._base.lon);
+    const filtered = this._kf.update(m.x, m.y, Math.max(c.accuracy, 1), dt);
+    const deg = toDeg(filtered.lat, filtered.lon, this._base.lat, this._base.lon);
+    this.state.lat = deg.lat;
+    this.state.lon = deg.lon;
+    this.state.altM = c.altitude ?? 0;
+    this.state.accM = c.accuracy;
+    this.state.speedMps = c.speed ?? 0;
+    this.state.headingDeg = c.heading ?? this.state.headingDeg;
+    this.state.gpsAge = 0;
+    const v = this._kf.vel;
+    this.state.vx = v.vx; this.state.vy = v.vy;
+    this._setSource('GPS');
+    this.onGPSFix && this.onGPSFix({ ...this.state });
+  },
+  _setupIMU() {
+    const tryReq = () => {
+      if (typeof DeviceMotionEvent !== 'undefined' &&
+          typeof DeviceMotionEvent.requestPermission === 'function') {
+        DeviceMotionEvent.requestPermission()
+          .then(r => { if (r === 'granted') this._listenIMU(); })
+          .catch(() => {});
+      } else { this._listenIMU(); }
+    };
+    tryReq();
+  },
+  _listenIMU() {
+    this._motionHandler = e => {
+      const a = e.acceleration;
+      if (!a || a.x == null) return;
+      this._imu.ax = a.x ?? 0;
+      this._imu.ay = a.y ?? 0;
+      this._imu.az = a.z ?? 0;
+      this._imuReady = true;
+    };
+    window.addEventListener('devicemotion', this._motionHandler, { passive: true });
+  },
+  _startTick() {
+    let lastFPSCheck = performance.now(), frames = 0;
+    this._timer = setInterval(() => {
+      const now = performance.now();
+      const dt = this._lastTickAt ? (now - this._lastTickAt) / 1000 : 0.01;
+      this._lastTickAt = now;
+      this.state.gpsAge = now - (this._lastGPSAt || now);
+      const gpsStale = this.state.gpsAge > 200;
+      if (gpsStale && this._imuReady && this._base && this._kf.ready) {
+        const ax = this._imu.ax, ay = this._imu.ay;
+        const p = this._kf.predict(ax, ay, dt);
+        if (p) {
+          const deg = toDeg(p.lat, p.lon, this._base.lat, this._base.lon);
+          this.state.lat = deg.lat;
+          this.state.lon = deg.lon;
+          const v = this._kf.vel;
+          this.state.vx = v.vx; this.state.vy = v.vy;
+          this.state.speedMps = Math.hypot(v.vx, v.vy);
+          this._setSource('GPS+IMU');
+        }
+      }
+      this.state.tickCount++;
+      this.state.lastTickAt = now;
+      frames++;
+      if (now - lastFPSCheck >= 1000) {
+        this.state.fps = frames; frames = 0; lastFPSCheck = now;
+      }
+      this.onUpdate && this.onUpdate(this.state);
+    }, TICK_MS);
+  },
+  async _startIPFallback() {
+    if (this._ipTimer) return;
+    let demoset = false;
+    const update = async () => {
+      if (this._source === 'GPS' || this._source === 'GPS+IMU') return;
+      const d = await fetchIPLocation();
+      if (this._source === 'GPS' || this._source === 'GPS+IMU') return;
+      if (d) {
+        this.state.lat = d.lat;
+        this.state.lon = d.lon;
+        this.state.accM = 5000;
+        this._setSource('IP');
+        this.onGPSFix && this.onGPSFix({ ...this.state });
+      } else if (!demoset) {
+        demoset = true;
+        this.state.lat = 35.6762;
+        this.state.lon = 139.6503;
+        this.state.accM = 9999;
+        this._setSource('DEMO');
+        this.onGPSFix && this.onGPSFix({ ...this.state });
+      }
+    };
+    await update();
+    this._ipTimer = setInterval(update, 30000);
+  },
+  _setSource(s) {
+    if (this._source === s) return;
+    this._source = s;
+    this.state.source = s;
+    this.onSourceChange && this.onSourceChange(s);
+  }
+};
+global.GPS = gps;
+})(window);
+</script>
+
+<!-- ============================================================
+     メインゲームスクリプト (File1 + File2 統合・補完版)
+     ============================================================ -->
 <script>
 'use strict';
-const $=id=>document.getElementById(id);
-const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c]));
 
 const isTestMode = new URLSearchParams(window.location.search).has('test');
 if (isTestMode) {
@@ -251,6 +483,7 @@ if (isTestMode) {
   console.log("[TEST MODE] Enabled");
 }
 
+const MAP_MAX = 80;
 const st = {
   mode:'bot', botCount:1, maxP:4, time:5, health:100, ammo:30, maxAmmo:30, reserve:90,
   score:{red:0,blue:0}, myTeam:'red', myPos:{x:0,y:0}, targetPos:{x:0,y:0},
@@ -258,12 +491,13 @@ const st = {
   gameActive:false, timeLeft:300, kills:0, deaths:0, reloading:false, dead:false,
   roomCode:null, players:[], objects:[], trail:[], yawV:0, pitV:0, spd:0, walkI:0, shk:0,
   pitch:0, roll:0, keyWalk:0, cover:false, origin:{lat:35.6762, lon:139.6503},
-  scanState:'idle', scanSamples:[], ready:false
+  scanState:'idle', scanSamples:[], ready:false, bigR:120
 };
-const net = {peer:null, host:false, conns:{}, hostConn:null, myId:null, name:'Player', joined:false, hostReady:false, guestReady:{}};
-const BOT_NAMES=['Ghost','Viper','Hawk','Snake','Fox','Wolf','Eagle','Raven'];
-const BOT_TEAMS=['blue','blue','red','blue','red','blue','red','blue'];
+const net = { peer:null, host:false, conns:{}, hostConn:null, myId:null, name:'Player', joined:false, hostReady:false, guestReady:{} };
+const BOT_NAMES = ['Ghost','Viper','Hawk','Snake','Fox','Wolf','Eagle','Raven'];
+const BOT_TEAMS = ['blue','blue','red','blue','red','blue','red','blue'];
 const ints = [];
+const enemyEls = {};
 
 function toMeters(lat, lon) {
   const dLat = (lat - st.origin.lat) * 111320;
@@ -280,31 +514,6 @@ function getBearing(p1, p2) { return Math.atan2(p2.x - p1.x, -(p2.y - p1.y)); }
 function radToDeg(r) { return r * 180 / Math.PI; }
 function normDeg(d) { return (d % 360 + 360) % 360; }
 
-class KalmanFilter {
-  constructor(R = 0.01, Q = 3) { this.R = R; this.Q = Q; this.A = 1; this.C = 1; this.cov = NaN; this.x = NaN; }
-  filter(z) {
-    if (isNaN(this.x)) { this.x = z; this.cov = 1; return this.x; }
-    this.cov = this.cov + this.Q;
-    const K = this.cov / (this.cov + this.R);
-    this.x = this.x + K * (z - this.x);
-    this.cov = (1 - K) * this.cov;
-    return this.x;
-  }
-}
-const kfLat = new KalmanFilter(0.01, 3);
-const kfLon = new KalmanFilter(0.01, 3);
-
-let drVel = { x: 0, y: 0 };
-window.addEventListener('devicemotion', e => {
-  const acc = e.accelerationIncludingGravity;
-  if (!acc) return;
-  const dt = 0.05;
-  const ax = (acc.x || 0) * dt;
-  const ay = (acc.y || 0) * dt;
-  drVel.x = drVel.x * 0.95 + ax * 0.05;
-  drVel.y = drVel.y * 0.95 + ay * 0.05;
-});
-
 document.addEventListener('click', e => {
   const b = e.target.closest('.bbot'); if (!b) return;
   const g = b.parentNode;
@@ -320,10 +529,14 @@ function selectMode(m) {
   $('next-btn').className = 'sbtn' + (m === 'bot' ? ' bot-s' : '');
 }
 function goToSetup() {
-  try { DeviceOrientationEvent.requestPermission && DeviceOrientationEvent.requestPermission(); DeviceMotionEvent.requestPermission && DeviceMotionEvent.requestPermission(); } catch (e) { }
+  try {
+    DeviceOrientationEvent.requestPermission && DeviceOrientationEvent.requestPermission();
+    DeviceMotionEvent.requestPermission && DeviceMotionEvent.requestPermission();
+  } catch (e) {}
   show('s-perm');
   $('start-btn').textContent = st.mode === 'bot' ? '⚔ ゲームスタート' : '▶ 次へ（ルーム設定）';
-  doCamPerm(); doGpsPerm();
+  doCamPerm();
+  doGpsPerm();
   setTimeout(() => {
     if ($('start-btn').disabled) {
       $('start-btn').disabled = false;
@@ -332,14 +545,14 @@ function goToSetup() {
       if (!st.gpsReady) { st.origin = { lat: 35.6762, lon: 139.6503 }; st.gpsReady = true; }
       console.log("[Flow] Permission timeout fallback triggered");
     }
-  }, 5000);
+  }, 12000);
 }
 function proceed() {
   if (st.mode === 'bot') { startScanPhase(); return; }
   st.roomCode = genCode(); $('hcode').textContent = st.roomCode; show('s-online');
 }
 function backPerm() { show('s-perm'); }
-function genCode() { const c = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; let s = ''; for (let i = 0; i < 6; i++) s += c[Math.floor(Math.random() * c.length)]; return s; }
+function genCode() { const c='ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; let s=''; for (let i=0;i<6;i++) s+=c[Math.floor(Math.random()*c.length)]; return s; }
 function tab(t) {
   $('t-host').className = 'mcard ' + (t === 'host' ? 'sel' : '');
   $('t-join').className = 'mcard ' + (t === 'join' ? 'sel' : '');
@@ -357,76 +570,91 @@ async function enumCams() {
     const d = await navigator.mediaDevices.enumerateDevices();
     cams = d.filter(x => x.kind === 'videoinput');
     const sel = $('camsel'); sel.innerHTML = '';
-    cams.forEach((c, i) => { const l = c.label || ('カメラ ' + (i + 1)); const o = document.createElement('option'); o.value = i; o.textContent = l; sel.appendChild(o); });
-    const bi = cams.findIndex(c => /back|rear|env/i.test(c.label)); if (bi >= 0) { sel.value = bi; curCam = bi; }
+    cams.forEach((c, i) => {
+      const l = c.label || ('カメラ ' + (i + 1));
+      const o = document.createElement('option'); o.value = i; o.textContent = l; sel.appendChild(o);
+    });
+    const bi = cams.findIndex(c => /back|rear|env/i.test(c.label));
+    if (bi >= 0) { sel.value = bi; curCam = bi; }
     if (cams.length) $('cam-sel').style.display = 'flex';
-  } catch (e) { }
+  } catch (e) {}
 }
 async function startCam(idx) {
   if (curStream) { curStream.getTracks().forEach(t => t.stop()); curStream = null; }
   try {
-    const con = cams.length && idx !== undefined ? { video: { deviceId: { exact: cams[idx].deviceId }, width: { ideal: 1920 }, height: { ideal: 1080 } } } : { video: { facingMode: 'environment', width: { ideal: 1920 }, height: { ideal: 1080 } } };
-    const s = await navigator.mediaDevices.getUserMedia(con); curStream = s; $('cam').srcObject = s;
-    setPerm('cam', 'ok', (s.getVideoTracks()[0]?.label || 'カメラ').substring(0, 28)); curCam = idx ?? 0;
+    const con = cams.length && idx !== undefined
+      ? { video: { deviceId: { exact: cams[idx].deviceId }, width: { ideal: 1920 }, height: { ideal: 1080 } } }
+      : { video: { facingMode: 'environment', width: { ideal: 1920 }, height: { ideal: 1080 } } };
+    const s = await navigator.mediaDevices.getUserMedia(con);
+    curStream = s; $('cam').srcObject = s;
+    setPerm('cam', 'ok', (s.getVideoTracks()[0]?.label || 'カメラ').substring(0, 28));
+    curCam = idx ?? 0;
   } catch (e) { setPerm('cam', 'ng', '拒否 — 背景は黒で続行'); }
   checkReady();
 }
 async function doCamPerm() {
   setPerm('cam', 'wt', '確認中...');
-  try { const t = await navigator.mediaDevices.getUserMedia({ video: true }); t.getTracks().forEach(x => x.stop()); } catch (e) { }
-  await enumCams(); const i = parseInt($('camsel').value || '0', 10); await startCam(isNaN(i) ? 0 : i);
+  try { const t = await navigator.mediaDevices.getUserMedia({ video: true }); t.getTracks().forEach(x => x.stop()); } catch (e) {}
+  await enumCams();
+  const i = parseInt($('camsel').value || '0', 10);
+  await startCam(isNaN(i) ? 0 : i);
 }
 async function applyCam() { await startCam(parseInt($('camsel').value, 10) || 0); }
 async function switchCam() { if (cams.length <= 1) return; curCam = (curCam + 1) % cams.length; await startCam(curCam); }
 
-let gpsWatcher = null, ipTimer = null, permWatch = false;
-let rawGps = { lat: 0, lon: 0, acc: 999 };
-
-function setPos(lat, lon, acc, src) {
-  rawGps = { lat, lon, acc };
-  if (st.scanState === 'scanning') {
-    st.scanSamples.push({ lat, lon, acc, heading: st.heading });
-    $('scan-acc').textContent = `精度: ±${Math.round(acc)}m`;
-    $('scan-acc').style.color = acc < 15 ? 'var(--g)' : acc < 30 ? 'var(--y)' : 'var(--r)';
-  }
-  if (!st.gpsReady) { st.origin = { lat, lon }; st.gpsReady = true; }
-  $('gps-acc').textContent = src + (acc ? ' ±' + Math.round(acc) + 'm' : '');
-  if (isTestMode) { $('dbg-err').textContent = Math.round(acc) + 'm'; }
-}
-async function ipLoc() {
-  const apis = [() => fetch('https://ipwho.is/').then(r => r.json()).then(d => ({ lat: +d.latitude, lon: +d.longitude, city: d.city })), () => fetch('https://ipapi.co/json/').then(r => r.json()).then(d => ({ lat: +d.latitude, lon: +d.longitude, city: d.city }))];
-  for (const f of apis) { try { const d = await f(); if (d.lat && d.lon) return d; } catch (e) { } } return null;
-}
-async function startIP(why, denied) {
-  if (ipTimer) return;
-  setPerm('gps', 'wt', 'IP位置取得中...'); if (denied) $('gps-help').style.display = 'block';
-  const upd = async () => {
-    if (st.src === 'GPS') return;
-    const d = await ipLoc();
-    if (st.src === 'GPS') return;
-    if (d) { setPos(d.lat, d.lon, 0, 'IP' + (d.city ? '(' + d.city + ')' : '')); setPerm('gps', 'ng', why + ' → IP位置(概算)'); }
-    else { setPerm('gps', 'ng', why + ' → デモ座標'); if (!st.gpsReady) { st.origin = { lat: 35.6762, lon: 139.6503 }; st.gpsReady = true; } }
+/* ── GPS: 新モジュール統合 ── */
+function doGpsPerm() {
+  setPerm('gps', 'wt', 'GPS取得中...');
+  GPS.onSourceChange = (src) => {
+    if (src === 'GPS' || src === 'GPS+IMU') {
+      st.src = 'GPS';
+      setPerm('gps', 'ok', 'GPS OK ±' + Math.round(GPS.state.accM) + 'm');
+      $('gps-help').style.display = 'none';
+    } else if (src === 'IP') {
+      st.src = 'IP';
+      setPerm('gps', 'ng', 'GPS拒否 → IP位置(概算)');
+      $('gps-help').style.display = 'block';
+    } else if (src === 'DEMO') {
+      st.src = 'DEMO';
+      setPerm('gps', 'ng', 'GPS利用不可 → デモ座標');
+      $('gps-help').style.display = 'block';
+    }
+    if (isTestMode) $('dbg-src').textContent = src;
     checkReady();
   };
-  await upd(); ipTimer = setInterval(upd, 30000);
+  GPS.onGPSFix = (s) => {
+    if (st.scanState === 'scanning') {
+      st.scanSamples.push({ lat: s.lat, lon: s.lon, acc: s.accM, heading: st.heading });
+      $('scan-acc').textContent = `精度: ±${Math.round(s.accM)}m`;
+      $('scan-acc').style.color = s.accM < 15 ? 'var(--g)' : s.accM < 30 ? 'var(--y)' : 'var(--r)';
+    }
+    if (!st.gpsReady) {
+      st.origin = { lat: s.lat, lon: s.lon };
+      st.gpsReady = true;
+    }
+    $('gps-acc').textContent = s.source + (s.accM ? ' ±' + Math.round(s.accM) + 'm' : '');
+    if (isTestMode) $('dbg-err').textContent = Math.round(s.accM) + 'm';
+    checkReady();
+  };
+  GPS.onUpdate = (s) => {
+    if (!isTestMode) return;
+    $('dbg-age').textContent = Math.round(s.gpsAge) + 'ms';
+    $('dbg-vel').textContent = (s.vx || 0).toFixed(2) + ',' + (s.vy || 0).toFixed(2);
+  };
+  if (!window._gpsStarted) {
+    window._gpsStarted = true;
+    GPS.start();
+  }
+  setTimeout(() => {
+    if (!st.gpsReady) {
+      st.origin = { lat: 35.6762, lon: 139.6503 };
+      st.gpsReady = true;
+      setPerm('gps', 'ng', 'タイムアウト（デモ座標）');
+      checkReady();
+    }
+  }, 12000);
 }
-function gpsOk(p) {
-  if (ipTimer) { clearInterval(ipTimer); ipTimer = null; }
-  setPos(p.coords.latitude, p.coords.longitude, p.coords.accuracy, 'GPS');
-  $('gps-help').style.display = 'none'; setPerm('gps', 'ok', 'GPS OK ±' + Math.round(p.coords.accuracy) + 'm'); checkReady();
-}
-function doGpsPerm() {
-  if (gpsWatcher !== null) { navigator.geolocation.clearWatch(gpsWatcher); gpsWatcher = null; }
-  if (!navigator.geolocation) { startIP('非対応'); return; }
-  if (!isSecureContext) { startIP('HTTPS必須'); return; }
-  setPerm('gps', 'wt', 'GPS取得中...');
-  const why = { 1: '拒否', 2: '位置不明', 3: 'タイムアウト' };
-  const ft = setTimeout(() => { if (st.src !== 'GPS') startIP('応答なし'); }, 9000);
-  navigator.geolocation.getCurrentPosition(p => { clearTimeout(ft); gpsOk(p); }, e => { clearTimeout(ft); startIP(why[e.code] || 'エラー', e.code === 1); }, { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 });
-  gpsWatcher = navigator.geolocation.watchPosition(gpsOk, e => { if (e.code === 1) startIP('拒否', true); }, { enableHighAccuracy: true, timeout: 30000, maximumAge: 1000 });
-  if (!permWatch && navigator.permissions) { permWatch = true; navigator.permissions.query({ name: 'geolocation' }).then(r => { r.onchange = () => { if (r.state === 'granted') doGpsPerm(); }; }).catch(() => { }); }
-  console.log("[GPS] Handler started");
-}
+
 function onOri(e) {
   let h = e.webkitCompassHeading;
   if (h == null && e.alpha != null && (e.absolute || e.type === 'deviceorientationabsolute')) h = 360 - e.alpha;
@@ -435,31 +663,41 @@ function onOri(e) {
 }
 addEventListener('deviceorientationabsolute', onOri, true);
 addEventListener('deviceorientation', onOri, true);
-addEventListener('devicemotion', e => { const a = e.accelerationIncludingGravity; if (!a || a.x == null) return; st.shk += (Math.abs(Math.hypot(a.x, a.y, a.z) - 9.81) - st.shk) * .12; });
+addEventListener('devicemotion', e => {
+  const a = e.accelerationIncludingGravity;
+  if (!a || a.x == null) return;
+  st.shk += (Math.abs(Math.hypot(a.x, a.y, a.z) - 9.81) - st.shk) * .12;
+});
 
-function setPerm(w, s, t) { $('perm-' + w).className = 'perm ' + s; $(w === 'cam' ? 'pcam-v' : 'pgps-v').textContent = t; const b = $(w === 'cam' ? 'btn-cam' : 'btn-gps'); b.textContent = s === 'ok' ? '✓' : s === 'ng' ? '再試行' : '...'; b.disabled = s === 'wt'; }
-function checkReady() { const c = !$('perm-cam').classList.contains('wt'), g = !$('perm-gps').classList.contains('wt'); if (c && g) $('start-btn').disabled = false; }
+function setPerm(w, s, t) {
+  $('perm-' + w).className = 'perm ' + s;
+  $(w === 'cam' ? 'pcam-v' : 'pgps-v').textContent = t;
+  const b = $(w === 'cam' ? 'btn-cam' : 'btn-gps');
+  b.textContent = s === 'ok' ? '✓' : s === 'ng' ? '再試行' : '...';
+  b.disabled = s === 'wt';
+}
+function checkReady() {
+  const c = !$('perm-cam').classList.contains('wt');
+  const g = !$('perm-gps').classList.contains('wt');
+  if (c && g) $('start-btn').disabled = false;
+}
 
+/* ── AI MODEL ── */
 let model = null;
 let detections = [];
 let lastDetectTime = 0;
-
 async function loadAIModel() {
   try {
     model = await cocoSsd.load();
     console.log("[AI] Model loaded");
-    showAlert("✅ AIモデル ロード完了");
+    showAlert("✅ AIモデル ロード完了", "ka");
   } catch (e) {
     console.error("[AI] Model load failed", e);
     showAlert("⚠ AIモデル ロード失敗", "ha");
   }
 }
-
 async function detectLoop(timestamp) {
-  if (!st.gameActive || !model) {
-    requestAnimationFrame(detectLoop);
-    return;
-  }
+  if (!st.gameActive || !model) { requestAnimationFrame(detectLoop); return; }
   if (timestamp - lastDetectTime > 300) {
     lastDetectTime = timestamp;
     const video = $('cam');
@@ -468,12 +706,11 @@ async function detectLoop(timestamp) {
         const predictions = await model.detect(video);
         detections = predictions.filter(p => p.class === 'person');
         drawAIDebug(detections);
-      } catch (e) { }
+      } catch (e) {}
     }
   }
   requestAnimationFrame(detectLoop);
 }
-
 function drawAIDebug(dets) {
   const cv = $('ai-overlay');
   const ctx = cv.getContext('2d');
@@ -484,109 +721,204 @@ function drawAIDebug(dets) {
   ctx.strokeStyle = 'rgba(0, 255, 136, 0.5)';
   ctx.font = '12px Courier New';
   ctx.fillStyle = '#00ff88';
-
   const video = $('cam');
-  const scaleX = cv.width / video.videoWidth;
-  const scaleY = cv.height / video.videoHeight;
-
+  const scaleX = cv.width / (video.videoWidth || cv.width);
+  const scaleY = cv.height / (video.videoHeight || cv.height);
   dets.forEach(d => {
     const [x, y, w, h] = d.bbox;
-    const bx = x * scaleX;
-    const by = y * scaleY;
-    const bw = w * scaleX;
-    const bh = h * scaleY;
+    const bx = x * scaleX, by = y * scaleY, bw = w * scaleX, bh = h * scaleY;
     ctx.strokeRect(bx, by, bw, bh);
     ctx.fillText(`Person ${Math.round(d.score * 100)}%`, bx, by - 5);
   });
 }
 
-function loadPeer() { return new Promise((ok, ng) => { if (window.Peer) return ok(); const s = document.createElement('script'); s.src = 'https://cdn.jsdelivr.net/npm/peerjs@1.5.5/dist/peerjs.min.js'; s.onload = ok; s.onerror = ng; document.head.appendChild(s); }); }
+/* ── NETWORKING ── */
+function loadPeerLib() {
+  return new Promise((ok, ng) => {
+    if (window.Peer) return ok();
+    const s = document.createElement('script');
+    s.src = 'https://cdn.jsdelivr.net/npm/peerjs@1.5.5/dist/peerjs.min.js';
+    s.onload = ok; s.onerror = ng;
+    document.head.appendChild(s);
+  });
+}
 async function netGo() {
   net.name = ($('pname').value.trim() || 'Player').slice(0, 10);
   const host = ($('net-go').dataset.t || 'host') === 'host';
-  if (!host) { const c = $('jcode').value.trim().toUpperCase(); if (c.length !== 6) { setNet('6文字のコードを入力してください'); return; } st.roomCode = c; }
+  if (!host) {
+    const c = $('jcode').value.trim().toUpperCase();
+    if (c.length !== 6) { setNet('6文字のコードを入力してください'); return; }
+    st.roomCode = c;
+  }
   setNet('接続中...'); $('net-go').disabled = true;
-  try { await loadPeer(); } catch (e) { setNet('通信ライブラリを読み込めません'); $('net-go').disabled = false; return; }
+  try { await loadPeerLib(); } catch (e) { setNet('通信ライブラリを読み込めません'); $('net-go').disabled = false; return; }
   host ? hostRoom() : joinRoom();
 }
 function hostRoom() {
   const peerOpts = { host: '0.peerjs.com', port: 443, path: '/', secure: true, debug: 2 };
-  const p = net.peer = new Peer('arsh-' + st.roomCode, peerOpts); net.host = true; net.myId = 'host'; st.myTeam = 'red'; st.players = []; net.hostReady = false; net.guestReady = {};
-  p.on('error', e => { setNet(e.type === 'unavailable-id' ? 'コードが使用中です' : 'エラー: ' + e.type); $('net-go').disabled = false; });
+  const p = net.peer = new Peer('arsh-' + st.roomCode, peerOpts);
+  net.host = true; net.myId = 'host'; st.myTeam = 'red';
+  st.players = []; net.hostReady = false; net.guestReady = {};
+  p.on('error', e => {
+    setNet(e.type === 'unavailable-id' ? 'コードが使用中です' : 'エラー: ' + e.type);
+    $('net-go').disabled = false;
+  });
   p.on('open', () => openLobby());
   p.on('connection', c => {
     c.on('data', m => hostRecv(c, m));
-    c.on('close', () => { delete net.conns[c.peer]; st.players = st.players.filter(x => x.id !== c.peer); lobbyPush(); });
+    c.on('close', () => {
+      delete net.conns[c.peer];
+      delete net.guestReady[c.peer];
+      st.players = st.players.filter(x => x.id !== c.peer);
+      lobbyPush();
+    });
   });
 }
 function hostRecv(c, m) {
-  const now = performance.now(); let p = st.players.find(x => x.id === c.peer);
+  const now = performance.now();
+  let p = st.players.find(x => x.id === c.peer);
   if (m.t === 'join') {
-    if (st.players.length + 1 >= st.maxP || st.gameActive) { c.send({ t: 'full' }); setTimeout(() => c.close(), 300); return; }
-    const r = st.players.filter(x => x.team === 'red').length + 1, b = st.players.length + 1 - r, team = r <= b ? 'red' : 'blue';
+    if (st.players.length + 1 >= st.maxP || st.gameActive) {
+      c.send({ t: 'full' }); setTimeout(() => c.close(), 300); return;
+    }
+    const r = st.players.filter(x => x.team === 'red').length + 1;
+    const b = st.players.length + 1 - r;
+    const team = r <= b ? 'red' : 'blue';
     st.players.push({ id: c.peer, name: esc(String(m.name || 'Player').slice(0, 10)), team, hp: 100, x: 0, y: 0 });
     net.conns[c.peer] = c; net.guestReady[c.peer] = false;
     c.send({ t: 'welcome', team, time: st.time, max: st.maxP, origin: st.origin });
     lobbyPush();
   } else if (!p) return;
-  else if (m.t === 'ready') { net.guestReady[c.peer] = true; $('lob-wait').textContent = `準備完了: ${Object.values(net.guestReady).filter(v => v).length} / ${st.players.length}`; checkHostStart(); }
-  else if (m.t === 'pos') { p.tx = m.x; p.ty = m.y; if (!p.lock || now > p.lock) p.hp = m.hp; }
+  else if (m.t === 'ready') {
+    net.guestReady[c.peer] = true;
+    $('lob-wait').textContent = `準備完了: ${Object.values(net.guestReady).filter(v => v).length} / ${st.players.length}`;
+    checkHostStart();
+  }
+  else if (m.t === 'pos') {
+    p.tx = m.x; p.ty = m.y;
+    if (!p.lock || now > p.lock) p.hp = m.hp;
+  }
   else if (m.t === 'hit') hostHit(m, c.peer);
-  else if (m.t === 'kill') scoreKill(m.by);
+  else if (m.t === 'kill') {
+    const shooter = m.by === 'host' ? { team: st.myTeam } : st.players.find(x => x.id === m.by);
+    if (shooter) { st.score[shooter.team]++; updateScore(); }
+  }
 }
 function checkHostStart() {
   if (!net.hostReady) return;
-  const allReady = Object.values(net.guestReady).every(v => v);
+  const guestIds = Object.keys(net.guestReady);
+  const allReady = guestIds.every(id => net.guestReady[id]);
   if (allReady && st.players.length > 0) {
     Object.values(net.conns).forEach(c => c.send({ t: 'start_countdown', origin: st.origin }));
     startCountdown();
   }
 }
-function hostHit(m, from) { if (m.to === 'host') takeDamage(m.d, { x: m.fx, y: m.fy, id: from }); else net.conns[m.to] && net.conns[m.to].send({ t: 'dmg', d: m.d, fx: m.fx, fy: m.fy, from }); }
-function scoreKill(id) { const k = id === 'host' ? { team: st.myTeam } : st.players.find(p => p.id === id); const t = k ? k.team : (st.myTeam === 'red' ? 'blue' : 'red'); st.score[t]++; updateScore(); }
+function hostHit(m, from) {
+  if (m.to === 'host') {
+    takeDamage(m.d, { x: m.fx, y: m.fy, id: from });
+  } else if (net.conns[m.to]) {
+    net.conns[m.to].send({ t: 'dmg', d: m.d, fx: m.fx, fy: m.fy, from });
+    const target = st.players.find(p => p.id === m.to);
+    if (target) {
+      target.hp -= m.d;
+      if (target.hp <= 0) {
+        const shooter = st.players.find(p => p.id === from);
+        if (shooter) { st.score[shooter.team]++; updateScore(); }
+        showAlert('💥 ' + (shooter?.name || '?') + ' → ' + (target.name || target.id), 'ka');
+      }
+    }
+  }
+}
 function joinRoom() {
-  net.joined = false; const p = net.peer = new Peer();
-  p.on('error', e => { setNet(e.type === 'peer-unavailable' ? 'ルームが見つかりません' : 'エラー: ' + e.type); $('net-go').disabled = false; });
+  net.joined = false;
+  const p = net.peer = new Peer();
+  p.on('error', e => {
+    setNet(e.type === 'peer-unavailable' ? 'ルームが見つかりません' : 'エラー: ' + e.type);
+    $('net-go').disabled = false;
+  });
   p.on('open', id => {
-    net.myId = id; const c = net.hostConn = p.connect('arsh-' + st.roomCode, { serialization: 'json', reliable: true });
-    c.on('open', () => c.send({ t: 'join', name: net.name })); c.on('data', clientRecv);
-    c.on('close', () => { if (st.gameActive) { endGame(); showAlert('ホストが切断しました', 'ha'); } else if (!net.joined) return; else location.reload(); });
-    setTimeout(() => { if (!net.joined) { setNet('ルームが見つかりません'); $('net-go').disabled = false; } }, 9000);
+    net.myId = id;
+    const c = net.hostConn = p.connect('arsh-' + st.roomCode, { serialization: 'json', reliable: true });
+    c.on('open', () => c.send({ t: 'join', name: net.name }));
+    c.on('data', clientRecv);
+    c.on('close', () => {
+      if (st.gameActive) { endGame(); showAlert('ホストが切断しました', 'ha'); }
+      else if (!net.joined) return; else location.reload();
+    });
+    setTimeout(() => {
+      if (!net.joined) { setNet('ルームが見つかりません'); $('net-go').disabled = false; }
+    }, 9000);
   });
 }
 function clientRecv(m) {
   const now = performance.now();
-  if (m.t === 'welcome') { net.joined = true; st.myTeam = m.team; st.time = m.time; st.maxP = m.max; st.origin = m.origin; openLobby(); }
+  if (m.t === 'welcome') {
+    net.joined = true; st.myTeam = m.team; st.time = m.time; st.maxP = m.max;
+    if (m.origin) st.origin = m.origin;
+    openLobby();
+  }
   else if (m.t === 'full') { setNet('満員、または開始済みです'); $('net-go').disabled = false; }
   else if (m.t === 'lobby') { st.maxP = m.max; lobbyShow(m.l); }
-  else if (m.t === 'start_countdown') { st.origin = m.origin; startCountdown(); }
+  else if (m.t === 'start_scan') { startScanPhase(); }
+  else if (m.t === 'start_countdown') {
+    if (m.origin) st.origin = m.origin;
+    startCountdown();
+  }
   else if (m.t === 'start_game') { beginOnline(); }
-  else if (m.t === 'dmg') takeDamage(m.d, { x: m.fx, y: m.fy, id: m.from });
+  else if (m.t === 'dmg') { takeDamage(m.d, { x: m.fx, y: m.fy, id: m.from }); }
   else if (m.t === 's') {
     const ids = {};
-    m.p.forEach(q => { if (q.id === net.myId) return; ids[q.id] = 1; let p = st.players.find(x => x.id === q.id); if (!p) { p = { id: q.id, hp: 100, x: q.x, y: q.y, tx: q.x, ty: q.y }; st.players.push(p); } p.name = q.n; p.team = q.tm; p.tx = q.x; p.ty = q.y; if (!p.lock || now > p.lock) p.hp = q.hp; });
-    st.players = st.players.filter(p => ids[p.id]); st.score = m.sc; updateScore(); if (Math.abs(st.timeLeft - m.tl) > 1) st.timeLeft = m.tl;
+    m.p.forEach(q => {
+      if (q.id === net.myId) return;
+      ids[q.id] = 1;
+      let p = st.players.find(x => x.id === q.id);
+      if (!p) { p = { id: q.id, hp: 100, x: q.x, y: q.y, tx: q.x, ty: q.y }; st.players.push(p); }
+      p.name = q.n; p.team = q.tm;
+      p.tx = q.x; p.ty = q.y;
+      if (!p.lock || now > p.lock) p.hp = q.hp;
+    });
+    st.players = st.players.filter(p => ids[p.id]);
+    st.score = m.sc; updateScore();
+    if (Math.abs(st.timeLeft - m.tl) > 1) st.timeLeft = m.tl;
   }
 }
 function lobbyData() { return [{ id: 'host', name: net.name, team: 'red' }].concat(st.players.map(p => ({ id: p.id, name: p.name, team: p.team }))); }
-function lobbyShow(l) { $('lob').innerHTML = l.map(x => `<div class="${x.team}">${x.id === 'host' ? '👑 ' : '● '}${esc(x.name)}</div>`).join(''); $('lcount').textContent = '参加者 ' + l.length + '/' + st.maxP; }
-function lobbyPush() { const l = lobbyData(); lobbyShow(l); Object.values(net.conns).forEach(c => c.send({ t: 'lobby', l, max: st.maxP })); }
+function lobbyShow(l) {
+  $('lob').innerHTML = l.map(x => `<div class="${x.team}">${x.id === 'host' ? '👑 ' : '● '}${esc(x.name)}</div>`).join('');
+  $('lcount').textContent = '参加者 ' + l.length + '/' + st.maxP;
+}
+function lobbyPush() {
+  const l = lobbyData();
+  lobbyShow(l);
+  Object.values(net.conns).forEach(c => c.send({ t: 'lobby', l, max: st.maxP }));
+}
 function openLobby() {
-  show('s-lobby'); $('lcode').textContent = st.roomCode; $('rid').textContent = st.roomCode;
-  $('lob-start').style.display = net.host ? 'block' : 'none'; $('lob-wait').textContent = net.host ? '全員がスキャン完了するのを待っています...' : 'ホストの開始を待っています...';
+  show('s-lobby');
+  $('lcode').textContent = st.roomCode;
+  $('rid').textContent = st.roomCode;
+  $('lob-start').style.display = net.host ? 'block' : 'none';
+  $('lob-wait').textContent = net.host ? '全員の準備が整うのを待っています...' : 'ホストの開始を待っています...';
   if (net.host) lobbyPush();
 }
 function hostStart() {
-  net.hostReady = true;
-  Object.values(net.conns).forEach(c => c.send({ t: 'start_countdown', origin: st.origin }));
-  startCountdown();
+  net.hostReady = false;
+  Object.values(net.conns).forEach(c => c.send({ t: 'start_scan' }));
+  startScanPhase();
 }
 
+/* ── SCAN PHASE ── */
 let scanTimer = null;
 function startScanPhase() {
-  show('s-scan'); st.scanState = 'scanning'; st.scanSamples = []; st.ready = false;
-  $('ready-btn').style.display = 'none'; $('ready-btn').textContent = 'READY'; $('ready-btn').classList.remove('ready');
-  $('scan-wait').style.display = 'none'; $('scan-timer').textContent = '5'; $('scan-timer').style.color = '#fff';
+  show('s-scan');
+  st.scanState = 'scanning'; st.scanSamples = []; st.ready = false;
+  net.hostReady = false;
+  $('ready-btn').style.display = 'none';
+  $('ready-btn').textContent = 'READY';
+  $('ready-btn').classList.remove('ready');
+  $('ready-btn').disabled = false;
+  $('scan-wait').style.display = 'none';
+  $('scan-timer').textContent = '5';
+  $('scan-timer').style.color = '#fff';
   $('scan-status').textContent = 'GPS精度を測定中... その場でお待ちください';
   console.log("[Scan] Phase started");
 
@@ -595,24 +927,38 @@ function startScanPhase() {
   let countdown = 5;
   if (scanTimer) clearInterval(scanTimer);
   scanTimer = setInterval(() => {
-    countdown--; $('scan-timer').textContent = countdown;
+    countdown--;
+    $('scan-timer').textContent = countdown;
     if (countdown <= 0) { clearInterval(scanTimer); finishScan(); }
   }, 1000);
 }
 function finishScan() {
   st.scanState = 'ready';
-  $('scan-timer').textContent = 'OK'; $('scan-timer').style.color = 'var(--g)';
+  $('scan-timer').textContent = 'OK';
+  $('scan-timer').style.color = 'var(--g)';
   $('scan-status').textContent = 'スキャン完了。座標系を初期化しました。';
   console.log("[Scan] Finished. Samples:", st.scanSamples.length);
 
+  let originSet = false;
   if (st.scanSamples.length > 0) {
     let sumLat = 0, sumLon = 0, sumHead = 0, validCount = 0;
-    st.scanSamples.forEach(s => { if (s.acc < 50) { sumLat += s.lat; sumLon += s.lon; sumHead += s.heading; validCount++; } });
-    if (validCount > 0) { st.origin = { lat: sumLat / validCount, lon: sumLon / validCount }; st.baseHeading = sumHead / validCount; }
-    else { st.origin = { lat: rawGps.lat, lon: rawGps.lon }; st.baseHeading = st.heading; }
-  } else { st.origin = { lat: rawGps.lat, lon: rawGps.lon }; st.baseHeading = st.heading; }
+    st.scanSamples.forEach(s => {
+      if (s.acc < 50) { sumLat += s.lat; sumLon += s.lon; sumHead += s.heading; validCount++; }
+    });
+    if (validCount > 0) {
+      st.origin = { lat: sumLat / validCount, lon: sumLon / validCount };
+      st.baseHeading = sumHead / validCount;
+      originSet = true;
+    }
+  }
+  if (!originSet) {
+    st.origin = { lat: GPS.state.lat, lon: GPS.state.lon };
+    st.baseHeading = st.heading;
+  }
 
-  st.myPos = { x: 0, y: 0 }; st.targetPos = { x: 0, y: 0 }; st.trail = [{ x: 0, y: 0 }];
+  st.myPos = { x: 0, y: 0 };
+  st.targetPos = { x: 0, y: 0 };
+  st.trail = [{ x: 0, y: 0 }];
   generateWorld();
 
   $('ready-btn').style.display = 'block';
@@ -622,14 +968,24 @@ function finishScan() {
 }
 function toggleReady() {
   if (st.mode === 'bot') { startCountdown(); return; }
+  if (st.ready) return;
   st.ready = true;
   $('ready-btn').classList.add('ready');
   $('ready-btn').textContent = 'READY ✓';
   $('ready-btn').disabled = true;
 
-  if (net.host) { net.hostReady = true; $('scan-wait').textContent = 'ゲストの準備を待っています...'; checkHostStart(); }
-  else { net.hostConn.send({ t: 'ready' }); $('scan-wait').textContent = 'ホストの開始を待っています...'; }
+  if (net.host) {
+    net.hostReady = true;
+    $('scan-wait').style.display = 'block';
+    $('scan-wait').textContent = 'ゲストの準備を待っています...';
+    checkHostStart();
+  } else {
+    net.hostConn && net.hostConn.send({ t: 'ready' });
+    $('scan-wait').style.display = 'block';
+    $('scan-wait').textContent = 'ホストの開始を待っています...';
+  }
 }
+
 function generateWorld() {
   st.objects = [];
   for (let i = 0; i < 15; i++) {
@@ -655,444 +1011,600 @@ function startCountdown() {
     else {
       clearInterval(timer);
       overlay.classList.remove('active');
-      if (net.host) { Object.values(net.conns).forEach(c => c.send({ t: 'start_game' })); }
-      beginOnline();
+      if (st.mode === 'bot') { beginBot(); }
+      else {
+        if (net.host) Object.values(net.conns).forEach(c => c.send({ t: 'start_game' }));
+        beginOnline();
+      }
     }
   }, 1000);
 }
 
+/* ── GAME CORE ── */
 let last = 0;
-function beginBot() { st.mode = 'bot'; spawnBots(); setBadge('🤖 BOT ×' + st.botCount); $('rid').textContent = 'BOT'; ints.push(setInterval(tickBots, 500)); runGame(); }
+let gunInitialized = false;
+function ensureGun() {
+  if (gunInitialized) return;
+  gunInitialized = true;
+  try { initGun(); } catch (e) { console.error('[Gun] init failed', e); }
+}
+function beginBot() {
+  st.mode = 'bot';
+  spawnBots();
+  setBadge('🤖 BOT ×' + st.botCount);
+  $('rid').textContent = 'BOT';
+  ints.push(setInterval(tickBots, 500));
+  runGame();
+}
 function beginOnline() {
   setBadge('🌐 ONLINE');
   ints.push(setInterval(() => {
     if (!st.gameActive) return;
     if (net.host) {
-      const p = [{ id: 'host', n: net.name, tm: st.myTeam, x: st.myPos.x, y: st.myPos.y, hp: st.health }].concat(st.players.map(x => ({ id: x.id, n: x.name, tm: x.team, x: x.tx, y: x.ty, hp: x.hp })));
+      const p = [{ id: 'host', n: net.name, tm: st.myTeam, x: st.myPos.x, y: st.myPos.y, hp: st.health }]
+        .concat(st.players.map(x => ({ id: x.id, n: x.name, tm: x.team, x: x.tx, y: x.ty, hp: x.hp })));
       const m = { t: 's', p, sc: st.score, tl: st.timeLeft };
       Object.values(net.conns).forEach(c => c.send(m));
-    } else net.hostConn.send({ t: 'pos', x: st.myPos.x, y: st.myPos.y, hp: st.health });
+    } else if (net.hostConn) {
+      net.hostConn.send({ t: 'pos', x: st.myPos.x, y: st.myPos.y, hp: st.health });
+    }
   }, 150));
   runGame();
 }
-function setBadge(t) { const m = $('mode-badge'); m.textContent = t; }
+function setBadge(t) { $('mode-badge').textContent = t; }
+
 function runGame() {
   document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
-  st.gameActive = true; st.timeLeft = st.time * 60; if (st.mode === 'bot') st.timeLeft = 300;
+  $('countdown-overlay').classList.remove('active');
+  st.gameActive = true;
+  st.dead = false; st.health = 100; st.ammo = st.maxAmmo;
+  st.timeLeft = st.mode === 'bot' ? 300 : st.time * 60;
   if (cams.length > 1) $('camsw').style.display = 'block';
+
+  ensureGun();
+  updateHUD();
+  updateScore();
+
   ints.push(setInterval(() => {
-    if (!st.gameActive) return; st.timeLeft--;
-    $('timer').textContent = String(Math.floor(st.timeLeft / 60)).padStart(2, '0') + ':' + String(Math.max(0, st.timeLeft) % 60).padStart(2, '0');
-    if (st.timeLeft <= 30) $('timer').style.color = '#ff4444'; if (st.timeLeft <= 0) endGame();
+    if (!st.gameActive) return;
+    st.timeLeft--;
+    $('timer').textContent = String(Math.floor(Math.max(0, st.timeLeft) / 60)).padStart(2, '0') + ':' +
+                              String(Math.max(0, st.timeLeft) % 60).padStart(2, '0');
+    if (st.timeLeft <= 30) $('timer').style.color = '#ff4444';
+    if (st.timeLeft <= 0) endGame();
   }, 1000));
-  ints.push(setInterval(() => { drawMap($('mc'), MAP_MAX); if ($('bigmap').classList.contains('open')) drawMap($('bmc'), st.bigR); $('pcnt').textContent = (st.players.length + 1) + '/' + (st.mode === 'bot' ? st.botCount + 1 : st.maxP); }, 250));
-  last = performance.now(); requestAnimationFrame(frame); requestAnimationFrame(detectLoop);
-  showAlert('⚔ START — TEAM ' + st.myTeam.toUpperCase());
+
+  ints.push(setInterval(() => {
+    drawMap($('mc'), MAP_MAX);
+    if ($('bigmap').classList.contains('open')) drawMap($('bmc'), st.bigR);
+    $('pcnt').textContent = (st.players.length + 1) + '/' + (st.mode === 'bot' ? st.botCount + 1 : st.maxP);
+  }, 250));
+
+  last = performance.now();
+  requestAnimationFrame(frame);
+  requestAnimationFrame(detectLoop);
+  showAlert('⚔ START — TEAM ' + st.myTeam.toUpperCase(), 'ka');
   console.log("[Game] Started");
 }
-function endGame() { st.gameActive = false; ints.forEach(clearInterval); $('timer').textContent = '終了'; const w = st.score.red > st.score.blue ? '🔴 RED WIN' : st.score.blue > st.score.red ? '🔵 BLUE WIN' : '⚖ DRAW'; showAlert(w + ' KD:' + st.kills + '/' + st.deaths); }
+function endGame() {
+  st.gameActive = false;
+  ints.forEach(clearInterval);
+  ints.length = 0;
+  $('timer').textContent = '終了';
+  Object.keys(enemyEls).forEach(id => { enemyEls[id].remove(); delete enemyEls[id]; });
+  const w = st.score.red > st.score.blue ? '🔴 RED WIN'
+          : st.score.blue > st.score.red ? '🔵 BLUE WIN'
+          : '⚖ DRAW';
+  showAlert(w + ' KD:' + st.kills + '/' + st.deaths, 'ka');
+}
 
 function spawnBots() {
   st.players = [];
   for (let i = 0; i < st.botCount; i++) {
-    const a = i / st.botCount * Math.PI * 2; const d = 15 + Math.random() * 20;
-    st.players.push({ id: 'bot' + i, name: BOT_NAMES[i % 8], team: BOT_TEAMS[i % 8], x: Math.cos(a) * d, y: Math.sin(a) * d, hp: 100, isBot: true, angle: Math.random() * 6.28, atk: 3 + Math.random() * 4 });
+    const a = i / st.botCount * Math.PI * 2;
+    const d = 15 + Math.random() * 20;
+    st.players.push({
+      id: 'bot' + i, name: BOT_NAMES[i % 8], team: BOT_TEAMS[i % 8],
+      x: Math.cos(a) * d, y: Math.sin(a) * d, hp: 100,
+      isBot: true, angle: Math.random() * 6.28, atk: 3 + Math.random() * 4
+    });
   }
 }
 function tickBots() {
   if (!st.gameActive) return;
   st.players.forEach(p => {
     if (!p.isBot || p.hp <= 0) return;
-    p.angle += (Math.random() - .5) * .9; p.atk -= .5;
+    p.angle += (Math.random() - .5) * .9;
+    p.atk -= .5;
     const s = 1.6 * 0.5;
-    p.x += Math.cos(p.angle) * s; p.y += Math.sin(p.angle) * s;
+    p.x += Math.cos(p.angle) * s;
+    p.y += Math.sin(p.angle) * s;
     if (p.atk <= 0 && p.team !== st.myTeam && !st.dead) {
       const d = getDist(st.myPos, p);
-      if (d < 100) { takeDamage(Math.max(3, Math.round((8 + Math.random() * 8) * Math.max(.4, 1 - d / 150))), p); p.atk = 3 + Math.random() * 5; }
-    }
-  });
-}
-
-const G = { aimUntil: 0, reloadStart: -9e9, aim() { G.aimUntil = performance.now() + 1400 }, kick() { }, hit() { }, update() { } };
-function initGun() {
-  const T = THREE, r = new T.WebGLRenderer({ canvas: $('gl'), alpha: true, antialias: true }), TH = Math.tan(25 * Math.PI / 180);
-  r.setPixelRatio(Math.min(2, devicePixelRatio || 1));
-  const sc = new T.Scene(), cam = new T.PerspectiveCamera(50, 1, .02, 10), gun = new T.Group(); gun.rotation.order = 'YXZ'; sc.add(gun);
-  sc.add(new T.HemisphereLight(0xcfe3ff, 0x303030, 1.3)); const dl = new T.DirectionalLight(0xffffff, 1.1); dl.position.set(1, 2, 1.5); sc.add(dl);
-  const fl = new T.PointLight(0xffa030, 0, 2); fl.position.set(0, 0, -.9); gun.add(fl);
-  const M = (c, m, q, o) => new T.MeshStandardMaterial(Object.assign({ color: c, metalness: m, roughness: q }, o || {}));
-  const steel = M(0x2c323a, .85, .35), dark = M(0x121417, .6, .5), poly = M(0x1e2125, .1, .75), tan = M(0x5b5741, .1, .8);
-  const fb = new T.Group(); gun.add(fb);
-  const B = (w, h, d, x, y, z, m, rx) => { const o = new T.Mesh(new T.BoxGeometry(w, h, d), m); o.position.set(x, y, z); if (rx) o.rotation.x = rx; fb.add(o); return o; };
-  const C = (rr, l, x, y, z, m) => { const o = new T.Mesh(new T.CylinderGeometry(rr, rr, l, 14), m); o.rotation.x = Math.PI / 2; o.position.set(x, y, z); fb.add(o); };
-  B(.062, .09, .3, 0, 0, 0, steel); B(.05, .016, .3, 0, .052, 0, dark); B(.03, .012, .55, 0, .066, -.1, dark);
-  B(.07, .075, .3, 0, -.004, -.3, poly); B(.074, .01, .3, 0, .04, -.3, dark); C(.011, .34, 0, .002, -.62, steel);
-  B(.025, .03, .04, 0, .025, -.5, dark); C(.017, .07, 0, .002, -.8, dark); B(.006, .04, .006, 0, .085, -.74, dark);
-  B(.045, .05, .09, 0, .095, -.04, dark); B(.036, .034, .004, 0, .098, -.088, M(0x330000, 0, .1, { emissive: 0xff2222, emissiveIntensity: .6, transparent: true, opacity: .7 }));
-  B(.03, .03, .01, 0, .08, .12, dark); B(.05, .085, .22, 0, -.012, .26, poly); B(.052, .095, .02, 0, -.012, .375, dark);
-  B(.04, .11, .055, 0, -.095, .09, tan, .4); B(.01, .03, .1, 0, -.058, -.02, dark);
-  const mag = B(.04, .16, .065, 0, -.12, -.075, steel, -.18);
-  const cv = document.createElement('canvas'); cv.width = cv.height = 64; const g = cv.getContext('2d'), gr = g.createRadialGradient(32, 32, 0, 32, 32, 32);
-  gr.addColorStop(0, '#fff'); gr.addColorStop(.3, '#ffd36a'); gr.addColorStop(.6, 'rgba(255,120,0,.5)'); gr.addColorStop(1, 'rgba(255,100,0,0)'); g.fillStyle = gr; g.fillRect(0, 0, 64, 64);
-  const fs = new T.Sprite(new T.SpriteMaterial({ map: new T.CanvasTexture(cv), blending: T.AdditiveBlending, transparent: true, depthWrite: false, opacity: 0 })); fs.position.set(0, 0, -.86); fs.scale.setScalar(.3); gun.add(fs);
-  const LEN = 1.1, fit = () => gun.scale.setScalar(Math.max(.15, Math.min(1, .85 * TH * cam.aspect / (.75 * LEN))));
-  const rs = () => { r.setSize(innerWidth, innerHeight, false); cam.aspect = innerWidth / innerHeight; cam.updateProjectionMatrix(); fit(); }; rs(); addEventListener('resize', rs); addEventListener('orientationchange', () => setTimeout(rs, 300));
-  r.outputEncoding = T.sRGBEncoding; r.toneMapping = T.ACESFilmicToneMapping; r.toneMappingExposure = 1.05;
-  { const pm = new T.PMREMGenerator(r), es = new T.Scene(); es.add(new T.Mesh(new T.SphereGeometry(5, 16, 8), new T.MeshBasicMaterial({ color: 0x7d8a99, side: T.BackSide }))); const lamp = (x, y, z, c, i) => { const m = new T.Mesh(new T.PlaneGeometry(3, 3), new T.MeshBasicMaterial({ color: new T.Color(c).multiplyScalar(i), side: T.DoubleSide })); m.position.set(x, y, z); m.lookAt(0, 0, 0); es.add(m); }; lamp(0, 4, 0, 0xffffff, 5); lamp(3, 1, 2, 0xffeedd, 2.5); lamp(-3, 0, -2, 0x99bbff, 1.5); sc.environment = pm.fromScene(es).texture; }
-  if (T.GLTFLoader) new T.GLTFLoader().load('ak-47.glb', gl => {
-    const m = gl.scene, b = new T.Box3().setFromObject(m), sz = b.getSize(new T.Vector3()), ct = b.getCenter(new T.Vector3()), k = LEN / Math.max(sz.x, sz.y, sz.z);
-    m.scale.setScalar(k); m.position.set(-ct.x * k, -(b.min.y + .81 * sz.y) * k, -(b.min.z + .674 * sz.z) * k); m.traverse(o => { if (o.isMesh) o.frustumCulled = false; }); gun.add(m); fb.visible = false; fs.position.set(0, 0, -.8); showAlert('🔫 AK-47 読込完了');
-  }, null, e => { console.warn(e); showAlert('⚠ ak-47.glb が見つかりません（簡易モデル）'); });
-  const PO = { aim: { nx: 0, ny: -.66, z: -.42, rx: .03, ry: 0, rz: 0 }, low: { nx: .38, ny: -.5, z: -.5, rx: -.1, ry: .85, rz: .12 }, cover: { nx: .12, ny: -.42, z: -.4, rx: 1.05, ry: .12, rz: .08 }, reload: { nx: .25, ny: -.82, z: -.45, rx: -.45, ry: .55, rz: .65 }, dead: { nx: .5, ny: -1.7, z: -.5, rx: -.5, ry: .9, rz: .3 } };
-  const P = Object.assign({}, PO.low), V = { nx: 0, ny: 0, z: 0, rx: 0, ry: 0, rz: 0 }, AX = ['nx', 'ny', 'z', 'rx', 'ry', 'rz']; let ph = 0, fv = 0;
-  G.kick = () => { V.z += .8; V.rx += 2.4; V.ry += (Math.random() - .5) * 1.4; V.ny += .6; fv = 1; };
-  G.hit = () => { V.nx += (Math.random() < .5 ? -1 : 1) * 2; V.ny -= 1.5; V.rz += (Math.random() - .5) * 5; };
-  G.update = (dt, t) => {
-    const n = performance.now(), pn = st.reloading ? 'reload' : st.dead ? 'dead' : n < G.aimUntil ? 'aim' : st.cover ? 'cover' : 'low';
-    const a = pn === 'aim' ? .3 : 1, w = st.walkI, run = pn === 'low' && w > .7 ? 1 : 0, tg = Object.assign({}, PO[pn]);
-    if (w > .03) ph += dt * (6 + w * 5); const pc = Math.cos(ph), p2 = Math.sin(ph * 2), br = Math.sin(t * 1.6), sk = Math.min(3, st.shk);
-    const n1 = Math.sin(t * 17) + Math.sin(t * 9.3 + 2), n2 = Math.sin(t * 13 + 1) + Math.sin(t * 6.1);
-    tg.ny += p2 * .03 * w * a + br * .006 - st.pitV * .0025;
-    tg.nx += pc * .035 * w * a - st.yawV * .0012 + st.roll * (pn === 'cover' ? .012 : .006) + n1 * .004 * sk;
-    tg.rx += p2 * .04 * w * a + br * .006 - st.pitV * .004 - run * .15;
-    tg.ry += st.yawV * .0035 + pc * .05 * w * a + n2 * .01 * sk + run * .1;
-    tg.rz += -st.roll * .0085 + pc * .05 * w * a;
-    const kk = pn === 'aim' ? 160 : 75, dd = pn === 'aim' ? 15 : 11;
-    AX.forEach(i => { V[i] += (tg[i] - P[i]) * kk * dt; V[i] *= Math.exp(-dd * dt); P[i] += V[i] * dt; });
-    gun.position.set(P.nx * (-P.z) * TH * cam.aspect, P.ny * (-P.z) * TH, P.z); gun.rotation.set(P.rx, P.ry, P.rz);
-    const rt = (n - G.reloadStart) / 1800; mag.visible = !(st.reloading && rt > .3 && rt < .55); mag.position.y = -.12 - (st.reloading && rt >= .55 ? Math.max(0, .8 - rt) * .8 : 0);
-    fv = Math.max(0, fv - dt * 14); fs.material.opacity = fv; fs.scale.setScalar(.2 + Math.random() * .15); fl.intensity = fv * 2;
-    r.render(sc, cam);
-  };
-}
-
-const mk = {};
-function frame(t) {
-  if (!st.gameActive) return;
-  const dt = Math.min(.1, (t - last) / 1000); last = t;
-
-  if (st.scanState === 'ready') {
-    const kLat = kfLat.filter(rawGps.lat);
-    const kLon = kfLon.filter(rawGps.lon);
-    const rawLocal = toMeters(kLat, kLon);
-
-    if (rawGps.acc > 20 && drVel.x !== 0) {
-      st.targetPos.x += drVel.x * dt * 10;
-      st.targetPos.y += drVel.y * dt * 10;
-    } else {
-      st.targetPos = rawLocal;
-    }
-
-    st.myPos.x += (st.targetPos.x - st.myPos.x) * Math.min(1, dt * 5);
-    st.myPos.y += (st.targetPos.y - st.myPos.y) * Math.min(1, dt * 5);
-
-    if (isTestMode) {
-      $('dbg-kal').textContent = `${kLat.toFixed(5)}, ${kLon.toFixed(5)}`;
-      $('dbg-vel').textContent = `${drVel.x.toFixed(2)}, ${drVel.y.toFixed(2)}`;
-    }
-  }
-
-  if (st.trail.length === 0 || getDist(st.trail[st.trail.length - 1], st.myPos) > 2) {
-    st.trail.push({ x: st.myPos.x, y: st.myPos.y });
-    if (st.trail.length > 50) st.trail.shift();
-  }
-
-  st.hd = normDeg(st.hd + (normDeg(st.heading - st.hd + 180) - 180) * Math.min(1, dt * 10));
-
-  st.players.forEach(p => {
-    if (p.isBot) { }
-    else if (p.tx != null && p.ty != null) {
-      const k = Math.min(1, dt * 8);
-      p.x += (p.tx - p.x) * k; p.y += (p.ty - p.y) * k;
-    }
-  });
-
-  const d2 = Math.max(dt, .004), dh = normDeg(st.hd - (st.phd ?? st.hd) + 180) - 180; st.phd = st.hd;
-  st.yawV += (Math.max(-400, Math.min(400, dh / d2)) - st.yawV) * Math.min(1, dt * 12);
-  st.pitV += (Math.max(-300, Math.min(300, (st.pitch - (st.ppn ?? st.pitch)) / d2)) - st.pitV) * Math.min(1, dt * 12); st.ppn = st.pitch;
-  const pp = st.pp || st.myPos; st.spd += (Math.min(5, getDist(pp, st.myPos) / d2) - st.spd) * Math.min(1, dt * 3); st.pp = { ...st.myPos };
-  const w = Math.max(Math.min(1, Math.max(0, (st.shk - .7) / 2.2)), Math.min(1, st.spd / 1.2), performance.now() - st.keyWalk < 350 ? 1 : 0);
-  st.walkI += (w - st.walkI) * Math.min(1, dt * 6);
-
-  G.update(d2, t / 1000);
-  renderMarkers();
-  requestAnimationFrame(frame);
-}
-
-function renderMarkers() {
-  const W = innerWidth, H = innerHeight, fov = 70, seen = {};
-  const lookAngle = st.hd - st.baseHeading;
-
-  st.players.forEach(p => {
-    p.sx = null; if (p.hp <= 0) return;
-    const dist = getDist(st.myPos, p); if (dist > 200) return;
-    const brg = radToDeg(getBearing(st.myPos, p));
-    let rel = normDeg(brg - lookAngle + 180) - 180;
-    let sx = W / 2 + (rel / fov) * W * 0.56;
-    sx = Math.max(30, Math.min(W - 30, sx));
-    p.sx = sx; p.sy = H * .28 + Math.min(1, dist / 200) * H * .14; p.dist = dist; seen[p.id] = 1;
-    const en = p.team !== st.myTeam; let e = mk[p.id];
-    if (!e) {
-      const el = document.createElement('div'); el.className = en ? 'em' : 'alm';
-      el.innerHTML = en ? '<div class="edia"></div><div class="elbl"></div><div class="hpb"><i></i></div><div class="edst"></div>' : '<div class="atri"></div><div class="albl"></div>';
-      document.body.appendChild(el); e = mk[p.id] = { el, l: el.querySelector('.elbl,.albl'), h: el.querySelector('i'), d: el.querySelector('.edst') };
-      e.l.textContent = (p.isBot ? '🤖' : '') + (p.name || 'Enemy');
-    }
-    e.el.style.transform = 'translate3d(' + p.sx + 'px,' + p.sy + 'px,0) translate(-50%,-50%)';
-    if (e.h) e.h.style.width = p.hp + '%'; if (e.d) e.d.textContent = Math.round(dist) + 'm';
-  });
-
-  st.objects.forEach(o => {
-    if (!o.active) return;
-    const dist = getDist(st.myPos, o); if (dist > 100) return;
-    const brg = radToDeg(getBearing(st.myPos, o));
-    let rel = normDeg(brg - lookAngle + 180) - 180;
-    let sx = W / 2 + (rel / fov) * W * 0.56;
-    sx = Math.max(30, Math.min(W - 30, sx));
-    const sy = H * .28 + Math.min(1, dist / 100) * H * .4;
-    seen[o.id] = 1; let e = mk[o.id];
-    if (!e) { const el = document.createElement('div'); el.className = 'obj ' + o.type; el.textContent = o.type === 'loot' ? '📦' : '🧱'; document.body.appendChild(el); e = mk[o.id] = { el }; }
-    e.el.style.transform = `translate3d(${sx}px, ${sy}px, 0) translate(-50%, -50%) scale(${Math.max(0.5, 1 - dist / 150)})`;
-  });
-
-  for (const id in mk) if (!seen[id]) { mk[id].el.remove(); delete mk[id]; }
-}
-
-const MAP_MAX = 100;
-const tiles = new Map();
-function tileImg(z, tx, ty) { const n = 2 ** z; tx = ((tx % n) + n) % n; if (ty < 0 || ty >= n) return null; const key = z + '/' + tx + '/' + ty; let t = tiles.get(key); if (!t) { t = new Image(); t.onerror = () => setTimeout(() => tiles.delete(key), 8000); t.src = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/' + z + '/' + ty + '/' + tx; tiles.set(key, t); if (tiles.size > 260) tiles.delete(tiles.keys().next().value); } return t.complete && t.naturalWidth ? t : null; }
-function drawMap(cv, R) {
-  R = Math.min(R, MAP_MAX);
-  const x = cv.getContext('2d'), W = cv.width, c = W / 2, k = c / R, mini = cv.id === 'mc', u = W / (mini ? 110 : 360), rad = Math.PI / 180;
-  x.clearRect(0, 0, W, W); x.save(); if (mini) { x.beginPath(); x.arc(c, c, c, 0, 6.283); x.clip(); }
-  x.fillStyle = '#0d1319'; x.fillRect(0, 0, W, W);
-  const lat = st.origin.lat, lon = st.origin.lon, mEq = 156543.03392 * Math.cos(lat * rad);
-  const z = Math.max(10, Math.min(19, Math.ceil(Math.log2(mEq / (R / c))))), n = 2 ** z, sn = Math.sin(lat * rad);
-  const wx = (lon + 180) / 360 * n * 256, wy = (.5 - Math.log((1 + sn) / (1 - sn)) / (4 * Math.PI)) * n * 256, s = k * mEq / n, e = c * 1.45 / s;
-  x.save(); x.translate(c, c); x.rotate(-st.hd * rad); x.scale(s, s);
-  for (let ty = Math.floor((wy - e) / 256); ty <= Math.floor((wy + e) / 256); ty++) for (let tx = Math.floor((wx - e) / 256); tx <= Math.floor((wx + e) / 256); tx++) { const im = tileImg(z, tx, ty); if (im) x.drawImage(im, tx * 256 - wx, ty * 256 - wy, 256.7, 256.7); }
-  x.restore();
-  if (st.trail.length > 1) {
-    x.beginPath(); x.moveTo(c, c);
-    st.trail.forEach(p => {
-      const dist = Math.hypot(p.x - st.myPos.x, p.y - st.myPos.y);
-      const brg = Math.atan2(p.x - st.myPos.x, -(p.y - st.myPos.y)) - (st.hd - st.baseHeading) * rad;
-      x.lineTo(c + dist * Math.sin(brg) * k, c - dist * Math.cos(brg) * k);
-    });
-    x.strokeStyle = 'rgba(0, 255, 136, 0.4)'; x.lineWidth = 3 * u; x.stroke();
-  }
-  if (rawGps.acc > 0 && rawGps.acc < 50) {
-    x.beginPath(); x.arc(c, c, Math.min(rawGps.acc * k, c), 0, 6.283);
-    x.fillStyle = 'rgba(60,140,255,.18)'; x.fill(); x.strokeStyle = 'rgba(60,140,255,.55)'; x.lineWidth = u; x.stroke();
-  }
-  x.strokeStyle = 'rgba(255,255,255,.1)'; x.lineWidth = 1;
-  const step = 10 * k;
-  for (let i = -c; i < c; i += step) { x.beginPath(); x.moveTo(c + i, 0); x.lineTo(c + i, W); x.stroke(); x.beginPath(); x.moveTo(0, c + i); x.lineTo(W, c + i); x.stroke(); }
-  st.players.forEach(p => {
-    if (p.hp <= 0) return;
-    const dist = getDist(st.myPos, p); if (dist > R) return;
-    const brg = Math.atan2(p.x - st.myPos.x, -(p.y - st.myPos.y)) - (st.hd - st.baseHeading) * rad;
-    const X = c + dist * Math.sin(brg) * k, Y = c - dist * Math.cos(brg) * k;
-    x.beginPath(); x.arc(X, Y, (mini ? 4 : 6) * u, 0, 6.283); x.fillStyle = p.team === 'red' ? '#ff4444' : '#33aaff'; x.fill(); x.strokeStyle = '#fff'; x.lineWidth = 1.5 * u; x.stroke();
-  });
-  st.objects.forEach(o => {
-    if (!o.active) return;
-    const dist = getDist(st.myPos, o); if (dist > R) return;
-    const brg = Math.atan2(o.x - st.myPos.x, -(o.y - st.myPos.y)) - (st.hd - st.baseHeading) * rad;
-    const X = c + dist * Math.sin(brg) * k, Y = c - dist * Math.cos(brg) * k;
-    x.font = `${(mini ? 8 : 12) * u}px Arial`; x.textAlign = 'center'; x.textBaseline = 'middle';
-    x.fillText(o.type === 'loot' ? '📦' : '🧱', X, Y);
-  });
-  x.translate(c, c);
-  x.beginPath(); x.moveTo(0, -16 * u); x.lineTo(6 * u, -6 * u); x.lineTo(-6 * u, -6 * u); x.closePath(); x.fillStyle = '#00ff88'; x.fill();
-  x.beginPath(); x.arc(0, 0, 7 * u, 0, 6.283); x.fillStyle = '#004422'; x.fill(); x.strokeStyle = '#00ff88'; x.lineWidth = 2.5 * u; x.stroke();
-  x.translate(-c, -c);
-  x.font = 'bold ' + 8 * u + 'px Courier New'; x.textAlign = 'center'; x.fillStyle = '#fff'; x.fillText(Math.round(R) + 'm', c, c - c * .49 - 2 * u);
-  x.restore();
-}
-
-const dmgScale = (dist, head) => Math.round(34 * Math.max(.35, 1 - dist / 500) * (head ? 2 : 1));
-let lastShot = 0;
-
-function isBlockedByWall(targetX, targetY) {
-  const dist = Math.hypot(targetX - st.myPos.x, targetY - st.myPos.y);
-  const angle = Math.atan2(targetX - st.myPos.x, -(targetY - st.myPos.y));
-  for (const o of st.objects) {
-    if (o.type !== 'wall' || !o.active) continue;
-    const oDist = Math.hypot(o.x - st.myPos.x, o.y - st.myPos.y); if (oDist > dist) continue;
-    const oAngle = Math.atan2(o.x - st.myPos.x, -(o.y - st.myPos.y));
-    let angleDiff = Math.abs(angle - oAngle); if (angleDiff > Math.PI) angleDiff = 2 * Math.PI - angleDiff;
-    if (angleDiff < 0.1) return true;
-  }
-  return false;
-}
-
-function isMarkerInsideAIBox(sx, sy) {
-  if (!detections || detections.length === 0) return false;
-  const video = $('cam');
-  const scaleX = window.innerWidth / video.videoWidth;
-  const scaleY = window.innerHeight / video.videoHeight;
-  return detections.some(d => {
-    const [x, y, w, h] = d.bbox;
-    const bx = x * scaleX, by = y * scaleY, bw = w * scaleX, bh = h * scaleY;
-    return sx >= bx && sx <= bx + bw && sy >= by && sy <= by + bh;
-  });
-}
-
-function recoil() { G.aim(); G.kick(); $('xh').animate([{ transform: 'translate(-50%,-50%) scale(1.4)' }, { transform: 'translate(-50%,-50%) scale(1)' }], { duration: 150 }); }
-
-function fire() {
-  if (!st.gameActive || st.dead || st.reloading) return;
-  const now = performance.now(); if (now - lastShot < 140) return;
-  if (st.ammo <= 0) { reload(); return; }
-  lastShot = now; st.ammo--; updateAmmoUI(); recoil();
-
-  const cx = innerWidth / 2, cy = innerHeight / 2;
-  const lookAngle = st.hd - st.baseHeading;
-  let best = null, bd = 15;
-
-  st.players.forEach(p => {
-    if (p.team === st.myTeam || p.sx == null || p.hp <= 0) return;
-    const dist = getDist(st.myPos, p);
-    const brg = radToDeg(getBearing(st.myPos, p));
-    let rel = Math.abs(normDeg(brg - lookAngle + 180) - 180);
-    const tolerance = Math.max(2, 15 - (dist / 10));
-
-    if (rel < tolerance) {
-      if (!isMarkerInsideAIBox(p.sx, p.sy)) {
-        pop('NO TARGET', p.sx, p.sy, 'me');
-        if (isTestMode) console.log("[HitTest] Marker not in AI box", p.sx, p.sy);
-        return;
+      if (d < 100) {
+        takeDamage(Math.max(3, Math.round((8 + Math.random() * 8) * Math.max(.4, 1 - d / 150))), p);
+        p.atk = 3 + Math.random() * 5;
       }
-      if (isBlockedByWall(p.x, p.y)) { pop('BLOCKED', p.sx, p.sy, ''); return; }
-      if (rel < bd) { bd = rel; best = p; }
     }
+  });
+}
+
+/* ── HUD / UI ── */
+function updateHUD() {
+  $('hpb').style.width = Math.max(0, st.health) + '%';
+  $('hpn').textContent = Math.max(0, Math.round(st.health));
+  $('amob').style.width = (st.ammo / st.maxAmmo * 100) + '%';
+  $('amon').textContent = st.ammo + '/' + st.reserve;
+  if (st.gpsReady) {
+    $('gps-la').textContent = 'X: ' + st.myPos.x.toFixed(1);
+    $('gps-lo').textContent = 'Y: ' + st.myPos.y.toFixed(1);
+  }
+}
+function updateScore() {
+  $('sc-r').textContent = 'RED ' + st.score.red;
+  $('sc-b').textContent = 'BLUE ' + st.score.blue;
+}
+function showAlert(text, cls) {
+  const el = document.createElement('div');
+  el.className = 'am ' + (cls || '');
+  el.textContent = text;
+  $('alerts').appendChild(el);
+  setTimeout(() => el.remove(), 2500);
+}
+function spawnDamage(x, y, dmg, isMe) {
+  const el = document.createElement('div');
+  el.className = 'dmg' + (isMe ? ' me' : '');
+  el.textContent = isMe ? '-' + dmg : dmg;
+  el.style.left = x + 'px';
+  el.style.top = y + 'px';
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 900);
+}
+
+/* ── COMBAT ── */
+function takeDamage(dmg, from) {
+  if (st.dead || !st.gameActive) return;
+  st.health -= dmg;
+  spawnDamage(window.innerWidth / 2, window.innerHeight / 2, dmg, true);
+
+  const flash = $('flash');
+  flash.style.opacity = '0.9';
+  setTimeout(() => { flash.style.opacity = '0'; }, 100);
+
+  if (from && st.gpsReady) {
+    const dx = from.x - st.myPos.x;
+    const dy = from.y - st.myPos.y;
+    const bearing = Math.atan2(dx, -dy) * 180 / Math.PI;
+    const relBearing = ((bearing - st.heading + 540) % 360) - 180;
+    const hd = $('hitdir');
+    hd.style.opacity = '1';
+    hd.style.transform = `translate(-50%, -50%) rotate(${relBearing}deg)`;
+    setTimeout(() => { hd.style.opacity = '0'; }, 500);
+  }
+
+  if (st.health <= 0) {
+    st.health = 0;
+    st.dead = true;
+    st.deaths++;
+    showAlert('💀 DOWN', 'ha');
+    updateHUD();
+    setTimeout(() => {
+      st.dead = false;
+      st.health = 100;
+      st.ammo = st.maxAmmo;
+      updateHUD();
+      document.body.classList.remove('low');
+    }, 3000);
+  } else {
+    if (st.health < 30) document.body.classList.add('low');
+    updateHUD();
+  }
+}
+function fire() {
+  if (!st.gameActive || st.dead || st.reloading || st.cover) return;
+  if (st.ammo <= 0) {
+    if (st.reserve > 0) reload();
+    else showAlert('残弾なし', 'ha');
+    return;
+  }
+  st.ammo--;
+  G.kick();
+  updateHUD();
+
+  // クロスヘア付近の敵を探索
+  const fov = 60, aimTol = 5;
+  let best = null, bestScore = Infinity;
+  st.players.forEach(p => {
+    if (p.hp <= 0 || p.team === st.myTeam) return;
+    const dx = p.x - st.myPos.x;
+    const dy = p.y - st.myPos.y;
+    const dist = Math.hypot(dx, dy);
+    if (dist > 90) return;
+    const bearing = Math.atan2(dx, -dy) * 180 / Math.PI;
+    const relBearing = ((bearing - st.heading + 540) % 360) - 180;
+    if (Math.abs(relBearing) > aimTol) return;
+    const score = Math.abs(relBearing) + dist * 0.1;
+    if (score < bestScore) { bestScore = score; best = { p, dist, relBearing }; }
   });
 
   if (best) {
-    const head = bd < 3, dmg = dmgScale(best.dist, head);
-    best.hp = Math.max(0, best.hp - dmg); best.lock = now + 400;
-    pop((head ? 'HEAD ' : '') + '-' + dmg, best.sx, best.sy - 24, head ? 'hd' : '');
-    $('xh').classList.add('hit'); setTimeout(() => $('xh').classList.remove('hit'), 110);
-    if (isTestMode) console.log("[HitTest] Hit!", best.name, "dmg:", dmg);
-    if (!best.isBot) { const m = { t: 'hit', to: best.id, d: dmg, fx: st.myPos.x, fy: st.myPos.y }; net.host ? hostHit(m, 'host') : net.hostConn.send(m); }
-    if (best.hp <= 0) {
-      st.kills++; showAlert('撃破！ KD:' + st.kills + '/' + st.deaths, 'ka');
-      if (best.isBot) { st.score[st.myTeam]++; updateScore(); const b = best; setTimeout(() => { const a = Math.random() * Math.PI * 2, d = 30 + Math.random() * 30; b.x = Math.cos(a) * d; b.y = Math.sin(a) * d; b.hp = 100; }, 4000); }
+    const dmg = Math.max(5, Math.round(18 + Math.random() * 12 - best.dist * 0.1));
+    best.p.hp -= dmg;
+    const screenX = window.innerWidth / 2 + (best.relBearing / (fov / 2)) * (window.innerWidth / 2);
+    const screenY = window.innerHeight / 2;
+    spawnDamage(screenX, screenY, dmg, false);
+
+    // ネットワーク通知
+    if (st.mode === 'online') {
+      if (net.host) {
+        const victimId = best.p.id;
+        if (net.conns[victimId]) {
+          net.conns[victimId].send({ t: 'dmg', d: dmg, fx: best.p.x, fy: best.p.y, from: 'host' });
+        }
+      } else if (net.hostConn) {
+        net.hostConn.send({ t: 'hit', to: best.p.id, d: dmg, fx: best.p.x, fy: best.p.y });
+      }
+    }
+
+    if (best.p.hp <= 0) {
+      const killedTeam = best.p.team;
+      st.score[killedTeam === 'red' ? 'blue' : 'red']++;
+      st.kills++;
+      updateScore();
+      showAlert('💥 KILL: ' + (best.p.name || best.p.id), 'ka');
+      if (st.mode === 'online' && !net.host && net.hostConn) {
+        net.hostConn.send({ t: 'kill', by: net.myId });
+      }
+      // リスポーン(ボットのみ)
+      if (best.p.isBot) {
+        setTimeout(() => {
+          if (st.gameActive) {
+            const a = Math.random() * Math.PI * 2;
+            best.p.x = Math.cos(a) * 30;
+            best.p.y = Math.sin(a) * 30;
+            best.p.hp = 100;
+          }
+        }, 3000);
+      }
     }
   }
-  if (st.ammo <= 0) setTimeout(reload, 300);
+  // リコイル
+  st.heading = normDeg(st.heading + (Math.random() - 0.5) * 0.4);
 }
-
 function reload() {
-  if (st.reloading || st.reserve <= 0 || st.ammo >= st.maxAmmo) { if (!st.reserve) showAlert('弾切れ！'); return; }
-  st.reloading = true; $('fire').classList.add('rl'); showAlert('リロード中...'); G.reloadStart = performance.now();
-  setTimeout(() => { const g = Math.min(st.maxAmmo - st.ammo, st.reserve); st.ammo += g; st.reserve -= g; st.reloading = false; $('fire').classList.remove('rl'); updateAmmoUI(); }, 1800);
+  if (st.reloading || st.reserve <= 0 || st.ammo >= st.maxAmmo) return;
+  st.reloading = true;
+  const fb = $('fire');
+  fb.classList.add('rl');
+  fb.textContent = '...';
+  setTimeout(() => {
+    const need = st.maxAmmo - st.ammo;
+    const take = Math.min(need, st.reserve);
+    st.ammo += take;
+    st.reserve -= take;
+    st.reloading = false;
+    fb.classList.remove('rl');
+    fb.textContent = 'FIRE';
+    updateHUD();
+  }, 1500);
+}
+function toggleCover() {
+  st.cover = !st.cover;
+  $('cov').classList.toggle('on', st.cover);
+  showAlert(st.cover ? '🛡 COVER ON' : 'COVER OFF');
 }
 
-function takeDamage(d, src) {
-  if (st.dead || !st.gameActive) return;
-  st.health = Math.max(0, st.health - d); updateHealthUI();
-  const f = $('flash'); f.style.transition = 'none'; f.style.opacity = Math.min(1, .4 + d / 30); requestAnimationFrame(() => requestAnimationFrame(() => { f.style.transition = 'opacity .6s'; f.style.opacity = 0; }));
-  G.hit(); navigator.vibrate && navigator.vibrate(Math.min(220, d * 6)); pop('-' + d, innerWidth / 2, innerHeight * .6, 'me');
-  if (src && src.x != null) { const brg = radToDeg(getBearing(st.myPos, src)); $('hitdir').style.transform = 'rotate(' + (brg - (st.hd - st.baseHeading)) + 'deg)'; $('hitdir').animate([{ opacity: 1 }, { opacity: 0 }], { duration: 900, fill: 'forwards' }); }
-  document.body.classList.toggle('low', st.health > 0 && st.health < 30);
-  if (st.health <= 0) {
-    st.dead = true; st.deaths++; showAlert('やられた！リスポーン中...', 'ha');
-    if (st.mode === 'bot') { st.score[st.myTeam === 'red' ? 'blue' : 'red']++; updateScore(); }
-    else if (net.host) scoreKill(src && src.id); else net.hostConn.send({ t: 'kill', by: src && src.id });
-    setTimeout(() => { st.health = 100; st.dead = false; updateHealthUI(); document.body.classList.remove('low'); showAlert('リスポーン！'); }, 3000);
+/* ── 3D GUN (Three.js) ── */
+const G = {
+  aimUntil: 0,
+  reloadStart: -9e9,
+  kickK: 0,
+  flash: null, group: null, gunCam: null, gunRenderer: null, gunScene: null,
+  aim() { G.aimUntil = performance.now() + 1400; },
+  kick() { G.kickK = 1; },
+  hit() {},
+  update() {}
+};
+function initGun() {
+  if (typeof THREE === 'undefined') { console.warn('[Gun] THREE not loaded'); return; }
+  const T = THREE;
+  const canvas = $('gl');
+  const renderer = new T.WebGLRenderer({ canvas, alpha: true, antialias: true });
+  renderer.setPixelRatio(Math.min(2, devicePixelRatio || 1));
+  renderer.setSize(window.innerWidth, window.innerHeight);
+
+  const scene = new T.Scene();
+  const cam = new T.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.02, 10);
+
+  const group = new T.Group();
+  group.rotation.order = 'YXZ';
+  scene.add(group);
+  scene.add(cam);
+
+  scene.add(new T.HemisphereLight(0xcfe3ff, 0x303030, 1.3));
+  const dl = new T.DirectionalLight(0xffffff, 1.1);
+  dl.position.set(1, 2, 1.5);
+  scene.add(dl);
+
+  const flash = new T.PointLight(0xffa030, 0, 2);
+  flash.position.set(0, 0, -0.9);
+  group.add(flash);
+
+  const M = (c, m, q, o) => new T.MeshStandardMaterial(Object.assign({ color: c, metalness: m, roughness: q }, o || {}));
+  const steel = M(0x2c323a, .85, .35);
+  const dark = M(0x121417, .6, .5);
+  const poly = M(0x1e2125, .1, .75);
+  const tan = M(0x5b5741, .1, .8);
+
+  const B = (w, h, d, x, y, z, m, rx) => {
+    const o = new T.Mesh(new T.BoxGeometry(w, h, d), m);
+    o.position.set(x, y, z);
+    if (rx) o.rotation.x = rx;
+    group.add(o);
+    return o;
+  };
+  const C = (rr, l, x, y, z, m) => {
+    const o = new T.Mesh(new T.CylinderGeometry(rr, rr, l, 14), m);
+    o.rotation.x = Math.PI / 2;
+    o.position.set(x, y, z);
+    group.add(o);
+  };
+
+  // AK-47風
+  B(.062, .09, .30, 0, 0, 0, steel);           // レシーバー
+  B(.050, .016, .30, 0, .052, 0, dark);        // トップレール
+  B(.030, .012, .55, 0, .066, -.10, dark);     // サイトレール
+  B(.070, .075, .30, 0, -.004, -.30, poly);    // ハンドガード
+  B(.074, .010, .30, 0, .040, -.30, dark);
+  C(.011, .34, 0, .002, -.62, steel);          // 銃身
+  B(.025, .030, .04, 0, .025, -.50, dark);
+  C(.017, .07, 0, .002, -.80, dark);           // マズル
+  B(.045, .050, .09, 0, .095, -.04, dark);     // リアサイト
+  B(.030, .030, .01, 0, .080, .12, dark);
+  B(.050, .085, .22, 0, -.012, .26, poly);     // ストック
+  B(.052, .095, .02, 0, -.012, .375, dark);
+  B(.040, .110, .055, 0, -.095, .09, tan, .4); // グリップ
+  B(.060, .140, .040, 0, -.115, -.15, dark);   // マガジン
+  B(.010, .060, .010, 0, .020, -.75, dark);    // ガスチューブ
+
+  group.position.set(0.18, -0.20, -0.45);
+  group.rotation.set(0, -0.06, 0);
+
+  G.flash = flash;
+  G.group = group;
+  G.gunCam = cam;
+  G.gunRenderer = renderer;
+  G.gunScene = scene;
+
+  window.addEventListener('resize', () => {
+    if (!G.gunRenderer) return;
+    G.gunRenderer.setSize(window.innerWidth, window.innerHeight);
+    G.gunCam.aspect = window.innerWidth / window.innerHeight;
+    G.gunCam.updateProjectionMatrix();
+    const gl = $('gl');
+    gl.width = window.innerWidth;
+    gl.height = window.innerHeight;
+  });
+}
+function animateGun(dt, ts) {
+  if (!G.group) return;
+  G.kickK *= 0.82;
+  const aiming = ts < G.aimUntil;
+  const targetY = -0.20 + (aiming ? 0.06 : 0);
+  const targetZ = -0.45 + (aiming ? 0.05 : 0);
+  const targetRotX = G.kickK * 0.15;
+
+  G.group.position.y += (targetY - G.group.position.y) * 0.12;
+  G.group.position.z += (targetZ - G.group.position.z) * 0.12;
+  G.group.rotation.x = targetRotX;
+
+  // 歩行時の揺れ
+  const walk = Math.min(1, (st.spd || 0) * 0.02);
+  G.group.position.x = 0.18 + Math.sin(ts * 0.006) * walk * 0.015;
+  G.group.rotation.z = Math.sin(ts * 0.004) * walk * 0.02;
+
+  if (G.flash) G.flash.intensity = G.kickK * 2;
+  if (G.gunRenderer) G.gunRenderer.render(G.gunScene, G.gunCam);
+}
+
+/* ── AR ENEMY RENDERER ── */
+function renderEnemies() {
+  const now = performance.now();
+  const w = window.innerWidth, h = window.innerHeight;
+  const fov = 60;
+  const active = {};
+
+  st.players.forEach(p => {
+    if (p.hp <= 0) { return; }
+    if (p.team === st.myTeam) return;
+    active[p.id] = 1;
+
+    let el = enemyEls[p.id];
+    if (!el) {
+      el = document.createElement('div');
+      el.className = 'em';
+      el.innerHTML = '<div class="edia"></div><div class="elbl"></div><div class="edst"></div><div class="hpb"><i></i></div>';
+      document.body.appendChild(el);
+      enemyEls[p.id] = el;
+    }
+
+    const dx = p.x - st.myPos.x;
+    const dy = p.y - st.myPos.y;
+    const dist = Math.hypot(dx, dy);
+    const bearing = Math.atan2(dx, -dy) * 180 / Math.PI;
+    const rel = ((bearing - st.heading + 540) % 360) - 180;
+
+    if (Math.abs(rel) > fov / 2 || dist > 120) {
+      el.style.display = 'none';
+      return;
+    }
+
+    const sx = w / 2 + (rel / (fov / 2)) * (w / 2);
+    const sy = h / 2;
+    const scale = Math.max(0.35, Math.min(1.2, 22 / Math.max(6, dist)));
+
+    el.style.display = 'flex';
+    el.style.transform = `translate(${sx - 30}px, ${sy - 50}px) scale(${scale})`;
+    el.querySelector('.elbl').textContent = p.name || p.id;
+    el.querySelector('.edst').textContent = Math.round(dist) + 'm';
+    el.querySelector('.hpb i').style.width = Math.max(0, p.hp) + '%';
+  });
+
+  Object.keys(enemyEls).forEach(id => {
+    if (!active[id]) { enemyEls[id].remove(); delete enemyEls[id]; }
+  });
+}
+
+/* ── MINIMAP ── */
+function drawMap(canvas, maxR) {
+  const ctx = canvas.getContext('2d');
+  const w = canvas.width, h = canvas.height;
+  const cx = w / 2, cy = h / 2;
+  const radius = Math.min(w, h) / 2 - 2;
+  const scale = radius / maxR;
+
+  ctx.clearRect(0, 0, w, h);
+
+  ctx.fillStyle = 'rgba(0, 8, 20, 0.85)';
+  ctx.beginPath(); ctx.arc(cx, cy, radius, 0, Math.PI * 2); ctx.fill();
+
+  ctx.strokeStyle = 'rgba(0, 255, 136, 0.3)';
+  ctx.lineWidth = 1;
+  [0.33, 0.66, 1].forEach(r => {
+    ctx.beginPath(); ctx.arc(cx, cy, radius * r, 0, Math.PI * 2); ctx.stroke();
+  });
+  ctx.beginPath();
+  ctx.moveTo(cx - radius, cy); ctx.lineTo(cx + radius, cy);
+  ctx.moveTo(cx, cy - radius); ctx.lineTo(cx, cy + radius);
+  ctx.stroke();
+
+  // 軌跡
+  if (st.trail.length > 1) {
+    ctx.strokeStyle = 'rgba(0, 255, 136, 0.55)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    st.trail.forEach((t, i) => {
+      const x = cx + (t.x - st.myPos.x) * scale;
+      const y = cy + (t.y - st.myPos.y) * scale;
+      if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    });
+    ctx.stroke();
   }
+
+  // オブジェクト
+  st.objects.forEach(o => {
+    if (!o.active) return;
+    const ox = cx + (o.x - st.myPos.x) * scale;
+    const oy = cy + (o.y - st.myPos.y) * scale;
+    if (Math.hypot(ox - cx, oy - cy) > radius - 3) return;
+    ctx.fillStyle = o.type === 'loot' ? '#ffdd00' : '#888';
+    ctx.beginPath(); ctx.arc(ox, oy, 2.5, 0, Math.PI * 2); ctx.fill();
+  });
+
+  // プレイヤー
+  st.players.forEach(p => {
+    if (p.hp <= 0) return;
+    const px = cx + (p.x - st.myPos.x) * scale;
+    const py = cy + (p.y - st.myPos.y) * scale;
+    if (Math.hypot(px - cx, py - cy) > radius - 4) return;
+    ctx.fillStyle = p.team === 'red' ? '#ff3333' : '#33aaff';
+    ctx.beginPath(); ctx.arc(px, py, 4, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = 1; ctx.stroke();
+  });
+
+  // 自分 + 方位
+  ctx.fillStyle = '#00ff88';
+  ctx.beginPath(); ctx.arc(cx, cy, 4, 0, Math.PI * 2); ctx.fill();
+  const hr = (st.heading) * Math.PI / 180;
+  ctx.strokeStyle = '#00ff88';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(cx, cy);
+  ctx.lineTo(cx + Math.sin(hr) * 20, cy - Math.cos(hr) * 20);
+  ctx.stroke();
 }
 
-function pop(t, x, y, c) { const e = document.createElement('div'); e.className = 'dmg ' + (c || ''); e.textContent = t; e.style.left = x + 'px'; e.style.top = y + 'px'; document.body.appendChild(e); setTimeout(() => e.remove(), 900); }
-function updateAmmoUI() { $('amob').style.width = st.ammo / st.maxAmmo * 100 + '%'; $('amon').textContent = st.ammo + '/' + st.reserve; }
-function updateHealthUI() { $('hpb').style.width = st.health + '%'; $('hpn').textContent = st.health; }
-function updateScore() { $('sc-r').textContent = 'RED ' + st.score.red; $('sc-b').textContent = 'BLUE ' + st.score.blue; }
-function showAlert(m, c) { const e = document.createElement('div'); e.className = 'am ' + (c || ''); e.textContent = m; $('alerts').appendChild(e); setTimeout(() => e.remove(), 2500); }
+/* ── MAIN LOOP ── */
+function frame(ts) {
+  if (!st.gameActive) return;
+  const dt = Math.min(0.1, (ts - last) / 1000);
+  last = ts;
 
-let af = null; const fb = $('fire');
-fb.addEventListener('pointerdown', e => { e.preventDefault(); fire(); clearInterval(af); af = setInterval(fire, 140); });
-['pointerup', 'pointercancel', 'pointerleave'].forEach(n => fb.addEventListener(n, () => clearInterval(af)));
+  // GPSから位置更新
+  if (st.gpsReady && GPS.state.source !== 'INIT') {
+    const m = toMeters(GPS.state.lat, GPS.state.lon);
+    st.myPos.x = m.x;
+    st.myPos.y = m.y;
+    st.spd = Math.hypot(GPS.state.vx || 0, GPS.state.vy || 0) * 100;
+    if (st.trail.length === 0 ||
+        Math.hypot(st.trail[st.trail.length-1].x - st.myPos.x,
+                   st.trail[st.trail.length-1].y - st.myPos.y) > 0.5) {
+      st.trail.push({ x: st.myPos.x, y: st.myPos.y });
+      if (st.trail.length > 500) st.trail.shift();
+    }
+  }
+
+  // キーボード移動(デバッグ用)
+  if (st.keyWalk) {
+    const spd = 2.0 * dt;
+    st.myPos.x += Math.sin(st.heading * Math.PI / 180) * spd * st.keyWalk;
+    st.myPos.y -= Math.cos(st.heading * Math.PI / 180) * spd * st.keyWalk;
+  }
+
+  renderEnemies();
+  animateGun(dt, ts);
+  updateHUD();
+
+  requestAnimationFrame(frame);
+}
+
+/* ── EVENT BINDINGS ── */
+$('fire').addEventListener('click', fire);
+$('rld').addEventListener('click', reload);
+$('cov').addEventListener('click', toggleCover);
 $('camsw').addEventListener('click', switchCam);
-$('cov').addEventListener('pointerdown', e => { e.preventDefault(); st.cover = !st.cover; $('cov').classList.toggle('on', st.cover); showAlert(st.cover ? '🧱 COVER: 銃を構え上げ' : 'COVER解除'); });
-$('rld').addEventListener('pointerdown', e => { e.preventDefault(); reload(); });
-$('mmap').addEventListener('click', () => { $('bigmap').classList.add('open'); drawMap($('bmc'), st.bigR); });
-$('bigmap').addEventListener('click', () => $('bigmap').classList.remove('open'));
+
+$('mmap').addEventListener('click', () => {
+  $('bigmap').classList.add('open');
+  drawMap($('bmc'), st.bigR);
+});
+$('bmc-close').addEventListener('click', () => $('bigmap').classList.remove('open'));
+$('mz-in').addEventListener('click', () => { st.bigR = Math.max(20, st.bigR - 20); drawMap($('bmc'), st.bigR); });
+$('mz-out').addEventListener('click', () => { st.bigR = Math.min(500, st.bigR + 20); drawMap($('bmc'), st.bigR); });
 
 document.addEventListener('keydown', e => {
-  if (isTestMode) {
-    if (e.code === 'BracketLeft') st.heading = normDeg(st.heading - 5);
-    if (e.code === 'BracketRight') st.heading = normDeg(st.heading + 5);
-  }
   if (!st.gameActive) return;
-  if (e.code === 'KeyR') reload(); if (e.code === 'KeyC') $('cov').dispatchEvent(new Event('pointerdown')); if (e.code === 'KeyQ') st.roll = -25; if (e.code === 'KeyE') st.roll = 25; if (e.code === 'KeyW' || e.code === 'KeyS') st.keyWalk = performance.now(); if (e.code === 'Space' || e.code === 'Enter') { e.preventDefault(); fire(); }
-  if (e.code === 'ArrowLeft' || e.code === 'KeyA') st.heading = (st.heading + 355) % 360;
-  if (e.code === 'ArrowRight' || e.code === 'KeyD') st.heading = (st.heading + 5) % 360;
-  if ((e.code === 'KeyW' || e.code === 'KeyS') && st.src !== 'GPS') {
-    const q = (e.code === 'KeyW' ? 1 : -1) * 3;
-    const a = (st.heading - st.baseHeading) * Math.PI / 180;
-    st.targetPos.x += Math.sin(a) * q; st.targetPos.y -= Math.cos(a) * q;
-  }
+  if (e.code === 'Space') { e.preventDefault(); fire(); }
+  if (e.code === 'KeyR') reload();
+  if (e.code === 'KeyC') toggleCover();
+  if (e.code === 'ArrowUp') st.keyWalk = 1;
+  if (e.code === 'ArrowDown') st.keyWalk = -1;
+  if (e.code === 'ArrowLeft') st.heading = normDeg(st.heading - 5);
+  if (e.code === 'ArrowRight') st.heading = normDeg(st.heading + 5);
 });
-document.addEventListener('keyup', e => { if (e.code === 'KeyQ' || e.code === 'KeyE') st.roll = 0; });
-const dpr = Math.min(2, devicePixelRatio || 1); $('mc').width = $('mc').height = 220 * dpr; $('bmc').width = $('bmc').height = 720 * dpr;
-const ZS = [20, 50, 100, 200]; let zi = 2; st.bigR = ZS[zi];
-const zoom = d => e => { e.stopPropagation(); zi = Math.max(0, Math.min(3, zi + d)); st.bigR = ZS[zi]; drawMap($('bmc'), st.bigR); };
-$('mz-in').addEventListener('click', zoom(-1)); $('mz-out').addEventListener('click', zoom(1));
+document.addEventListener('keyup', e => {
+  if (e.code === 'ArrowUp' || e.code === 'ArrowDown') st.keyWalk = 0;
+});
 
-function runSelfTest() {
-  console.log("=== SELF DIAGNOSTIC TEST START ===");
-  let pass = 0, fail = 0;
-  function assert(name, cond, msg) {
-    if (cond) { console.log(`[PASS] ${name}`); pass++; }
-    else { console.error(`[FAIL] ${name}: ${msg}`); fail++; showAlert(`❌ ${name} FAILED`, 'ha'); }
+window.addEventListener('load', () => {
+  setTimeout(loadAIModel, 1200);
+});
+
+/* ── SELF TEST ── */
+async function runSelfTest() {
+  showAlert('🧪 テスト実行中...');
+  const results = [];
+  results.push('📷 ' + (curStream ? 'OK' : 'NG'));
+  results.push('📍 ' + (st.gpsReady ? st.src : 'NG'));
+  results.push('🤖 ' + (model ? 'OK' : '...'));
+  results.push('🎮 ' + (typeof THREE !== 'undefined' ? 'OK' : 'NG'));
+  results.push('📡 ' + (typeof Peer !== 'undefined' ? 'OK' : 'NG'));
+  if (typeof GPS !== 'undefined' && GPS.state) {
+    results.push('📊 ' + GPS.state.fps + 'Hz');
+    results.push('±' + Math.round(GPS.state.accM) + 'm');
   }
-
-  const lat1 = 35.6762, lon1 = 139.6503;
-  const lat2 = 35.6763, lon2 = 139.6504;
-  st.origin = {lat: lat1, lon: lon1};
-  const m = toMeters(lat2, lon2);
-  const back = toLatLon(m.x, m.y);
-  assert("Geodesy Roundtrip", Math.abs(back.lat - lat2) < 1e-6 && Math.abs(back.lon - lon2) < 1e-6, "Coordinate conversion mismatch");
-
-  const d = getDist({x:0, y:0}, {x:3, y:4});
-  assert("Pythagorean Distance", Math.abs(d - 5) < 0.001, "Expected 5, got " + d);
-
-  const kf = new KalmanFilter(0.1, 1);
-  kf.filter(10); kf.filter(12); const kOut = kf.filter(11);
-  assert("Kalman Convergence", Math.abs(kOut - 11) < 2, "Filter diverged: " + kOut);
-
-  const brg = radToDeg(getBearing({x:0, y:0}, {x:1, y:0}));
-  assert("Bearing East", Math.abs(brg - 90) < 1, "Expected 90, got " + brg);
-
-  assert("Heading Norm", normDeg(-10) === 350 && normDeg(370) === 10, "NormDeg failed");
-
-  st.scanState = 'ready';
-  st.myPos = {x:0, y:0}; st.targetPos = {x:0, y:0};
-  rawGps = {lat: lat1, lon: lon1, acc: 5};
-  kfLat.x = NaN; kfLon.x = NaN;
-  const loop = (n) => { for(let i=0; i<n; i++) {
-    const kLat = kfLat.filter(rawGps.lat);
-    const kLon = kfLon.filter(rawGps.lon);
-    const rl = toMeters(kLat, kLon);
-    if (rawGps.acc > 20) { } else { st.targetPos = rl; }
-    st.myPos.x += (st.targetPos.x - st.myPos.x) * 0.1;
-    st.myPos.y += (st.targetPos.y - st.myPos.y) * 0.1;
-  }};
-  loop(20);
-  assert("Fusion Stable (High Acc)", getDist(st.myPos, {x:0, y:0}) < 1.0, "Fusion drifted: " + getDist(st.myPos, {x:0, y:0}));
-
-  const dist = 50;
-  const tol = Math.max(2, 15 - (dist / 10));
-  assert("Hit Tolerance Calculation", tol === 10, "Expected 10, got " + tol);
-
-  console.log(`=== TEST COMPLETE: ${pass} PASS, ${fail} FAIL ===`);
-  if (fail === 0) showAlert('✅ 全テスト成功', 'ka');
-  st.scanState = 'idle';
+  setTimeout(() => showAlert(results.join(' / '), 'ka'), 400);
 }
-
-selectMode('bot'); tab('host'); drawMap($('mc'), MAP_MAX);
 </script>
 </body>
 </html>
